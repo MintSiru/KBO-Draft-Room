@@ -1,0 +1,133 @@
+﻿소속 ID,종류,지역,야구부 평판,최초 요청 이름,v0.3 이름,적용 이름,변경 사유,이번 확인 범위,이번 확인 출처,v0.3 수정 사유
+hs000,high-school,서울,명문,한성고,한성청람고,한양고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EC%96%91%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs001,high-school,서울,명문,한국대사대부속고,한국청람대사대부속고,민국대사대부속고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%AF%BC%EA%B5%AD%EB%8C%80%EC%82%AC%EB%8C%80%EB%B6%80%EC%86%8D%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,가상 본교 이름 변경에 맞춘 연동 수정
+hs002,high-school,서울,명문,광암고,광암고,광암고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs003,high-school,경기·강원,명문,충정고,충정고,충정고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs004,high-school,경기·강원,명문,평택첨단고,평택첨단고,평택첨단고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs005,high-school,인천,명문,인하고,인하고,인하고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs006,high-school,인천,명문,강화고,강화해울고,강화해양과학고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B0%95%ED%99%94%ED%95%B4%EC%96%91%EA%B3%BC%ED%95%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs007,high-school,대전·충청·전북,명문,북영고,북영고,북영고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs008,high-school,대전·충청·전북,명문,전주일고,전주일고,전주일고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs009,high-school,대구·경북,명문,달구벌고,달구벌청람고,대구달빛고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8C%80%EA%B5%AC%EB%8B%AC%EB%B9%9B%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs010,high-school,경남,명문,경남중앙고,경남중앙고,경남중앙고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs011,high-school,부산·울산,명문,부산해사고,부산해사과학고,부산해사과학고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,공개 학교 명칭 또는 지역 약칭과 충돌
+hs012,high-school,부산·울산,명문,동래고,동래해울고,장산고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9E%A5%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs013,high-school,광주·전남·제주,명문,송정고,송정고,송정고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs014,high-school,광주·전남·제주,명문,광주체육고,광주청람체육고,광산체육고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B4%91%EC%82%B0%EC%B2%B4%EC%9C%A1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs015,high-school,서울,강호,동곡고,동곡고,동곡고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs016,high-school,서울,강호,서초상업고,서초상업고,서초상업고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs017,high-school,서울,강호,서울AI고,서울AI고,서울AI고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs018,high-school,서울,강호,신명고,신명서림고,신영고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%8B%A0%EC%98%81%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs019,high-school,경기·강원,강호,명강고,명강고,명강고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs020,high-school,경기·강원,강호,광명고,광명해울고,광명상연고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B4%91%EB%AA%85%EC%83%81%EC%97%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs021,high-school,경기·강원,강호,하남하이텍고,하남하이텍고,하남하이텍고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs022,high-school,경기·강원,강호,화성고,화성별하고,화성인터넷고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%99%94%EC%84%B1%EC%9D%B8%ED%84%B0%EB%84%B7%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs023,high-school,경기·강원,강호,강릉고,강릉솔바람고,강릉솔바람고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,공개 학교 명칭 또는 지역 약칭과 충돌
+hs024,high-school,인천,강호,영종고,영종하늘빛고,영종국제고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%98%81%EC%A2%85%EA%B5%AD%EC%A0%9C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs025,high-school,인천,강호,미추홀예술고,미추홀예술고,미추홀예술고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs026,hs-club,대전·충청·전북,강호,계룡고,계룡청람고,계룡BC,사용자 지정: 고교에서 고교 연령 BC로 변경,club-outside-school-register,NEIS 학교정보 대상 외,공개 학교 명칭 또는 지역 약칭과 충돌
+hs027,hs-club,대전·충청·전북,강호,유성고,유성별하고,유성구드림BC,사용자 지정: 고교에서 고교 연령 BC로 변경,club-outside-school-register,NEIS 학교정보 대상 외,공개 학교 명칭 또는 지역 약칭과 충돌
+hs028,high-school,대전·충청·전북,강호,대청고,대청해울고,대전대영고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8C%80%EC%A0%84%EB%8C%80%EC%98%81%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs029,high-school,대전·충청·전북,강호,북대전고,북대전고,북대전고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs030,high-school,대구·경북,강호,달서고,달서별하고,달서기계과학고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8B%AC%EC%84%9C%EA%B8%B0%EA%B3%84%EA%B3%BC%ED%95%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs031,high-school,대구·경북,강호,포항해사고,포항해사고,포항해사고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs032,hs-club,대구·경북,강호,경주고BC,경주별하BC,동경BC,사용자 최종 지정 이름,club-outside-school-register,NEIS 학교정보 대상 외,공개 학교 명칭 또는 지역 약칭과 충돌
+hs033,high-school,대구·경북,강호,수성공고,수성공고,수성공고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs034,high-school,경남,강호,남해수산고,남해수산고,남해수산고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs035,high-school,경남,강호,마산봉암고,마산봉암고,마산봉암고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs036,high-school,경남,강호,창원고,창원해울고,창원해사고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B0%BD%EC%9B%90%ED%95%B4%EC%82%AC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs037,high-school,경남,강호,김해고,김해청람고,김해항공고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B9%80%ED%95%B4%ED%95%AD%EA%B3%B5%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs038,high-school,부산·울산,강호,태화고,태화고,태화고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs039,high-school,부산·울산,강호,해운대상업고,해운대상업고,해운대상업고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs040,high-school,부산·울산,강호,울산석유화학고,울산석유화학고,울산석유화학고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs041,hs-club,부산·울산,강호,임랑BC,임랑BC,임랑BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs042,high-school,광주·전남·제주,강호,무등고,무등고,무등고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs043,high-school,광주·전남·제주,강호,용봉고,용봉고,용봉고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs044,high-school,광주·전남·제주,강호,다도해고,다도해고,다도해고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs045,high-school,광주·전남·제주,강호,순천팔마고,순천팔마청람고,순천만고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%88%9C%EC%B2%9C%EB%A7%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs046,high-school,서울,중견,서울전자고,서울전자고,서울전자고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs047,high-school,서울,중견,경성고,경성별하고,한산주고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EC%82%B0%EC%A3%BC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs048,high-school,서울,중견,휘성고,휘성고,휘성고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs049,high-school,서울,중견,서울남산고,서울남산고,서울남산고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs050,hs-club,서울,중견,조은BC,조은BC,조은BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs051,high-school,경기·강원,중견,봉포고,봉포고,봉포고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs052,high-school,경기·강원,중견,동해고,동해고,동해고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs053,high-school,경기·강원,중견,용문고,용문청람고,용현고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9A%A9%ED%98%84%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs054,high-school,경기·강원,중견,곤지암고,곤지암별하고,해리스고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%B4%EB%A6%AC%EC%8A%A4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs055,high-school,경기·강원,중견,분당교통고,분당교통고,분당교통고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs056,high-school,인천,중견,청라고,청라별하고,청라해운고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B2%AD%EB%9D%BC%ED%95%B4%EC%9A%B4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs057,high-school,인천,중견,아라빛고,아라빛고,아라빛고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs058,high-school,인천,중견,소래고,소래해울고,소래공고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%86%8C%EB%9E%98%EA%B3%B5%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs059,high-school,대전·충청·전북,중견,익산고,익산청람고,익산농고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9D%B5%EC%82%B0%EB%86%8D%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs060,high-school,대전·충청·전북,중견,전주서산고,전주서산고,전주서산고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs061,high-school,대전·충청·전북,중견,세종고,세종해울고,세종컴퓨터과학고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%84%B8%EC%A2%85%EC%BB%B4%ED%93%A8%ED%84%B0%EA%B3%BC%ED%95%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs062,high-school,대전·충청·전북,중견,한밭공고,한밭공고,한밭공고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs063,high-school,대구·경북,중견,대명고,대명별하고,대명가톨릭고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8C%80%EB%AA%85%EA%B0%80%ED%86%A8%EB%A6%AD%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs064,high-school,대구·경북,중견,송림반도체고,송림반도체고,송림반도체고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs065,high-school,대구·경북,중견,와룡고,와룡청람고,봉추고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B4%89%EC%B6%94%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs066,high-school,경남,중견,진해고,진해해울고,진해해울고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,공개 학교 명칭 또는 지역 약칭과 충돌
+hs067,hs-club,경남,중견,물금BC,물금BC,물금BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs068,high-school,경남,중견,한려고,한려고,한려고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs069,hs-club,경남,중견,옥포BC,옥포BC,옥포BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs070,high-school,부산·울산,중견,장생포고,장생포고,장생포고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs071,high-school,부산·울산,중견,영도고,영도고,영도고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs072,high-school,부산·울산,중견,부산진고,부산진청람고,부산진영고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%80%EC%82%B0%EC%A7%84%EC%98%81%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs073,high-school,부산·울산,중견,사직체육고,사직체육고,사직체육고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs074,high-school,광주·전남·제주,중견,돌산고,돌산고,돌산고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs075,hs-club,광주·전남·제주,중견,광양BC,광양BC,광양BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs076,high-school,광주·전남·제주,중견,광주아이티고,광주아이티고,광주아이티고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs077,high-school,서울,약소,한국디자인고,한국디자인고,한국디자인고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs078,high-school,서울,약소,배전고,배전고,배전고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs079,high-school,서울,약소,성명고,성명고,성명고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs080,hs-club,서울,약소,한웅BC,한웅BC,한웅BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs081,high-school,경기·강원,약소,단오고,단오고,단오고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs082,hs-club,경기·강원,약소,김포BC,김포BC,김포BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs083,high-school,경기·강원,약소,신월고,신월별하고,신월향고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%8B%A0%EC%9B%94%ED%96%A5%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs084,high-school,인천,약소,인천남동고,인천남동청람고,인천남동공고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9D%B8%EC%B2%9C%EB%82%A8%EB%8F%99%EA%B3%B5%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs085,high-school,인천,약소,월미해양고,월미해양고,월미해양고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs086,high-school,대전·충청·전북,약소,도안고,도안해울고,도연고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%84%EC%97%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs087,hs-club,대전·충청·전북,약소,청주고BC,청주별하BC,청주별하BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,공개 학교 명칭 또는 지역 약칭과 충돌
+hs088,high-school,대전·충청·전북,약소,충주상고,충주해울상고,충주호암고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B6%A9%EC%A3%BC%ED%98%B8%EC%95%94%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+hs089,high-school,대구·경북,약소,문경고,문경고,문경고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs090,high-school,대구·경북,약소,동대구고,동대구고,동대구고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs091,hs-club,대구·경북,약소,선덕BC,선덕BC,선덕BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs092,hs-club,경남,약소,가야BC,가야BC,가야BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs093,high-school,경남,약소,사천공고,사천공고,사천공고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs094,high-school,경남,약소,진주문산고,진주문산고,진주문산고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs095,high-school,경남,약소,합포상명고,합포상명고,합포상명고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs096,high-school,부산·울산,약소,장산고,장산고,장산자동차고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9E%A5%EC%82%B0%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,원안 유지
+hs097,high-school,부산·울산,약소,부울대부속고,부울대부속고,부울대부속고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs098,high-school,부산·울산,약소,부산대중문화예술고,부산대중문화예술고,부산대중문화예술고,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs099,hs-club,부산·울산,약소,남포BC,남포BC,남포BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs100,hs-club,광주·전남·제주,약소,이순신BC,이순신BC,이순신BC,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+hs101,hs-club,광주·전남·제주,약소,영산고,영산청람고,영산BC,사용자 지정: 고교에서 고교 연령 BC로 변경,club-outside-school-register,NEIS 학교정보 대상 외,공개 학교 명칭 또는 지역 약칭과 충돌
+hs102,high-school,광주·전남·제주,약소,목포공고,목포해울공고,목포해양과학고,사용자 최종 지정 이름,not-returned,https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%AA%A9%ED%8F%AC%ED%95%B4%EC%96%91%EA%B3%BC%ED%95%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90,공개 학교 명칭 또는 지역 약칭과 충돌
+uni00,college,서울,명문,한국대,한국청람대,민국대,사용자 최종 지정 이름,이번 수정판의 NEIS 학교명 확인 대상 외,사용자 수정안 / 이전 audit 기록,서경대학교의 과거 한국대학 명칭과 혼동 방지
+uni01,college,서울,명문,연서대,연서대,연서대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni02,college,경기·강원,명문,명성대,명성대,명성대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni03,college,대구·경북,강호,성운대,성운서림대,성운과학기술대,사용자 최종 지정 이름,이번 수정판의 NEIS 학교명 확인 대상 외,사용자 수정안 / 이전 audit 기록,실존 성운대학교와 명칭 충돌
+uni04,college,인천,강호,인천외국어대,인천외국어대,인천외국어대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni05,college,경남,강호,동남대,동남해솔대,동남예대,사용자 최종 지정 이름,이번 수정판의 NEIS 학교명 확인 대상 외,사용자 수정안 / 이전 audit 기록,중국 동남대학의 한국어 명칭과 혼동 방지
+uni06,college,부산·울산,강호,동성대,동성대,동성대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni07,college,경기·강원,중견,청명대,청명대,청명대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni08,college,대전·충청·전북,중견,대곡대,대곡대,대곡대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni09,college,광주·전남·제주,중견,광주첨단과학대,광주첨단과학대,광주첨단과학대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni10,college,대전·충청·전북,중견,계룡대,계룡대,계룡대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni11,college,인천,중견,인천대,인천해울대,인천해양대,사용자 최종 지정 이름,이번 수정판의 NEIS 학교명 확인 대상 외,사용자 수정안 / 이전 audit 기록,실존 인천대학교와 명칭 충돌
+uni12,college,광주·전남·제주,약소,서귀포대,서귀포대,서귀포대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+uni13,college,서울,약소,한국사이버대,한국청람사이버대,민국사이버대,사용자 최종 지정 이름,이번 수정판의 NEIS 학교명 확인 대상 외,사용자 수정안 / 이전 audit 기록,숭실사이버대학교의 과거 명칭과 충돌
+uni14,college,경기·강원,약소,안산대,안산별하대,단원대,사용자 최종 지정 이름,이번 수정판의 NEIS 학교명 확인 대상 외,사용자 수정안 / 이전 audit 기록,실존 안산대학교와 명칭 충돌
+uni15,college,대전·충청·전북,약소,한국축산대,한국축산대,한국축산대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ind00,independent,경기·강원,미분류,김포 블랙팬서즈,김포 블랙팬서즈,김포 블랙팬서즈,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ind01,independent,경기·강원,미분류,하남 워리어즈,하남 워리어즈,하남 워리어즈,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ind02,independent,경기·강원,미분류,부천 브레이브스,부천 브레이브스,부천 브레이브스,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ind03,independent,경기·강원,미분류,안산 데블스,안산 데블스,안산 데블스,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ov00,overseas-college,미국,미분류,미국 미네소타공대,미국 미네소타공대,미국 미네소타공대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ov01,overseas-college,미국,미분류,미국 스탠리대,미국 스탠리대,미국 스탠리대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ov02,overseas-college,미국,미분류,미국 레이크빌대,미국 레이크빌대,미국 레이크빌대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ov03,overseas-college,미국,미분류,미국 포틀랜드대,미국 포틀랜드리버대,미국 롱아일랜드하버대,사용자 최종 지정 이름,해외 전체 명칭 웹 검색에서 동일명 미확인; 부재 보장 아님,user-name-check.json,University of Portland와 명칭 충돌
+ov04,overseas-college,미국,미분류,미국 뉴멕시코주립대,미국 뉴멕시코메사대,미국 시카고허드슨대,사용자 최종 지정 이름,이번 수정판의 NEIS 학교명 확인 대상 외,사용자 수정안 / 이전 audit 기록,New Mexico State University와 명칭 충돌
+ov05,overseas-college,캐나다,미분류,캐나다 토론토공대,캐나다 토론토공대,캐나다 토론토공대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ov06,overseas-college,일본,미분류,일본 하네다대,일본 하네다대,일본 하네다대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ov07,overseas-college,일본,미분류,일본 미나미도쿄대,일본 미나미도쿄대,일본 미나미도쿄대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지
+ov08,overseas-college,대만,미분류,대만 타이중공대,대만 타이중공대,대만 타이중공대,v0.3 이름 유지,v0.3 확인 범위 유지,사용자 수정안 / 이전 audit 기록,원안 유지

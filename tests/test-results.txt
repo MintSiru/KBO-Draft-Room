@@ -1,0 +1,31 @@
+Tier readiness means { '명문': '47.02', '강호': '44.08', '중견': '41.99', '약소': '39.45' } rare overseas 40/600
+✔ all 132 requested institutions remain present with original region/tier and documented renames (11.998158ms)
+✔ complete given names avoid arbitrary syllables, duplicate full names and repeated adjacent syllables (422.248625ms)
+✔ birthday, international age, educational chronology and start of rookie season agree (543.026377ms)
+✔ regional eligibility is current high-school qualification, never birthplace or old school (19.457076ms)
+✔ school reputation shifts preparation but weak programs retain elite potential and shared team honors (882.876475ms)
+✔ Korean particles cover final consonants, vowels, rieul exceptions, clubs, numerals and Latin initials (6.917824ms)
+✔ generated reports, coach comments, interviews and development prose use formal endings (168.158114ms)
+✔ default normal preview precedes any pick and produces fixed two-outlet legal mock drafts (136.58458ms)
+✔ all ten clubs × regional OFF/ON × three difficulties complete every phase and validated reload (1859.309458ms)
+✔ AI, forecasts, news and advice do not read hidden ability, risk or future results (20.64334ms)
+✔ difficulty changes assistance and AI decisions but never a player or the rookie roll (334.658268ms)
+✔ 22 board sorts work in both directions, put non-applicable values last, retain zero, and do not mutate input (41.712485ms)
+✔ news is contextual, first-round only, immutable after subsequent picks, and never double-counted (41.495953ms)
+✔ all interview promises use explicit thresholds, no-debut development can succeed, and no replay farming (20.946111ms)
+✔ save validation rejects old versions, invalid difficulty, edited forecasts/news/promises and malformed picks without throwing (59.756997ms)
+✔ 50 v0.3 reference hashes still match physical players and public records; v0.3 saves are explicitly rejected (616.238456ms)
+✔ setup default, preview autosave, same forecasts on reload and no premature AI pick (981.049099ms)
+✔ every club × regional OFF/ON completes normal UI, interviews, fan history, season, owner and PNG (22308.181504ms)
+✔ easy/hard settings persist; completed and partial saves retain the exact newsroom, pledge and fan score (3710.740908ms)
+✔ all sort controls display matching values, directions, nulls and coexist with search/role/path/tier/star filters (6768.150872ms)
+✔ newsroom and mock archive can reopen without fan changes; modal keyboard can reach forecast summaries (204.656299ms)
+✔ blocked storage, malformed save and old version fail gracefully without changing previous storage (1103.973813ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42530.446296

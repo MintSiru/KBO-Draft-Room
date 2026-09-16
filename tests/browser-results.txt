@@ -1,0 +1,10 @@
+PASS 390px easy: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 390px normal: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 390px hard: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 768px easy: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 768px normal: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 768px hard: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 1280px easy: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 1280px normal: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 1280px hard: preview/reload → draft/news → GM/reload → season → owner/fans/archive → PNG
+PASS 99 layout checks; no document overflow; no browser JS errors.

@@ -1,0 +1,983 @@
+{
+  "checkedAt": "2026-09-16",
+  "scope": "Current exact names, regional-prefix aliases and BC school-name bases; no absence guarantee",
+  "results": [
+    {
+      "requested": "한성고",
+      "query": "한성고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "한성고등학교",
+          "area": "서울특별시",
+          "homepage": "http://hanseong.sen.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EC%84%B1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "한국대사대부속고",
+      "query": "한국대사대부속고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EA%B5%AD%EB%8C%80%EC%82%AC%EB%8C%80%EB%B6%80%EC%86%8D%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "광암고",
+      "query": "광암고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B4%91%EC%95%94%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "충정고",
+      "query": "충정고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B6%A9%EC%A0%95%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "평택첨단고",
+      "query": "평택첨단고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%8F%89%ED%83%9D%EC%B2%A8%EB%8B%A8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "인하고",
+      "query": "인하고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9D%B8%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "강화고",
+      "query": "강화고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "강화고등학교",
+          "area": "인천광역시",
+          "homepage": "http://ganghwahs.icehs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B0%95%ED%99%94%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "북영고",
+      "query": "북영고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%81%EC%98%81%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "전주일고",
+      "query": "전주일고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%A0%84%EC%A3%BC%EC%9D%BC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "달구벌고",
+      "query": "달구벌고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "달구벌고등학교",
+          "area": "대구광역시",
+          "homepage": "http://dalgus.dge.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8B%AC%EA%B5%AC%EB%B2%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "경남중앙고",
+      "query": "경남중앙고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B2%BD%EB%82%A8%EC%A4%91%EC%95%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "부산해사고",
+      "query": "부산해사고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "부산해사고등학교",
+          "area": "부산광역시",
+          "homepage": "http://www.maritime.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%80%EC%82%B0%ED%95%B4%EC%82%AC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "동래고",
+      "query": "동래고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "동래고등학교",
+          "area": "부산광역시",
+          "homepage": "http://dongnae.hs.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%99%EB%9E%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "송정고",
+      "query": "송정고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%86%A1%EC%A0%95%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "광주체육고",
+      "query": "광주체육고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "광주체육고등학교",
+          "area": "전남광주통합특별시(광주)",
+          "homepage": "http://gwangju-p.gen.hs.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B4%91%EC%A3%BC%EC%B2%B4%EC%9C%A1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "동곡고",
+      "query": "동곡고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%99%EA%B3%A1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "서초상업고",
+      "query": "서초상업고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%84%9C%EC%B4%88%EC%83%81%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "서울AI고",
+      "query": "서울AI고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%84%9C%EC%9A%B8AI%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "신명고",
+      "query": "신명고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "신명고등학교",
+          "area": "대구광역시",
+          "homepage": "sm.dge.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%8B%A0%EB%AA%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "명강고",
+      "query": "명강고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%AA%85%EA%B0%95%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "광명고",
+      "query": "광명고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "광명고등학교",
+          "area": "부산광역시",
+          "homepage": "http://www.km.hs.kr"
+        },
+        {
+          "name": "광명고등학교",
+          "area": "경기도",
+          "homepage": "https://gmhs-m.goegm.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B4%91%EB%AA%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "하남하이텍고",
+      "query": "하남하이텍고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%98%EB%82%A8%ED%95%98%EC%9D%B4%ED%85%8D%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "화성고",
+      "query": "화성고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "화성고등학교",
+          "area": "경기도",
+          "homepage": "https://hwasung-h.goehs.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%99%94%EC%84%B1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "강릉고",
+      "query": "강릉고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "강릉고등학교",
+          "area": "강원특별자치도",
+          "homepage": "http://ganggo.gwe.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B0%95%EB%A6%89%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "영종고",
+      "query": "영종고등학교",
+      "status": "regional-prefix-alias",
+      "matches": [
+        {
+          "name": "인천영종고등학교",
+          "area": "인천광역시",
+          "homepage": "yeongjong.icehs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%98%81%EC%A2%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "미추홀예술고",
+      "query": "미추홀예술고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%AF%B8%EC%B6%94%ED%99%80%EC%98%88%EC%88%A0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "계룡고",
+      "query": "계룡고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "계룡고등학교",
+          "area": "충청남도",
+          "homepage": "http://grhs.cnehs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B3%84%EB%A3%A1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "유성고",
+      "query": "유성고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "유성고등학교",
+          "area": "대전광역시",
+          "homepage": "http://yshs.djsch.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9C%A0%EC%84%B1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "대청고",
+      "query": "대청고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "대청고등학교",
+          "area": "인천광역시",
+          "homepage": "idmh.icehs.kr"
+        },
+        {
+          "name": "김해대청고등학교",
+          "area": "경상남도",
+          "homepage": "http://ghdaecheong-h.gne.go.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8C%80%EC%B2%AD%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "북대전고",
+      "query": "북대전고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%81%EB%8C%80%EC%A0%84%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "달서고",
+      "query": "달서고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "달서고등학교",
+          "area": "대구광역시",
+          "homepage": "http://dalseo.dge.hs.kr "
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8B%AC%EC%84%9C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "포항해사고",
+      "query": "포항해사고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%8F%AC%ED%95%AD%ED%95%B4%EC%82%AC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "경주고BC",
+      "query": "경주고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "경주고등학교",
+          "area": "경상북도",
+          "homepage": "https://school.gyo6.net/gyeongjuhs"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B2%BD%EC%A3%BC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "수성공고",
+      "query": "수성공업고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%88%98%EC%84%B1%EA%B3%B5%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "남해수산고",
+      "query": "남해수산고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%82%A8%ED%95%B4%EC%88%98%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "마산봉암고",
+      "query": "마산봉암고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%A7%88%EC%82%B0%EB%B4%89%EC%95%94%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "창원고",
+      "query": "창원고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "창원고등학교",
+          "area": "경상남도",
+          "homepage": "http://changwon-h.gne.go.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B0%BD%EC%9B%90%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "김해고",
+      "query": "김해고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "김해고등학교",
+          "area": "경상남도",
+          "homepage": "http://gimhae-h.gne.go.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B9%80%ED%95%B4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "태화고",
+      "query": "태화고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%83%9C%ED%99%94%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "해운대상업고",
+      "query": "해운대상업고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%B4%EC%9A%B4%EB%8C%80%EC%83%81%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "울산석유화학고",
+      "query": "울산석유화학고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9A%B8%EC%82%B0%EC%84%9D%EC%9C%A0%ED%99%94%ED%95%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "임랑BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "무등고",
+      "query": "무등고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%AC%B4%EB%93%B1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "용봉고",
+      "query": "용봉고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9A%A9%EB%B4%89%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "다도해고",
+      "query": "다도해고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8B%A4%EB%8F%84%ED%95%B4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "순천팔마고",
+      "query": "순천팔마고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "순천팔마고등학교",
+          "area": "전남광주통합특별시(전남)",
+          "homepage": "https://palma.jge.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%88%9C%EC%B2%9C%ED%8C%94%EB%A7%88%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "서울전자고",
+      "query": "서울전자고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%84%9C%EC%9A%B8%EC%A0%84%EC%9E%90%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "경성고",
+      "query": "경성고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "경성고등학교",
+          "area": "서울특별시",
+          "homepage": "http://gyeongseong.sen.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B2%BD%EC%84%B1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "휘성고",
+      "query": "휘성고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%9C%98%EC%84%B1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "서울남산고",
+      "query": "서울남산고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%84%9C%EC%9A%B8%EB%82%A8%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "조은BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "봉포고",
+      "query": "봉포고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B4%89%ED%8F%AC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "동해고",
+      "query": "동해고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%99%ED%95%B4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "용문고",
+      "query": "용문고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "용문고등학교",
+          "area": "서울특별시",
+          "homepage": "http://yongmoon.sen.hs.kr"
+        },
+        {
+          "name": "용문고등학교",
+          "area": "경기도",
+          "homepage": "yongmun-h.goeyp.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9A%A9%EB%AC%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "곤지암고",
+      "query": "곤지암고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "곤지암고등학교",
+          "area": "경기도",
+          "homepage": "gonjiam-h.goegh.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B3%A4%EC%A7%80%EC%95%94%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "분당교통고",
+      "query": "분당교통고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%84%EB%8B%B9%EA%B5%90%ED%86%B5%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "청라고",
+      "query": "청라고등학교",
+      "status": "regional-prefix-alias",
+      "matches": [
+        {
+          "name": "인천청라고등학교",
+          "area": "인천광역시",
+          "homepage": "http://cheongra.icehs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B2%AD%EB%9D%BC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "아라빛고",
+      "query": "아라빛고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%95%84%EB%9D%BC%EB%B9%9B%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "소래고",
+      "query": "소래고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "소래고등학교",
+          "area": "경기도",
+          "homepage": "https://sorae-h.goesh.kr/sorae-h/main.do"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%86%8C%EB%9E%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "익산고",
+      "query": "익산고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "익산고등학교",
+          "area": "전북특별자치도",
+          "homepage": "http://www.iksan.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9D%B5%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "전주서산고",
+      "query": "전주서산고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%A0%84%EC%A3%BC%EC%84%9C%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "세종고",
+      "query": "세종고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "서울세종고등학교",
+          "area": "서울특별시",
+          "homepage": "http://seoulsejong.sen.hs.kr"
+        },
+        {
+          "name": "세종고등학교",
+          "area": "세종특별자치시",
+          "homepage": "http://sejong.sjeduhs.kr/"
+        },
+        {
+          "name": "세종고등학교",
+          "area": "경기도",
+          "homepage": "https://se-jong-h.goeyj.kr"
+        },
+        {
+          "name": "세종고등학교",
+          "area": "경상남도",
+          "homepage": "http://sejong-h.gne.go.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%84%B8%EC%A2%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "한밭공고",
+      "query": "한밭공업고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EB%B0%AD%EA%B3%B5%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "대명고",
+      "query": "대명고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "대명고등학교",
+          "area": "대구광역시",
+          "homepage": "http://dmh.dge.hs.kr"
+        },
+        {
+          "name": "경기대명고등학교",
+          "area": "경기도",
+          "homepage": "https://daemyoung-h.goesw.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8C%80%EB%AA%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "송림반도체고",
+      "query": "송림반도체고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%86%A1%EB%A6%BC%EB%B0%98%EB%8F%84%EC%B2%B4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "와룡고",
+      "query": "와룡고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "와룡고등학교",
+          "area": "대구광역시",
+          "homepage": "http://waryong.dge.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%99%80%EB%A3%A1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "진해고",
+      "query": "진해고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "진해고등학교",
+          "area": "경상남도",
+          "homepage": "http://jinhae-h.gne.go.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%A7%84%ED%95%B4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "물금BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "한려고",
+      "query": "한려고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EB%A0%A4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "옥포BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "장생포고",
+      "query": "장생포고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9E%A5%EC%83%9D%ED%8F%AC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "영도고",
+      "query": "영도고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%98%81%EB%8F%84%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "부산진고",
+      "query": "부산진고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "부산진고등학교",
+          "area": "부산광역시",
+          "homepage": "www.pusanjin.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%80%EC%82%B0%EC%A7%84%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "사직체육고",
+      "query": "사직체육고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%82%AC%EC%A7%81%EC%B2%B4%EC%9C%A1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "돌산고",
+      "query": "돌산고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%8C%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "광양BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "광주아이티고",
+      "query": "광주아이티고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B4%91%EC%A3%BC%EC%95%84%EC%9D%B4%ED%8B%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "한국디자인고",
+      "query": "한국디자인고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EA%B5%AD%EB%94%94%EC%9E%90%EC%9D%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "배전고",
+      "query": "배전고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B0%B0%EC%A0%84%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "성명고",
+      "query": "성명고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%84%B1%EB%AA%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "한웅BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "단오고",
+      "query": "단오고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8B%A8%EC%98%A4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "김포BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "신월고",
+      "query": "신월고등학교",
+      "status": "regional-prefix-alias",
+      "matches": [
+        {
+          "name": "창원신월고등학교",
+          "area": "경상남도",
+          "homepage": "http://cwsinwol-h.gne.go.kr/"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%8B%A0%EC%9B%94%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "인천남동고",
+      "query": "인천남동고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "인천남동고등학교",
+          "area": "인천광역시",
+          "homepage": "http://namdong.icehs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9D%B8%EC%B2%9C%EB%82%A8%EB%8F%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "월미해양고",
+      "query": "월미해양고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9B%94%EB%AF%B8%ED%95%B4%EC%96%91%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "도안고",
+      "query": "도안고등학교",
+      "status": "regional-prefix-alias",
+      "matches": [
+        {
+          "name": "대전도안고등학교",
+          "area": "대전광역시",
+          "homepage": "http://doanhs.djsch.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%84%EC%95%88%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "청주고BC",
+      "query": "청주고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "청주고등학교",
+          "area": "충청북도",
+          "homepage": "http://school.cbe.go.kr/cheongju-h"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B2%AD%EC%A3%BC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "충주상고",
+      "query": "충주상업고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "충주상업고등학교",
+          "area": "충청북도",
+          "homepage": "chungju-ch.hs.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B6%A9%EC%A3%BC%EC%83%81%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "문경고",
+      "query": "문경고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%AC%B8%EA%B2%BD%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "동대구고",
+      "query": "동대구고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%99%EB%8C%80%EA%B5%AC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "선덕BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "가야BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "사천공고",
+      "query": "사천공업고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%82%AC%EC%B2%9C%EA%B3%B5%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "진주문산고",
+      "query": "진주문산고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%A7%84%EC%A3%BC%EB%AC%B8%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "합포상명고",
+      "query": "합포상명고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%A9%ED%8F%AC%EC%83%81%EB%AA%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "장산고",
+      "query": "장산고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9E%A5%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "부울대부속고",
+      "query": "부울대부속고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%80%EC%9A%B8%EB%8C%80%EB%B6%80%EC%86%8D%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "부산대중문화예술고",
+      "query": "부산대중문화예술고등학교",
+      "status": "not-returned",
+      "matches": [],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%80%EC%82%B0%EB%8C%80%EC%A4%91%EB%AC%B8%ED%99%94%EC%98%88%EC%88%A0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "남포BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "이순신BC",
+      "query": null,
+      "status": "club-outside-school-register",
+      "matches": []
+    },
+    {
+      "requested": "영산고",
+      "query": "영산고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "영산고등학교",
+          "area": "부산광역시",
+          "homepage": "http://ysh.hs.kr"
+        },
+        {
+          "name": "영산고등학교",
+          "area": "전남광주통합특별시(전남)",
+          "homepage": "http://yeongsan.hs.jne.kr"
+        },
+        {
+          "name": "영산고등학교",
+          "area": "경상남도",
+          "homepage": "http://youngsan-h.gne.go.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%98%81%EC%82%B0%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    },
+    {
+      "requested": "목포공고",
+      "query": "목포공업고등학교",
+      "status": "exact-match",
+      "matches": [
+        {
+          "name": "목포공업고등학교",
+          "area": "전남광주통합특별시(전남)",
+          "homepage": "mokpo-mt.hs.jne.kr"
+        }
+      ],
+      "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%AA%A9%ED%8F%AC%EA%B3%B5%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+    }
+  ]
+}

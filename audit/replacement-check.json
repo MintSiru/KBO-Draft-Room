@@ -1,0 +1,266 @@
+[
+  {
+    "requested": "한성청람고",
+    "query": "한성청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EC%84%B1%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "한국청람대사대부속고",
+    "query": "한국청람대사대부속고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%95%9C%EA%B5%AD%EC%B2%AD%EB%9E%8C%EB%8C%80%EC%82%AC%EB%8C%80%EB%B6%80%EC%86%8D%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "강화해울고",
+    "query": "강화해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B0%95%ED%99%94%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "달구벌청람고",
+    "query": "달구벌청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8B%AC%EA%B5%AC%EB%B2%8C%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "부산해사과학고",
+    "query": "부산해사과학고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%80%EC%82%B0%ED%95%B4%EC%82%AC%EA%B3%BC%ED%95%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "동래해울고",
+    "query": "동래해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%99%EB%9E%98%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "광주청람체육고",
+    "query": "광주청람체육고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B4%91%EC%A3%BC%EC%B2%AD%EB%9E%8C%EC%B2%B4%EC%9C%A1%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "신명서림고",
+    "query": "신명서림고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%8B%A0%EB%AA%85%EC%84%9C%EB%A6%BC%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "광명해울고",
+    "query": "광명해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B4%91%EB%AA%85%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "화성별하고",
+    "query": "화성별하고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%ED%99%94%EC%84%B1%EB%B3%84%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "강릉솔바람고",
+    "query": "강릉솔바람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B0%95%EB%A6%89%EC%86%94%EB%B0%94%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "영종하늘빛고",
+    "query": "영종하늘빛고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%98%81%EC%A2%85%ED%95%98%EB%8A%98%EB%B9%9B%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "계룡청람고",
+    "query": "계룡청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B3%84%EB%A3%A1%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "유성별하고",
+    "query": "유성별하고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9C%A0%EC%84%B1%EB%B3%84%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "대청해울고",
+    "query": "대청해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8C%80%EC%B2%AD%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "달서별하고",
+    "query": "달서별하고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8B%AC%EC%84%9C%EB%B3%84%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "경주별하BC",
+    "query": null,
+    "status": "club-outside-school-register",
+    "matches": []
+  },
+  {
+    "requested": "창원해울고",
+    "query": "창원해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B0%BD%EC%9B%90%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "김해청람고",
+    "query": "김해청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B9%80%ED%95%B4%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "순천팔마청람고",
+    "query": "순천팔마청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%88%9C%EC%B2%9C%ED%8C%94%EB%A7%88%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "경성별하고",
+    "query": "경성별하고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B2%BD%EC%84%B1%EB%B3%84%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "용문청람고",
+    "query": "용문청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9A%A9%EB%AC%B8%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "곤지암별하고",
+    "query": "곤지암별하고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EA%B3%A4%EC%A7%80%EC%95%94%EB%B3%84%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "청라별하고",
+    "query": "청라별하고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B2%AD%EB%9D%BC%EB%B3%84%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "소래해울고",
+    "query": "소래해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%86%8C%EB%9E%98%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "익산청람고",
+    "query": "익산청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9D%B5%EC%82%B0%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "세종해울고",
+    "query": "세종해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%84%B8%EC%A2%85%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "대명별하고",
+    "query": "대명별하고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8C%80%EB%AA%85%EB%B3%84%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "와룡청람고",
+    "query": "와룡청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%99%80%EB%A3%A1%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "진해해울고",
+    "query": "진해해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%A7%84%ED%95%B4%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "부산진청람고",
+    "query": "부산진청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%B6%80%EC%82%B0%EC%A7%84%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "신월별하고",
+    "query": "신월별하고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%8B%A0%EC%9B%94%EB%B3%84%ED%95%98%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "인천남동청람고",
+    "query": "인천남동청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%9D%B8%EC%B2%9C%EB%82%A8%EB%8F%99%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "도안해울고",
+    "query": "도안해울고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%8F%84%EC%95%88%ED%95%B4%EC%9A%B8%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "청주별하BC",
+    "query": null,
+    "status": "club-outside-school-register",
+    "matches": []
+  },
+  {
+    "requested": "충주해울상고",
+    "query": "충주해울상업고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%B6%A9%EC%A3%BC%ED%95%B4%EC%9A%B8%EC%83%81%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "영산청람고",
+    "query": "영산청람고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EC%98%81%EC%82%B0%EC%B2%AD%EB%9E%8C%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  },
+  {
+    "requested": "목포해울공고",
+    "query": "목포해울공업고등학교",
+    "status": "not-returned",
+    "matches": [],
+    "source": "https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=%EB%AA%A9%ED%8F%AC%ED%95%B4%EC%9A%B8%EA%B3%B5%EC%97%85%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90"
+  }
+]

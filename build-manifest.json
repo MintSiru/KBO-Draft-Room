@@ -1,0 +1,47 @@
+{
+  "version": "0.4.0",
+  "variant": "spotlight-five-round",
+  "saveKey": "draft-room-kbo-v4-spotlight",
+  "rounds": 5,
+  "poolSize": 200,
+  "htmlBytes": 173865,
+  "htmlSha256": "add2518593f5fffbd53edd6dc586cefdd3603c72b5cfc8effa4e379e5f52f942",
+  "inlineScripts": 12,
+  "unitAndDomTests": 22,
+  "fullEngineFlows": 60,
+  "browserRuns": 9,
+  "browserWidths": [
+    390,
+    768,
+    1280
+  ],
+  "layoutChecks": 99,
+  "draftSimulations": 600,
+  "simulatedPicks": 33000,
+  "physicalPoolReferenceHashes": 50,
+  "previousBuildHashes": {
+    "kbo-draft-v0.3": "4848c38208340366e5e46b8254a9db88eaeefd026d72b55db705f0e3d79098ee",
+    "kbo-draft-v0.3.1": "b9c1dcba487f4282256356e1ea20119b55a72a263a4d7a178426c4c982865ee1"
+  },
+  "sourceHashes": {
+    "src/app.js": "56aaf0721179c416d302efdb8ab6e02a2372083d3406db75f3e6664db561c7a0",
+    "src/biography.js": "5a551479ede3fff6bfa06dcb813c2ef3e42c94118e1e3c8fafe19188a242d21b",
+    "src/catalog.js": "7e04a827b126e14bfe6f67592c73e9e646bb34948b10e52c87e6de467bdac395",
+    "src/clubs.js": "d3779b8bfbb7d09115dade7ed58dc6dd4e9b4648e3ca992ade8a7d8eed72d0ef",
+    "src/data.js": "46c08f07050141ab8c1fba2fd173385730d5d897eab2f96117958c289beff681",
+    "src/engine.js": "969677d0ec4ef76226a3e95b7edaf473f5c5c85f46710004954a3d28972bfd47",
+    "src/ko.js": "8021818a63b2f8953b07bc254bf4e611de5c1382d186dd3739fe6c6b33f803ae",
+    "src/names.js": "c86f7e4c020d90af43e2f8e13e197d404cdece30f176c505e544ae237f414d94",
+    "src/press.js": "789219209141ce29f254ce6140e1feb341e2cc042a5db9a4acc2500e917ebd84",
+    "src/rules04.js": "b47e21e54995dcd1b8e02af6d384fbb83f34aac877eb6cd502579b46e1782c19",
+    "src/scouting.js": "25e73d835833139535e4beacf025eaede2c477929eb3d8b8ef552d09a9ce66f4",
+    "src/season.js": "ae398e1d59d96d5a2e1ba1548a9be6178c9368441d610f0905afd1921ce63cad",
+    "src/style.css": "7ec26f40b817be5700d35921ad2e2ebe833dc529c311a76104933f77b132bacc",
+    "src/template.html": "50aeeb0ccf1ba1efd0388e7f52f3292cf76a4a6c46aa7f5685558c587f1afdc6",
+    "src/v02.css": "5dfa0c2ffda9fb5a99682a0cc98edc2796868d9cdbaa03bed184845da2ea73cd",
+    "src/v03.css": "ed7fa8176d474ef4f4bfef7d99d378c71c955b41a4acb56864544ab4d6bc50cd",
+    "src/v04.css": "125f0dc4aac4079cf17a658bf2bcdc81bfaf043f36fafb1b505f3d7123820d3f",
+    "src/view04.js": "c2dccc62c2c66c3fefd34f09a4baa74c75fe6d3e81f67436332b45bf1fb75e7f"
+  },
+  "checkedAt": "2026-09-16"
+}
