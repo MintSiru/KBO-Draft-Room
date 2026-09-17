@@ -1,15 +1,17 @@
-/* DRAFT ROOM v0.4 — deterministic draft state, seeded pool, contextual dialogue. */
+/* DRAFT ROOM v0.5 — quota-safe draft, deterministic five-year careers and replay validation. */
 (function(root){
 'use strict';
 const D=root.DraftData||(typeof require!=='undefined'?require('./data.js'):null);
 const TEAMS=root.DraftClubs||(typeof require!=='undefined'?require('./clubs.js'):null);
 const M=root.DraftSeason||(typeof require!=='undefined'?require('./season.js'):null);
+const Career=root.DraftCareer||(typeof require!=='undefined'?require('./career.js'):null);
 const R=root.DraftRules||(typeof require!=='undefined'?require('./rules04.js'):null);
 const Press=root.DraftPress||(typeof require!=='undefined'?require('./press.js'):null);
 const {ROLES,REGIONS,rng,pick,clamp,round}=D;
 const K=D.ko,Bio=D.bio;
-// v4 saves are separate; physical player and rookie RNG remain the v3 model.
-const RELEASE='0.4.0',VERSION=4,ROUNDS=5,POOL_SIZE=200;
+// V0.5 has its own save namespace and deterministic model; V0.4 remains untouched.
+const RELEASE='0.5.0',VERSION=5,ROUNDS=7,POOL_SIZE=200;
+const CONFIG=Object.freeze({nationalRounds:ROUNDS,seasonCount:Career.SEASONS,collegeQuota:1,earlyCountsForQuota:false});
 const teamById=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 let activePool=null;const cache=new Map();
 function poolFor(g){const seed=String(typeof g==='string'?g:g.seed);if(!cache.has(seed)){cache.set(seed,D.generatePool(seed));if(cache.size>3)cache.delete(cache.keys().next().value);}activePool=cache.get(seed);return activePool;}
@@ -23,11 +25,19 @@ function makeSchedule(local){const a=[];if(local)for(const t of TEAMS)a.push({te
 function publicPool(g){return poolFor(g).players.map(R.project);}
 function createGame(teamId,local=false,seed='default',difficulty='normal'){
  if(!Object.hasOwn(teamById,teamId)||!Object.hasOwn(R.DIFFICULTIES,difficulty))throw Error('구단 또는 난이도를 확인해야 합니다.');
- const g={version:VERSION,teamId,local:!!local,seed:String(seed),difficulty,draftDate:Bio.DRAFT_DATE,phase:'preview',schedule:makeSchedule(local),cursor:0,picks:[],news:[],gmChoice:null,season:null,owner:null};
+ const g={version:VERSION,teamId,local:!!local,seed:String(seed),difficulty,draftDate:Bio.DRAFT_DATE,phase:'preview',schedule:makeSchedule(local),cursor:0,picks:[],news:[],gmChoice:null,season:null,owner:null,career:null};
  g.forecasts=Press.forecast(publicPool(g),TEAMS,g.local,g.seed);return g;
 }
 function beginDraft(g){if(g.phase!=='preview'||g.cursor!==0)throw Error('이미 시작한 드래프트입니다.');g.phase='draft';return g;}
-function available(g,slot=g.schedule[g.cursor]){if(!slot)return [];const used=new Set(g.picks.map(s=>s.playerId));return poolFor(g).players.filter(p=>!used.has(p.id)&&(slot.round!==0||Bio.eligible(p,teamById[slot.teamId])));}
+function quotaStatus(g,teamId=g.teamId){const byId=poolFor(g).byId;const count=g.picks.filter(s=>s.teamId===teamId&&byId[s.playerId]?.quotaEligible).length;const remaining=g.schedule.slice(g.cursor).filter(s=>s.teamId===teamId&&s.round>0).length;return {count,required:CONFIG.collegeQuota,missing:Math.max(0,CONFIG.collegeQuota-count),remaining};}
+function available(g,slot=g.schedule[g.cursor]){
+ if(!slot)return [];const used=new Set(g.picks.map(s=>s.playerId));let list=poolFor(g).players.filter(p=>!used.has(p.id));
+ if(slot.round===0)return list.filter(p=>Bio.eligible(p,teamById[slot.teamId]));
+ const q=quotaStatus(g,slot.teamId),demand=TEAMS.reduce((n,t)=>n+quotaStatus(g,t.id).missing,0),supply=list.filter(p=>p.quotaEligible).length;
+ if(q.missing&&q.remaining<=q.missing)list=list.filter(p=>p.quotaEligible);
+ else if(!q.missing&&supply<=demand)list=list.filter(p=>!p.quotaEligible);
+ return list;
+}
 function addPick(g,id){if(g.phase!=='draft')throw Error('드래프트 진행 중에만 지명할 수 있습니다.');const slot=g.schedule[g.cursor];if(!slot||!available(g,slot).some(p=>p.id===id))throw Error('현재 순서에서 지명할 수 없는 선수입니다.');const p=getPlayer(g,id);const s={...slot,playerId:id,overall:g.cursor+1,fit:fit(p,teamById[slot.teamId])};if(s.round<=1)g.news.push(Press.news(publicPool(g),TEAMS,s,g.picks,g.forecasts,g.seed));g.picks.push(s);g.cursor++;if(g.cursor===g.schedule.length)g.phase='interviews';return s;}
 function aiChoice(g){const slot=g.schedule[g.cursor];if(!slot||g.phase!=='draft')return null;const t=teamById[slot.teamId];const prior=g.picks.filter(s=>s.teamId===t.id).map(s=>R.project(getPlayer(g,s.playerId)));const ranked=R.aiScores(available(g).map(R.project),t,prior,g.difficulty,g.seed+'-ai-'+g.cursor);return ranked.length?getPlayer(g,ranked[0].id):null;}
 function advanceToUser(g){const out=[];while(g.phase==='draft'&&g.cursor<g.schedule.length&&g.schedule[g.cursor].teamId!==g.teamId){const p=aiChoice(g);if(!p)throw Error('후보 부족');out.push(addPick(g,p.id));}return out;}
@@ -38,6 +48,7 @@ function interview(p,s,g,context='live'){
  let openings;
  if(s.round===0)openings=[`${p.region}에서 야구를 배운 선수로서 이 선택이 더 뜻깊습니다.`,`${p.school}에서 함께 땀 흘린 친구들이 먼저 떠오릅니다.`,`연고 지역을 대표한다는 책임감을 느낍니다.`];
  else if(p.pathway==='독립구단')openings=[`${K.p(p.history.at(-2).name,'을/를')} 거쳐 ${p.school}에서 다시 기회를 준비했습니다.`,'다시 불릴 수 있다고 믿고 버텼습니다. 기다려 준 가족들에게 고맙습니다.','훈련을 마치고 혼자 돌아가던 날들이 생각납니다. 이제 새로운 출발입니다.'];
+ else if(p.pathway==='대학 얼리')openings=[`${p.school} 2학년으로 조기 도전에 나섰습니다. 배움의 자세로 시작하겠습니다.`,'졸업 전에 선택한 도전인 만큼 책임감을 가지고 준비하겠습니다.','대학에서 배운 것을 바탕으로 프로의 긴 시즌에 적응하겠습니다.'];
  else if(p.pathway==='대졸')openings=[`${K.p(p.highSchoolName,'을/를')} 거쳐 ${p.school}에서 준비한 시간이 떠오릅니다.`,`대학 무대에서 제 부족한 점을 배우고 보완했습니다.`,`고교 졸업 후 ${K.p(p.school,'을/를')} 선택한 것은 제 야구를 다지는 기회였습니다.`];
  else if(p.pathway==='해외파')openings=['멀리서 쌓은 경험을 이제 이 무대에서 보여드리고 싶습니다.',`${p.school}에서 익힌 것을 한국 야구에 맞게 다듬겠습니다.`,'새로운 환경에 적응하는 데 주저하지 않겠습니다.'];
  else if(p.rank<actual-12)openings=['이름이 불릴 때까지 긴장을 많이 했습니다. 이제 출발선은 같다고 생각합니다.','기다린 시간이 길었지만 유니폼을 입는 순간만 생각하고 있었습니다.','예상보다 늦게 불렸지만, 앞으로 보여드릴 것이 더 중요합니다.'];
@@ -82,27 +93,23 @@ function fanState(g){
  return {score,label:score>=65?'기대 우세':score>=45?'관망':score>=30?'우려 우세':'신뢰 회복 필요',timeline};
 }
 function evaluate(g,season){const players=myPicks(g).map(s=>getPlayer(g,s.playerId)),base=M.evaluate(g,season,players,teamById[g.teamId]);const pledge=Press.accountability(g.gmChoice,players.map(R.project),season,teamById[g.teamId]);const score=clamp(base.score+pledge.bonus,0,100);return {...base,baseScore:base.score,score,grade:score>=89?'A':score>=77?'B':score>=63?'C':'D',pledge};}
-function runSeason(g){if(g.cursor!==g.schedule.length||!g.gmChoice)throw Error('드래프트와 단장 인터뷰를 먼저 완료해야 합니다.');poolFor(g);if(!g.season){g.season=myPicks(g).map(s=>simulatePlayer(getPlayer(g,s.playerId),s,g));g.owner=evaluate(g,g.season);}g.phase='season';return g.season;}
+function runSeason(g){if(g.cursor!==g.schedule.length||!g.gmChoice)throw Error('드래프트와 단장 인터뷰를 먼저 완료해야 합니다.');const {byId}=poolFor(g);if(!g.career){g.career=Career.create(g.picks,byId);Career.advance(g.career,g.picks,byId,g.seed);g.season=g.career.years[0].records.filter(s=>s.teamId===g.teamId);g.owner=evaluate(g,g.season);}g.phase='season';return g.season;}
+function nextSeason(g){if(!g.career||!['season','owner'].includes(g.phase))throw Error('첫 시즌을 먼저 진행해야 합니다.');const result=Career.advance(g.career,g.picks,poolFor(g).byId,g.seed);g.phase='season';return result;}
+function careerReview(g){return g.career?Career.review(g.career,g.picks,poolFor(g).byId):[];}
 function validate(g){try {
- if(!g||g.version!==VERSION||!Object.hasOwn(R.DIFFICULTIES,g.difficulty)||!Array.isArray(g.news)||!Array.isArray(g.forecasts)||!(g.gmChoice===null||Press.GM_CHOICES.some(c=>c.id===g.gmChoice))||g.draftDate!==Bio.DRAFT_DATE||!Object.hasOwn(teamById,g.teamId)||typeof g.seed!=='string'||g.seed.length>200||typeof g.local!=='boolean'||!['preview','draft','interviews','season','owner'].includes(g.phase)||!Array.isArray(g.picks))return false;
- const schedule=makeSchedule(g.local);if(!Number.isInteger(g.cursor)||g.cursor<0||g.cursor>schedule.length||g.cursor!==g.picks.length||JSON.stringify(g.schedule)!==JSON.stringify(schedule))return false;
- const byId=poolFor(g).byId,used=new Set();
- for(let i=0;i<g.picks.length;i++){const s=g.picks[i],p=byId[s.playerId],e=schedule[i];if(!p||used.has(p.id)||s.teamId!==e.teamId||s.round!==e.round||s.label!==e.label||s.overall!==i+1||s.fit!==fit(p,teamById[s.teamId]))return false;if(s.round===0&&!Bio.eligible(p,teamById[s.teamId]))return false;used.add(p.id);}
- if(g.phase==='preview'&&(g.cursor!==0||g.gmChoice||g.season||g.owner))return false;
- if(g.phase!=='preview'&&((g.phase==='draft')!==(g.cursor<schedule.length)))return false;
- if(g.gmChoice&&g.cursor!==schedule.length)return false;
- const projected=publicPool(g),forecasts=Press.forecast(projected,TEAMS,g.local,g.seed);
- if(JSON.stringify(g.forecasts)!==JSON.stringify(forecasts))return false;
- const expectedNews=g.picks.filter(s=>s.round<=1).map(s=>Press.news(projected,TEAMS,s,g.picks.slice(0,s.overall-1),forecasts,g.seed));
- if(JSON.stringify(g.news)!==JSON.stringify(expectedNews))return false;
- if(!g.season&&g.owner!==null)return false;
- if(g.season&&!g.gmChoice)return false;
- if((g.phase==='season'||g.phase==='owner')&&!g.season)return false;
- if(g.season){if(g.cursor!==schedule.length)return false;const s=myPicks(g).map(s=>simulatePlayer(byId[s.playerId],s,g));if(JSON.stringify(g.season)!==JSON.stringify(s)||JSON.stringify(g.owner)!==JSON.stringify(evaluate(g,s)))return false;}
- return true;
+ if(!g||g.version!==VERSION||!Object.hasOwn(R.DIFFICULTIES,g.difficulty)||!Object.hasOwn(teamById,g.teamId)||g.draftDate!==Bio.DRAFT_DATE||typeof g.seed!=='string'||!g.seed.length||g.seed.length>200||typeof g.local!=='boolean'||!['preview','draft','interviews','season','owner'].includes(g.phase)||!Array.isArray(g.picks)||g.picks.length>80)return false;
+ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),replay=createGame(g.teamId,g.local,g.seed,g.difficulty);
+ if(g.cursor!==g.picks.length||!same(g.schedule,replay.schedule)||!same(g.forecasts,replay.forecasts))return false;
+ if(g.phase==='preview'){return g.cursor===0&&same(g.news,[])&&g.gmChoice===null&&g.season===null&&g.owner===null&&g.career===null;}
+ beginDraft(replay);for(const s of g.picks){if(!s)return false;const expected=addPick(replay,s.playerId);if(!same(s,expected))return false;}
+ if((g.phase==='draft')!==(g.cursor<g.schedule.length)||!same(g.news,replay.news))return false;
+ if(g.gmChoice!==null)chooseGM(replay,g.gmChoice);
+ if(g.career!==null){if(!g.career||!Array.isArray(g.career.years)||g.career.years.length<1||g.career.years.length>Career.SEASONS)return false;runSeason(replay);while(replay.career.years.length<g.career.years.length)nextSeason(replay);}
+ if(['season','owner'].includes(g.phase)&&!g.career)return false;
+ return same(g.career,replay.career)&&same(g.season,replay.season)&&same(g.owner,replay.owner);
  }catch(_){return false;}
 }
-const api={ko:K,bio:Bio,catalog:D.catalog,eligible:Bio.eligible,DRAFT_DATE:Bio.DRAFT_DATE,ENTRY_YEAR:Bio.ENTRY_YEAR,RELEASE,VERSION,rules:R,press:Press,publicPool,beginDraft,gmOptions,chooseGM,fanState,ROUNDS,POOL_SIZE,TEAMS,REGIONS,ROLES,teamById,poolFor,getPlayer,innings,fit,fitLabel,outlook,upsideLabel,makeSchedule,createGame,available,addPick,aiChoice,advanceToUser,myPicks,interview,coach,scoutAdvice,simulatePlayer,runSeason,evaluate,validate,rng,clamp};
+const api={CONFIG,Career,quotaStatus,nextSeason,careerReview,ko:K,bio:Bio,catalog:D.catalog,eligible:Bio.eligible,DRAFT_DATE:Bio.DRAFT_DATE,ENTRY_YEAR:Bio.ENTRY_YEAR,RELEASE,VERSION,rules:R,press:Press,publicPool,beginDraft,gmOptions,chooseGM,fanState,ROUNDS,POOL_SIZE,TEAMS,REGIONS,ROLES,teamById,poolFor,getPlayer,innings,fit,fitLabel,outlook,upsideLabel,makeSchedule,createGame,available,addPick,aiChoice,advanceToUser,myPicks,interview,coach,scoutAdvice,simulatePlayer,runSeason,evaluate,validate,rng,clamp};
 Object.defineProperties(api,{PLAYERS:{get:()=> (activePool||poolFor('preview')).players},playerById:{get:()=> (activePool||poolFor('preview')).byId}});
 root.DraftCore=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

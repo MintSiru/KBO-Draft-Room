@@ -1,0 +1,26 @@
+
+> draft-room-kbo-prototype@0.5.0 test
+> node --test tests/v05*.test.cjs
+
+✔ 200 candidates: 144 HS, 30 graduates, 16 early, 6 independent, 4 overseas; eligibility and chronology (229.687243ms)
+✔ all 10 clubs x regional ON/OFF x 3 difficulties: legal 7R draft, quotas, 5 seasons and reload (2160.381915ms)
+✔ early does not count; last pick legally restricts humans and CPUs, direct illegal picks rejected (13.311173ms)
+✔ global quota supply cannot be exhausted by already satisfied teams (13.544707ms)
+✔ first-year promise, news and forecasts are immutable through all five seasons and repeated viewing (36.591762ms)
+✔ difficulty and observing team do not reroll physical player careers when selections are the same (29.312201ms)
+✔ yearly growth persists, stays under hidden ceiling, ages advance; past ownership stays frozen (415.798168ms)
+✔ 144-game standings balance, postseason has one champion, cohort award eligibility and historical team (20.516312ms)
+✔ cumulative rates are derived from raw totals, not average rates; non-appearance remains null (16.605203ms)
+✔ reload after every season continues identically to uninterrupted run; corrupted saves rejected (219.388162ms)
+✔ AI, media, advice use public projections only; 22 sorts keep non-applicable values last (28.280187ms)
+✔ offline UI: draft, early filter, both 7/8-pick flows, records, profiles, all five years, review (3579.110328ms)
+✔ record room works during draft and preserves draft state and filters on return (230.355212ms)
+✔ double next-season clicks within 900ms do not skip a year; news/fans and interview archive remain usable (1103.504042ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8887.514535

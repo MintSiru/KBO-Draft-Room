@@ -1,0 +1,37 @@
+
+> draft-room-kbo-prototype@0.5.0 test:browser
+> node tests/v05-browser.cjs
+
+[
+  {
+    "case": "desktop-normal-on",
+    "offline": true,
+    "picks": 80,
+    "seasons": 5,
+    "exportImport": true,
+    "firstYearImage": true,
+    "horizontalOverflow": false,
+    "errors": []
+  },
+  {
+    "case": "mobile-hard-off",
+    "offline": true,
+    "picks": 70,
+    "seasons": 5,
+    "exportImport": true,
+    "firstYearImage": true,
+    "horizontalOverflow": false,
+    "errors": []
+  },
+  {
+    "case": "tablet-easy-on",
+    "offline": true,
+    "picks": 80,
+    "seasons": 5,
+    "exportImport": true,
+    "firstYearImage": true,
+    "horizontalOverflow": false,
+    "errors": []
+  }
+]
+PASS real Chromium offline smoke

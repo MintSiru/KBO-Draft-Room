@@ -7,7 +7,7 @@ const DIFFICULTIES={
  normal:{name:'노말',hint:'기존 수준의 조언 · 균형형 AI',noise:5},
  hard:{name:'하드',hint:'핵심 관찰만 제공 · 보강·중복·희소성을 따지는 AI',noise:1.5}
 };
-function project(p){return {id:p.id,name:p.name,role:p.role,pathway:p.pathway,school:p.school,region:p.highSchoolRegion,ready:p.ready,scoutCeiling:p.scoutCeiling,publicScore:p.publicScore,rank:p.rank,schoolTier:p.schoolTier,regionalEligible:!!D.bio.eligible(p,{region:p.highSchoolRegion})};}
+function project(p){return {id:p.id,name:p.name,role:p.role,pathway:p.pathway,quotaEligible:p.quotaEligible===true,entryCategory:p.entryCategory,school:p.school,region:p.highSchoolRegion,ready:p.ready,scoutCeiling:p.scoutCeiling,publicScore:p.publicScore,rank:p.rank,schoolTier:p.schoolTier,regionalEligible:!!D.bio.eligible(p,{region:p.highSchoolRegion})};}
 function fit(p,t){const n=t.needs.indexOf(p.role);return n===0?100:n===1?80:n===2?60:25;}
 function aiScores(candidates,team,prior,difficulty,seed){
  const cfg=DIFFICULTIES[difficulty];if(!cfg)throw Error('알 수 없는 난이도입니다.');

@@ -1,5 +1,5 @@
-/* Rookie development model — game tuning, NOT calibrated real-world KBO statistics.
-   The player's draft round is metadata only; it never reduces ability or debut odds. */
+/* V0.5 yearly development. All coefficients are fictional game tuning, not KBO statistics.
+   Draft investment adds a temporary opportunity bonus, never hidden talent. */
 (function(root){
 'use strict';
 const D=root.DraftData||(typeof require!=='undefined'?require('./data.js'):null);
@@ -32,15 +32,22 @@ function pitchingStats(p,games,ability,level,r){
  return {kind:'pitcher',games,outs,er,era,k,bb,wins,holds,saves};
 }
 function statsFor(p,games,ability,level,r){if(games===0)return emptyStats(p);return ['SP','RP'].includes(p.role)?pitchingStats(p,games,ability,level,r):hittingStats(p,games,ability,level,r);}
-function simulatePlayer(p,selection,g,team,fit){
- const r=rng(g.seed+'-rookie-v3-'+p.id+'-'+team.id);
- const limited=r()<p.risk,adaptation=normal(r)*9;
+function simulatePlayer(original,selection,g,team,fit,previous=null,yearIndex=0){
+ const abilityBefore=previous?.ability??original.trueReady;
+ const toolDelta=(abilityBefore-original.trueReady)*.55;
+ const p={...original,trueReady:abilityBefore,ready:previous?.scoutReady??original.ready,power:clamp(original.power+toolDelta,20,96),control:clamp(original.control+toolDelta,20,96),defense:clamp(original.defense+toolDelta,20,96)};
+ const r=rng(g.seed+'-performance-v5-'+yearIndex+'-'+p.id+'-'+team.id);
+ const healthR=rng(g.seed+'-health-v5-'+yearIndex+'-'+p.id),growR=rng(g.seed+'-growth-v5-'+yearIndex+'-'+p.id);
+ const limited=healthR()<clamp(p.risk+(previous?.limited?.045:0),.03,.3),adaptation=normal(r)*(yearIndex===0?9:6);
  // A rare unanticipated technical leap. Scouts do not know this outcome in advance.
  const leap=r()<.024&&p.trueReady>=42;
  const impact=clamp(p.trueReady+adaptation+(leap?19+r()*8:0)-(limited?9:0),20,94);
- const debutChance=clamp((.015+sigmoid((impact-63)/7)*.68)*(fit>=80?1.10:fit>=60?1:.83),.005,.85);
+ const investment=selection.round===0?.26:selection.round===1?.27:selection.round===2?.17:selection.round===3?.07:0;
+ const opportunity=investment*(yearIndex===0?1:yearIndex===1?.3:0);
+ const continuity=previous?.route==='regular'?.18:previous?.route==='backup'?.08:0;
+ const debutChance=clamp((.025+sigmoid((impact-61)/7)*.78)*(fit>=80?1.08:fit>=60?1:.90)+opportunity+continuity+(yearIndex>0?.025:0)-(limited?.06:0),.01,.98);
  const debut=r()<debutChance;
- const regularChance=clamp(Math.pow(Math.max(0,impact-60)/27,2)*.48,0,.48);
+ const regularChance=clamp(sigmoid((impact-(yearIndex===0?70:67))/7)*(yearIndex===0?.60:.67)+(previous?.route==='regular'?.12:0),.005,.88);
  let route='futures';
  if(debut){route=r()<regularChance?'regular':r()<clamp((impact-40)/60,.08,.58)?'backup':'cameo';}
  if(limited&&route==='regular')route='backup';
@@ -51,8 +58,11 @@ function simulatePlayer(p,selection,g,team,fit){
  if(route==='regular')games=pitcher?(p.role==='SP'?16+Math.floor(r()*9):34+Math.floor(r()*22)):65+Math.floor(r()*45);
  const stats=statsFor(p,games,impact,route==='regular'?'major-regular':'major',r);
  const contribution=!debut?0:stats.kind==='pitcher'?clamp(stats.outs/3*.64+(5.5-stats.era)*4,0,100):clamp(stats.pa*.12+(stats.ops-.65)*22,0,100);
- const growth=round(clamp((p.upside-p.trueReady)*.095+r()*6+(p.lateDevelopment?1.5:0)+(leap?4:0)-(limited?3.5:0),0,14));
- const growthLabel=growth>=10?'뚜렷한 성장':growth>=6?'꾸준한 발전':growth>=3?'기초 적응 중':'육성 방향 재점검';
+ const age=D.bio.ageAt(p.birthday,`${D.bio.ENTRY_YEAR+yearIndex}-12-31`);
+ const rawGrowth=(p.upside-p.trueReady)*(.10+growR()*.04)+normal(growR)*4+(p.lateDevelopment&&yearIndex>=2?3:0)+(leap?3:0)-(limited?4:0)-Math.max(0,age-25)*.75;
+ const abilityAfter=round(clamp(p.trueReady+clamp(rawGrowth,-6,12),20,p.upside));
+ const growth=abilityAfter-p.trueReady;
+ const growthLabel=growth>=9?'뚜렷한 성장':growth>=5?'꾸준한 발전':growth>=2?'기술 발전':growth>=0?'성장 정체':'컨디션·기량 후퇴';
  let futuresGames=pitcher?(p.role==='SP'?13+Math.floor(r()*8):23+Math.floor(r()*17)):63+Math.floor(r()*28);
  if(route==='regular')futuresGames=pitcher?3+Math.floor(r()*5):10+Math.floor(r()*13);
  if(route==='backup')futuresGames=round(futuresGames*.72);
@@ -66,6 +76,7 @@ function simulatePlayer(p,selection,g,team,fit){
   backup:['제한된 보직에서 경험을 쌓으며 1·2군을 오갔습니다.','주어진 역할을 소화했지만, 자리를 굳히려면 경쟁력을 더 키워야 합니다.','주전 뒤에서 기회를 받으며 프로 무대에서의 활용법을 찾았습니다.'],
   regular:['신인으로서는 드물게 1군에서 꾸준한 역할을 얻었습니다.','경쟁을 이겨내고 첫해부터 1군의 한 자리를 맡았습니다.','주어진 기회를 놓치지 않았습니다. 이제 이 성과를 유지하는 것이 과제입니다.']
  }[route],r);
+ if(yearIndex>0)note=pick({futures:['퓨처스에서 기술을 다듬으며 다음 기회를 준비했습니다.','1군 자리를 얻지 못했지만 퓨처스에서 실전을 이어갔습니다.'],cameo:['짧은 콜업에서 가능성과 보완 과제를 함께 확인했습니다.','제한적인 1군 기회를 받은 뒤 퓨처스에서 경험을 쌓았습니다.'],backup:['1·2군을 오가며 백업과 보조 역할을 맡았습니다.','제한된 기회 속에서 맡은 보직을 소화했습니다.'],regular:['1군에서 꾸준한 역할을 소화했습니다. 이제 유지가 과제입니다.','경쟁을 이겨내고 1군의 한 자리를 지켰습니다.']}[route],r);
  if(limited)note+=' 컨디션 문제로 훈련과 출전이 일부 줄었습니다.';
  const developmentNote=growth>=10?`${p.focus}에서 분명한 개선이 관찰됐습니다. 다음 단계의 훈련을 준비합니다.`:growth>=6?`${p.focus} 과제를 반복하며 안정적인 동작이 늘었습니다.`:growth>=3?`${K.p(p.focus,'을/를')} 아직 다지는 중입니다. 일정한 수행 능력을 만드는 것이 목표입니다.`:`${p.focus}의 개선 속도가 기대보다 느렸습니다. 훈련 방식과 목표를 재점검합니다.`;
  // Evaluate the plan stated BEFORE the draft: developmental players are not punished for zero MLB-equivalent appearances.
@@ -73,7 +84,9 @@ function simulatePlayer(p,selection,g,team,fit){
  const progress=clamp(growth/expectedGrowth,0,1.25);
  const target=p.ready>=66?'1군 경쟁 도전':'퓨처스 적응·기술 발전';
  const planScore=round(clamp(p.ready>=66?30+progress*24+(debut?15:0)+Math.min(26,contribution*.4):30+progress*48+(debut?4:0)-(limited?3:0),10,100));
- return {playerId:p.id,label:selection.label,route,routeLabel,stats,futures,growth,growthLabel,developmentNote,note,limited,contribution:round(contribution),planScore,target,unexpected:route==='regular'&&leap};
+ const reportR=rng(g.seed+'-report-v5-'+yearIndex+'-'+p.id);
+ const scoutReady=round(clamp(abilityAfter+normal(reportR)*8,20,95));
+ return {playerId:p.id,label:selection.label,year:D.bio.ENTRY_YEAR+yearIndex,teamId:team.id,age,route,routeLabel,stats,futures,growth,growthLabel,developmentNote,note,limited,contribution:round(contribution),planScore,target,unexpected:route==='regular'&&leap,scoutReady,endState:{ability:abilityAfter,scoutReady,route,limited,age}};
 }
 function evaluate(g,season,players,team){
  const roles=new Set(players.map(p=>p.role));

@@ -35,20 +35,21 @@ function schoolHonors(seed){
  return map;
 }
 function generatePool(seed){
- const r=rng(seed+'-pool-v3'),usedNames=new Set(),players=[],honors=schoolHonors(seed);
- const otherPaths=shuffle([...Array(30).fill('대졸'),...Array(6).fill('독립구단'),...Array(4).fill('해외파')],r);
+ const r=rng(seed+'-pool-v5'),usedNames=new Set(),players=[],honors=schoolHonors(seed);
+ const otherPaths=shuffle([...Array(30).fill('대졸'),...Array(16).fill('대학 얼리'),...Array(6).fill('독립구단'),...Array(4).fill('해외파')],r);
  for(let i=0;i<200;i++){
-  const region=REGIONS[Math.floor(i/25)],j=i%25,pathway=j<20?'고졸':otherPaths[Math.floor(i/25)*5+j-20],high=pathway==='고졸';
+  const region=REGIONS[Math.floor(i/25)],j=i%25,pathway=j<18?'고졸':otherPaths[Math.floor(i/25)*7+j-18],high=pathway==='고졸';
   const identity=Names.makeName(r,usedNames),bio=Bio.makeBiography(r,region,pathway),{name}=identity,{school,age}=bio;
   const schoolStyle=SCHOOL_STYLES[hash(bio.currentInstitutionId)%SCHOOL_STYLES.length];
   const reputation=Bio.TIERS[bio.schoolTier]||{ready:0,team:.52};
   const schoolTournament=honors[bio.currentInstitutionId]||null;
   const roll=r(),role=roll<.32?'SP':roll<.49?'RP':roll<.58?'C':roll<.81?'IF':'OF',pitcher=['SP','RP'].includes(role);
   const type=Math.floor(r()*5),a=ARCHETYPES[role][type];
-  const baseReady=(high?28:37)+Math.pow(r(),1.6)*(high?39:31)+(r()<.012?9:0);
+  const early=pathway==='대학 얼리';
+  const baseReady=(high?28:early?33:37)+Math.pow(r(),1.6)*(high?39:early?35:31)+(r()<.012?9:0);
   const ready=round(clamp(baseReady+reputation.ready,25,78));
   const trueReady=round(clamp(ready+normal(r)*10,22,86));
-  const upside=round(clamp(Math.max(trueReady+5,baseReady+14+r()*20+(high?6:0)),48,96));
+  const upside=round(clamp(Math.max(trueReady+5,baseReady+14+r()*20+(high?6:early?3:0)),48,96));
   const scoutCeiling=round(clamp(upside+normal(r)*12,45,97));
   const publicScore=round(ready*.6+scoutCeiling*.4+normal(r)*6,1);
   const throwHand=pitcher?(type===2?'좌':r()<.21?'좌':'우'):(role==='OF'&&r()<.25?'좌':'우');
@@ -60,7 +61,7 @@ function generatePool(seed){
   const height=type===4&&role==='SP'?190+Math.floor(r()*7):174+Math.floor(r()*19),weight=round(68+(height-174)*.6+r()*15+(type===1&&!pitcher?7:0));
   const awards=[];
   if(high&&ready>58&&r()<.35)awards.push('U-18 대표팀');
-  if(pathway==='대졸'&&ready>56&&r()<.25)awards.push('대학 대표팀');
+  if(['대졸','대학 얼리'].includes(pathway)&&ready>56&&r()<.25)awards.push('대학 대표팀');
   // Shared school results: school reputation affects team success, not a direct AVG/ERA multiplier.
   if(schoolTournament?.award)awards.push(schoolTournament.award);
   if(ready>58&&r()<.25)awards.push(pitcher?'소속 대회 우수투수상':'소속 대회 타격상');
