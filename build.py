@@ -1,9 +1,9 @@
-"""Bundle the editable v0.5 sources into a dependency-free, offline HTML file."""
+"""Bundle the editable v0.6 sources into a dependency-free, offline HTML file."""
 from pathlib import Path
 root = Path(__file__).resolve().parent
 src = root / 'src'
 html = (src / 'template.html').read_text(encoding='utf-8')
-files = {'INLINE_V05_STYLE':'v05.css', 'INLINE_CAREER':'career.js', 'INLINE_VIEW05':'view05.js', 'INLINE_STYLE':'style.css', 'INLINE_V02_STYLE':'v02.css', 'INLINE_V03_STYLE':'v03.css', 'INLINE_V04_STYLE':'v04.css', 'INLINE_RULES04':'rules04.js', 'INLINE_PRESS':'press.js', 'INLINE_VIEW04':'view04.js', 'INLINE_CLUBS':'clubs.js', 'INLINE_CATALOG':'catalog.js', 'INLINE_KO':'ko.js', 'INLINE_NAMES':'names.js', 'INLINE_BIO':'biography.js', 'INLINE_DATA':'data.js', 'INLINE_SEASON':'season.js', 'INLINE_ENGINE':'engine.js', 'INLINE_APP':'app.js'}
+files = {'INLINE_GRADES06':'grades06.js','INLINE_SCOUTING06':'scouting06.js','INLINE_VIEW06':'view06.js','INLINE_V06_STYLE':'v06.css','INLINE_V05_STYLE':'v05.css', 'INLINE_CAREER':'career.js', 'INLINE_VIEW05':'view05.js', 'INLINE_STYLE':'style.css', 'INLINE_V02_STYLE':'v02.css', 'INLINE_V03_STYLE':'v03.css', 'INLINE_V04_STYLE':'v04.css', 'INLINE_RULES04':'rules04.js', 'INLINE_PRESS':'press.js', 'INLINE_VIEW04':'view04.js', 'INLINE_CLUBS':'clubs.js', 'INLINE_CATALOG':'catalog.js', 'INLINE_KO':'ko.js', 'INLINE_NAMES':'names.js', 'INLINE_BIO':'biography.js', 'INLINE_DATA':'data.js', 'INLINE_SEASON':'season.js', 'INLINE_ENGINE':'engine.js', 'INLINE_APP':'app.js'}
 for marker, filename in files.items():
     token = f'/* {marker} */'
     assert html.count(token) == 1, marker

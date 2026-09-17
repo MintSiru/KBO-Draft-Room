@@ -1,14 +1,13 @@
 {
   "name": "draft-room-kbo-prototype",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Self-contained fictional KBO draft simulator prototype",
   "scripts": {
     "build": "python3 build.py",
-    "build:catalog": "python3 audit/build-catalog.py",
-    "test": "node --test tests/v05*.test.cjs",
-    "test:browser": "node tests/v05-browser.cjs",
-    "test:balance": "node tests/v05-balance.cjs"
+    "test": "node --test tests/v06*.test.cjs",
+    "test:browser": "node tests/v06-browser.cjs",
+    "test:balance": "node tests/v06-balance.cjs"
   },
   "devDependencies": { "jsdom": "26.1.0", "playwright-core": "1.55.0" }
 }

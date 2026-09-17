@@ -1,0 +1,33 @@
+
+> draft-room-kbo-prototype@0.6.0 test
+> node --test tests/v06*.test.cjs
+
+✔ V6 namespace, strict phase order, 70/80 schedule (48.311793ms)
+✔ 200 candidates: quota supply, 136 high-school and 8 overseas returnees (134.607298ms)
+✔ all public ability grades use 20–80 by fives; FV differs from ceiling (8.028019ms)
+✔ domestic/overseas biographies and catalog preserve chronology and eligibility (58.918433ms)
+✔ AI, media and recommendations cannot read hidden talent or preferences (9.834416ms)
+✔ club plans vary by seed, reproduce exactly and respect positions (1.642391ms)
+✔ same seed and player talent are independent of difficulty and chosen club (19.463943ms)
+✔ quota last-pick and global-supply safeguards survive adversarial selection (58.14477ms)
+✔ regional and recommendation candidates are eligible, unique, and immutable (40.178194ms)
+✔ all 60 club × local × difficulty combinations finish and replay every phase/year (9442.788326ms)
+✔ counting stats, cumulative rates, team schedules and season affiliations reconcile (36.793225ms)
+✔ healthy established players do not randomly disappear into the futures (28.839012ms)
+✔ tool interventions affect relevant statistics without using overall-point shortcuts (168.147462ms)
+✔ mature starter wins and slugger home runs have no V5 artificial caps (12.527488ms)
+✔ trait-specific development carries tools forward and is not four identical boosts (32.880067ms)
+✔ replay rejects changed forecasts, recommendations, club plans, records and old saves (181.141034ms)
+✔ every new sort handles mixed positions and nulls in both directions (29.699591ms)
+✔ DOM: new guide and all catalog groups open with no undefined names (356.160367ms)
+✔ DOM: scouting phase persists, recommends three candidates, profile shows public tools and filters (794.189231ms)
+✔ DOM: easy-only favorite team and complete mobile-friendly grade markup (300.475089ms)
+✔ renderers only expose public current tools and preserve original scouting snapshot (217.942257ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12821.914527
