@@ -97,6 +97,9 @@
       agingPerYear: { speed: 0.38, other: 0.28 },
     },
 
+    // Descriptive only: each season's top velocity follows the change in true stuff.
+    velocity: { perStuff: 0.48, noise: 0.8, min: 128, max: 163 },
+
     scores: {
       // Last season's form, fed into next year's retention.
       performance: { eraPivot: 4.5, eraScale: 1.3, opsPivot: 0.72, opsScale: 0.12, limit: 2 },

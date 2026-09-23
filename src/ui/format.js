@@ -57,7 +57,17 @@
       .join('')}</div></section>`;
   }
 
+  /** "+2" style change in top velocity against the previous season (or the draft-day reading). */
+  function velocityChange(g, rec) {
+    const hist = g.career ? C.Career.history(g.career, rec.playerId) : [];
+    const i = hist.findIndex((r) => r.year === rec.year);
+    const before = i > 0 ? hist[i - 1].velocity : C.getPlayer(g, rec.playerId).velocity;
+    const d = rec.velocity - before;
+    return d ? (d > 0 ? '+' : '') + d : '변화 없음';
+  }
+
   Object.assign(UI, {
+    velocityChange,
     esc, tag, signed, num, rate, teamName, teamDot, player, playerLink, hand, grade, gradeClass,
     statLine, toolTable, toolSnapshot,
   });

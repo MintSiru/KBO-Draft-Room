@@ -278,6 +278,12 @@
       'trial-opportunity': `현재 기량과 ${investment > 0 ? '상위 지명에 대한 시험 기회, ' : ''}포지션 수요를 반영해 제한적인 1군 기회를 받았습니다.`,
     }[reason];
   }
+  /** Top velocity for the season (pitchers). Draws from its own stream, so it never affects results. */
+  function seasonVelocity(p, after, r) {
+    if (!isPitcher(p) || p.velocity == null) return null;
+    const V = T.velocity;
+    return round(clamp(p.velocity + (after.stuff - p.trueTools.stuff) * V.perStuff + normal(r) * V.noise, V.min, V.max));
+  }
   const growthLabel = (growth) => T.scores.growthLabels.find(([min]) => growth >= min)?.[1] ?? '기량 후퇴';
 
   // ---------------------------------------------------------------- one season
@@ -337,6 +343,7 @@
       futures,
       growth,
       growthLabel: growthLabel(growth),
+      velocity: seasonVelocity(p, after, rng(tag('velocity'))),
       developmentNote: `${G.LABELS[bestTool]} 중심 훈련 · 현재 기량 ${startGrade} → ${observed.ready}`,
       note,
       routeReason: reason,

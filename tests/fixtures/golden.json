@@ -15,27 +15,27 @@
     },
     "game:lg/true/golden-a/normal/development": {
       "sim": "7072e89eb9f39569ac61f776dcfa4338feb614257d7bd429895453c1c2aab886",
-      "full": "f930e338fe8307fb8e490bb59031ab4846caf8761d74bcfbcdcd4bc291745161"
+      "full": "9917c55fa6b20e7cea674df2b9602da6e8830ebda5376f721d261c63718ca843"
     },
     "game:kiwoom/false/golden-b/hard/immediate": {
       "sim": "a8d7aef024a4e66f493a5d59228d865ca79554abdeb0a884732999f83a9f2ae7",
-      "full": "55711a363f987dd966866f651c7a173d18185e5a390482082625e029d79ebeb2"
+      "full": "86798813599ed54419a5635696fb03892e202c1191eddf0019d6c60ee4b2d42a"
     },
     "game:samsung/true/golden-c/easy/needs": {
       "sim": "6acb03bdcc3c9421991503d1a5e4c578f1d90786d8e0591cfd9bf560ce8aea70",
-      "full": "fed09ae07d353ed15187ba6ab9b18158491397d91b796492c1938f5235326773"
+      "full": "355c3e158420b9b6b6d66d2ce82752b7ecd4a149478eb6ccc1a9e71733a5247b"
     },
     "game:kia/false/golden-d/normal/needs": {
       "sim": "91595b6748154fd1d12a931264ddfb3e9f3a371ea1a639ad9d88f9d3ecab23fc",
-      "full": "3a8844101aa2590c5429c013cd1607047fc0f0dfedd8106a3fa1985c37167933"
+      "full": "1f9e09faa62026984dfa7709d968761651d0782a8a32cecfdb8f99912e59cc7d"
     },
     "game:hanwha/true/golden-e/hard/development": {
       "sim": "da98fb025eacad1c3fe9a1573f6b369ea3065dbee77cb1de9c9d1462bfb03c97",
-      "full": "2220c7db266015b95961b5a2efe5bdbaef265ad3834b4e1fe80855d0704d9c99"
+      "full": "02e01ad546042f7365b9f14bd0554fd9944c6dddc95d2ef40d1d0bee59692d17"
     },
     "game:nc/false/golden-f/easy/immediate": {
       "sim": "627a3b55d4d45f272a22d15c7e49174b615a2dea0f2a864ec3ca3523f0eea5f0",
-      "full": "7606624311c6568d11bbf1ec19123e61396d8888197bbbf04421b7b8a1f56de9"
+      "full": "fe9983a7a5b4b3b967bf5dffa616f41e7a09ff8d9f36d2cdf79d8aa63c7d9336"
     }
   }
 }

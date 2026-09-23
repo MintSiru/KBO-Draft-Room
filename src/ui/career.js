@@ -21,6 +21,8 @@
           futures: chosen ? rec?.futures : C.Career.totalStats(hist, 'futures'),
           teamId: scope === 'origin' ? s.teamId : state ? state.currentTeamId : s.teamId,
           contribution: chosen ? rec?.contribution || 0 : hist.reduce((n, r) => n + r.contribution, 0),
+          // Top velocity that season; for career totals, the latest one.
+          velocity: chosen ? rec?.velocity ?? null : hist.findLast((r) => r.velocity)?.velocity ?? p.velocity ?? null,
           honors: years.flatMap((y) => y.awards).filter((a) => a.playerId === p.id && (!chosen || a.year === chosen.year)).length,
         };
       })
@@ -56,15 +58,15 @@
       .map((kind) => {
         const group = list.filter((x) => x.p.record.kind === kind);
         if (!group.length) return '';
-        const labels = kind === 'hitter' ? ['G', 'PA', 'AVG', 'OPS', 'HR', 'RBI', 'SB'] : ['G', 'GS', 'IP', 'ERA', 'W', 'HLD', 'SV', 'K', 'BB', 'QS'];
+        const labels = kind === 'hitter' ? ['G', 'PA', 'AVG', 'OPS', 'HR', 'RBI', 'SB'] : ['G', 'GS', 'IP', 'ERA', 'W', 'HLD', 'SV', 'K', 'BB', 'QS', '구속'];
         const body = group
           .map((x) => {
             const s = x[level];
             const values = !s
-              ? labels.map(() => '—')
+              ? labels.map((l) => (l === '구속' && x.velocity ? x.velocity : '—'))
               : kind === 'hitter'
                 ? [s.games, s.pa, rate(s.avg), rate(s.ops), s.hr, s.rbi, s.sb]
-                : [s.games, s.gs, C.innings(s.outs), num(s.era, 2), s.wins, s.holds, s.saves, s.k, s.bb, s.qs];
+                : [s.games, s.gs, C.innings(s.outs), num(s.era, 2), s.wins, s.holds, s.saves, s.k, s.bb, s.qs, x.velocity ?? '—'];
             const now = x.state ? x.state.currentTeamId : x.s.teamId;
             const moved = x.state?.status === 'released' ? '방출' : now !== x.s.teamId ? `→ ${teamName(now)}` : '';
             return `<tr class="${mixed && x.s.teamId === g.teamId ? 'mine' : ''}">
@@ -92,6 +94,7 @@
         return `<article>
           <div style="display:flex;justify-content:space-between;gap:6px">${playerLink(p.id, p.name)}${tag(r.routeLabel, r.route === 'regular' ? 'good' : '')}</div>
           <p class="move">${from} → ${r.scoutReady} <small>현재 기량 · 지명 당시 FV ${p.scoutCeiling}</small></p>
+          ${r.velocity ? `<p class="note">최고 구속 ${r.velocity}km/h (${UI.velocityChange(g, r)})</p>` : ''}
           <p>${esc(r.note)}</p>
           <p class="note">${esc(r.growthLabel)} · 계획 이행 ${r.planScore}점</p>
         </article>`;
@@ -217,7 +220,7 @@
                 <p>1군: ${UI.statLine(y.stats)}</p>
                 <p class="muted">퓨처스: ${UI.statLine(y.futures)}</p>
                 <p>${esc(y.note)}</p>
-                <p class="note">${esc(y.growthLabel)} · 현재 기량 ${y.startGrade ?? y.scoutReady} → ${y.scoutReady} · 계획 이행 ${y.planScore}</p>
+                <p class="note">${esc(y.growthLabel)} · 현재 기량 ${y.startGrade ?? y.scoutReady} → ${y.scoutReady} · 계획 이행 ${y.planScore}${y.velocity ? ` · 최고 구속 ${y.velocity}km/h (${UI.velocityChange(g, y)})` : ''}</p>
                 ${y.publicTools ? UI.toolSnapshot(p, y.publicTools, '시즌 종료 세부 기량') : ''}
               </article>`,
             )

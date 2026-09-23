@@ -1653,6 +1653,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       agingPerYear: { speed: 0.38, other: 0.28 },
     },
 
+    // Descriptive only: each season's top velocity follows the change in true stuff.
+    velocity: { perStuff: 0.48, noise: 0.8, min: 128, max: 163 },
+
     scores: {
       // Last season's form, fed into next year's retention.
       performance: { eraPivot: 4.5, eraScale: 1.3, opsPivot: 0.72, opsScale: 0.12, limit: 2 },
@@ -1994,6 +1997,12 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       'trial-opportunity': `현재 기량과 ${investment > 0 ? '상위 지명에 대한 시험 기회, ' : ''}포지션 수요를 반영해 제한적인 1군 기회를 받았습니다.`,
     }[reason];
   }
+  /** Top velocity for the season (pitchers). Draws from its own stream, so it never affects results. */
+  function seasonVelocity(p, after, r) {
+    if (!isPitcher(p) || p.velocity == null) return null;
+    const V = T.velocity;
+    return round(clamp(p.velocity + (after.stuff - p.trueTools.stuff) * V.perStuff + normal(r) * V.noise, V.min, V.max));
+  }
   const growthLabel = (growth) => T.scores.growthLabels.find(([min]) => growth >= min)?.[1] ?? '기량 후퇴';
 
   // ---------------------------------------------------------------- one season
@@ -2053,6 +2062,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       futures,
       growth,
       growthLabel: growthLabel(growth),
+      velocity: seasonVelocity(p, after, rng(tag('velocity'))),
       developmentNote: `${G.LABELS[bestTool]} 중심 훈련 · 현재 기량 ${startGrade} → ${observed.ready}`,
       note,
       routeReason: reason,
@@ -3567,7 +3577,17 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       .join('')}</div></section>`;
   }
 
+  /** "+2" style change in top velocity against the previous season (or the draft-day reading). */
+  function velocityChange(g, rec) {
+    const hist = g.career ? C.Career.history(g.career, rec.playerId) : [];
+    const i = hist.findIndex((r) => r.year === rec.year);
+    const before = i > 0 ? hist[i - 1].velocity : C.getPlayer(g, rec.playerId).velocity;
+    const d = rec.velocity - before;
+    return d ? (d > 0 ? '+' : '') + d : '변화 없음';
+  }
+
   Object.assign(UI, {
+    velocityChange,
     esc, tag, signed, num, rate, teamName, teamDot, player, playerLink, hand, grade, gradeClass,
     statLine, toolTable, toolSnapshot,
   });
@@ -4032,6 +4052,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           futures: chosen ? rec?.futures : C.Career.totalStats(hist, 'futures'),
           teamId: scope === 'origin' ? s.teamId : state ? state.currentTeamId : s.teamId,
           contribution: chosen ? rec?.contribution || 0 : hist.reduce((n, r) => n + r.contribution, 0),
+          // Top velocity that season; for career totals, the latest one.
+          velocity: chosen ? rec?.velocity ?? null : hist.findLast((r) => r.velocity)?.velocity ?? p.velocity ?? null,
           honors: years.flatMap((y) => y.awards).filter((a) => a.playerId === p.id && (!chosen || a.year === chosen.year)).length,
         };
       })
@@ -4067,15 +4089,15 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       .map((kind) => {
         const group = list.filter((x) => x.p.record.kind === kind);
         if (!group.length) return '';
-        const labels = kind === 'hitter' ? ['G', 'PA', 'AVG', 'OPS', 'HR', 'RBI', 'SB'] : ['G', 'GS', 'IP', 'ERA', 'W', 'HLD', 'SV', 'K', 'BB', 'QS'];
+        const labels = kind === 'hitter' ? ['G', 'PA', 'AVG', 'OPS', 'HR', 'RBI', 'SB'] : ['G', 'GS', 'IP', 'ERA', 'W', 'HLD', 'SV', 'K', 'BB', 'QS', '구속'];
         const body = group
           .map((x) => {
             const s = x[level];
             const values = !s
-              ? labels.map(() => '—')
+              ? labels.map((l) => (l === '구속' && x.velocity ? x.velocity : '—'))
               : kind === 'hitter'
                 ? [s.games, s.pa, rate(s.avg), rate(s.ops), s.hr, s.rbi, s.sb]
-                : [s.games, s.gs, C.innings(s.outs), num(s.era, 2), s.wins, s.holds, s.saves, s.k, s.bb, s.qs];
+                : [s.games, s.gs, C.innings(s.outs), num(s.era, 2), s.wins, s.holds, s.saves, s.k, s.bb, s.qs, x.velocity ?? '—'];
             const now = x.state ? x.state.currentTeamId : x.s.teamId;
             const moved = x.state?.status === 'released' ? '방출' : now !== x.s.teamId ? `→ ${teamName(now)}` : '';
             return `<tr class="${mixed && x.s.teamId === g.teamId ? 'mine' : ''}">
@@ -4103,6 +4125,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         return `<article>
           <div style="display:flex;justify-content:space-between;gap:6px">${playerLink(p.id, p.name)}${tag(r.routeLabel, r.route === 'regular' ? 'good' : '')}</div>
           <p class="move">${from} → ${r.scoutReady} <small>현재 기량 · 지명 당시 FV ${p.scoutCeiling}</small></p>
+          ${r.velocity ? `<p class="note">최고 구속 ${r.velocity}km/h (${UI.velocityChange(g, r)})</p>` : ''}
           <p>${esc(r.note)}</p>
           <p class="note">${esc(r.growthLabel)} · 계획 이행 ${r.planScore}점</p>
         </article>`;
@@ -4228,7 +4251,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
                 <p>1군: ${UI.statLine(y.stats)}</p>
                 <p class="muted">퓨처스: ${UI.statLine(y.futures)}</p>
                 <p>${esc(y.note)}</p>
-                <p class="note">${esc(y.growthLabel)} · 현재 기량 ${y.startGrade ?? y.scoutReady} → ${y.scoutReady} · 계획 이행 ${y.planScore}</p>
+                <p class="note">${esc(y.growthLabel)} · 현재 기량 ${y.startGrade ?? y.scoutReady} → ${y.scoutReady} · 계획 이행 ${y.planScore}${y.velocity ? ` · 최고 구속 ${y.velocity}km/h (${UI.velocityChange(g, y)})` : ''}</p>
                 ${y.publicTools ? UI.toolSnapshot(p, y.publicTools, '시즌 종료 세부 기량') : ''}
               </article>`,
             )
