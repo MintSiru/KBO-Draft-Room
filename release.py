@@ -22,13 +22,16 @@ def main():
     assert '# fail 0' in core_log, 'unit tests have not passed'
     browser = json.loads((ROOT / 'tests/v06-browser-results.json').read_text())
     assert browser and all(not x['errors'] and x['seasons'] == 5 and x['exportImport'] for x in browser)
-    demo = json.loads((ROOT / 'examples/demo-v06-five-seasons.json').read_text())
-    assert demo['format'] == 'draft-room-v06' and len(demo['game']['career']['years']) == 5
+    demo = json.loads((ROOT / 'examples/demo-five-seasons.json').read_text())
+    assert demo['format'] == 'draft-room-save' and demo['seasons'] == 5
 
     files = ['index.html', 'README.md', 'CHANGELOG.md', 'QA.md', 'build.py', 'release.py', 'package.json',
-             'package-lock.json', 'examples/demo-v06-five-seasons.json']
+             'package-lock.json', 'examples/demo-five-seasons.json']
     files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'src').rglob('*') if p.is_file())
-    files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'tests').glob('*') if p.is_file())
+    # Test sources, fixtures and result logs; not screenshots, scratch output or downloaded saves.
+    files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'tests').rglob('*') if p.is_file()
+                    and not any(part.startswith(('screenshots', 'tmp')) for part in p.relative_to(ROOT / 'tests').parts)
+                    and not p.name.endswith('-save.json'))
     files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'docs').rglob('*') if p.is_file())
     manifest = {'release': VERSION, 'files': {f: sha((ROOT / f).read_bytes()) for f in files}}
 

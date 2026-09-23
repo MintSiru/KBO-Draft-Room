@@ -1,0 +1,23 @@
+{
+  "format": "draft-room-save",
+  "version": 2,
+  "sim": "0.6",
+  "teamId": "lg",
+  "local": true,
+  "seed": "1789626532478-0.09119859398711205",
+  "difficulty": "normal",
+  "phase": "owner",
+  "picks": [
+    "p015",
+    "p042",
+    "p144",
+    "p116",
+    "p071",
+    "p041",
+    "p003",
+    "p170"
+  ],
+  "gmChoice": "development",
+  "seasons": 5,
+  "stars": []
+}

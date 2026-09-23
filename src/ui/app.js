@@ -5,7 +5,6 @@
     UI = window.DraftUI;
   const $ = (s) => document.querySelector(s);
   const STORE = 'draft-room-kbo-v6-scouting'; // unchanged since V0.6 so existing saves keep loading
-  const SAVE_FORMAT = 'draft-room-v06';
   const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', '5시즌', '평가'];
   const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, interviews: 4, season: 5, owner: 6 };
 
@@ -23,6 +22,7 @@
     yearIndex: 0,
     modal: null,
     storageOK: true,
+    notice: null, // shown above the setup screen, e.g. when an old save could not be continued
   };
   let lastFocus = null,
     toastTimer = null,
@@ -42,8 +42,14 @@
       if (Object.hasOwn(C.rules.DIFFICULTIES, saved.difficulty)) state.setup.difficulty = saved.difficulty;
       if (Object.hasOwn(C.teamById, saved.selectedTeam)) state.setup.selectedTeam = saved.selectedTeam;
       state.setup.local = saved.local === true;
-      const game = C.restore(saved.game);
-      if (game) adopt(game, Array.isArray(saved.stars) ? saved.stars : []);
+      const stored = saved.save ?? saved.game; // `game` is the v0.6.0 layout
+      const loaded = stored ? C.loadSave(stored) : {};
+      if (loaded.game) adopt(loaded.game, Array.isArray(saved.stars) ? saved.stars : []);
+      else if (loaded.error === 'sim') {
+        // Keep the old save instead of overwriting it with the next autosave.
+        localStorage.setItem(`${STORE}-sim-${loaded.sim}`, JSON.stringify(saved));
+        state.notice = `이전 규칙(v${loaded.sim})으로 진행하던 게임은 이 버전에서 이어 할 수 없어 따로 보관했습니다. 새 게임을 시작해 주세요.`;
+      }
     }
     localStorage.setItem(STORE + '-check', '1');
     localStorage.removeItem(STORE + '-check');
@@ -53,7 +59,8 @@
   function save() {
     const { selectedTeam, local, difficulty } = state.setup;
     try {
-      localStorage.setItem(STORE, JSON.stringify({ selectedTeam, local, difficulty, game: state.game, stars: [...state.stars] }));
+      const save = state.game ? C.toSave(state.game) : null;
+      localStorage.setItem(STORE, JSON.stringify({ selectedTeam, local, difficulty, save, stars: [...state.stars] }));
     } catch (e) {
       state.storageOK = false;
     }
@@ -92,7 +99,8 @@
       (name, i) => `<li class="${now === i + 1 ? 'now' : now > i + 1 ? 'done' : ''}" ${now === i + 1 ? 'aria-current="step"' : ''}><b>${i + 1}</b>${name}</li>`,
     ).join('');
     $('#reset-game').hidden = !g();
-    $('#main').innerHTML = (g() ? UI.gameBar(g()) : '') + screen();
+    if (g()) state.notice = null;
+    $('#main').innerHTML = (state.notice ? `<p class="callout">${UI.esc(state.notice)}</p>` : '') + (g() ? UI.gameBar(g()) : '') + screen();
     $('#storage-status').textContent = state.storageOK ? '진행 상황은 이 브라우저에 자동 저장됩니다.' : '이 환경에서는 자동 저장을 쓸 수 없습니다. 진행 파일 저장을 이용하세요.';
     save();
   }
@@ -158,9 +166,9 @@
   }
   function exportSave() {
     if (!g()) return;
-    const blob = new Blob([JSON.stringify({ format: SAVE_FORMAT, version: C.VERSION, game: g(), stars: [...state.stars] }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ ...C.toSave(g()), stars: [...state.stars] }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    download(`draft-room-v06-${g().teamId}-${g().career?.years.at(-1)?.year || 'draft'}.json`, url);
+    download(`draft-room-${g().teamId}-${g().career?.years.at(-1)?.year || 'draft'}.json`, url);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify('진행 파일을 내려받았습니다.');
   }
@@ -169,11 +177,12 @@
     try {
       if (file.size > 5_000_000) throw Error('too large');
       const data = JSON.parse(await file.text());
-      const game = data.format === SAVE_FORMAT && data.version === C.VERSION ? C.restore(data.game) : null;
-      if (!game) throw Error('invalid');
-      showModal('import', { game, stars: Array.isArray(data.stars) ? data.stars : [] });
+      const loaded = C.loadSave(data);
+      if (loaded.error === 'sim') return notify(`이전 규칙(v${loaded.sim})으로 만든 진행 파일이라 이 버전에서는 이어 할 수 없습니다.`);
+      if (!loaded.game) throw Error('invalid');
+      showModal('import', { game: loaded.game, stars: Array.isArray(data.stars) ? data.stars : [] });
     } catch (err) {
-      notify('불러올 수 없는 파일입니다. V0.6 진행 파일(JSON)만 지원합니다.');
+      notify('불러올 수 없는 파일입니다. 드래프트 룸 진행 파일(JSON)인지 확인해 주세요.');
     } finally {
       $('#import-file').value = '';
     }

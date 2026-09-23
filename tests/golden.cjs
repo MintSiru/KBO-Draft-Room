@@ -36,19 +36,35 @@ for (const cfg of CONFIGS) {
   const picks = out.game.picks.map((s) => s.playerId);
   result['game:' + cfg.join('/')] = { full: hash(out), numbers: hash(numbers(out)), picks: hash(picks) };
 }
+const expected = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : null;
+const diffs = [];
+for (const [k, v] of Object.entries(expected?.hashes ?? {}))
+  for (const kind of Object.keys(v)) if (result[k]?.[kind] !== v[kind]) diffs.push({ k, kind });
+// `full` includes wording; `numbers` and `picks` are the simulation itself.
+const behaviourChanged = diffs.some((d) => d.kind !== 'full');
+const sameSim = expected?.sim === C.SIM_VERSION;
+
 if (process.argv.includes('--write')) {
-  fs.mkdirSync(path.dirname(FILE), { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(result, null, 2) + '\n');
-  console.log('wrote', FILE);
-} else {
-  const expected = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  let failed = 0;
-  for (const [k, v] of Object.entries(expected)) {
-    for (const kind of Object.keys(v)) {
-      const ok = result[k]?.[kind] === v[kind];
-      if (!ok) failed++;
-      console.log(`${ok ? 'same' : 'DIFF'}  ${kind.padEnd(7)} ${k}`);
-    }
+  if (expected && behaviourChanged && sameSim) {
+    console.error(`Simulation results changed but SIM_VERSION is still '${C.SIM_VERSION}'.
+Bump SIM_VERSION in src/core/engine.js first: saves from '${C.SIM_VERSION}' would otherwise replay into different histories.`);
+    process.exit(1);
   }
-  process.exit(failed && !process.argv.includes('--loose') ? 1 : 0);
+  fs.mkdirSync(path.dirname(FILE), { recursive: true });
+  fs.writeFileSync(FILE, JSON.stringify({ sim: C.SIM_VERSION, hashes: result }, null, 2) + '\n');
+  console.log(`wrote ${FILE} (SIM_VERSION ${C.SIM_VERSION})`);
+} else {
+  for (const d of diffs) console.log(`DIFF  ${d.kind.padEnd(7)} ${d.k}`);
+  let problem = null;
+  if (!sameSim && !behaviourChanged)
+    problem = `SIM_VERSION changed ('${expected.sim}' -> '${C.SIM_VERSION}') but the simulation did not. Revert the bump, or re-record with --write.`;
+  else if (!sameSim) problem = `SIM_VERSION is now '${C.SIM_VERSION}'. Re-record the baseline: node tests/golden.cjs --write`;
+  else if (behaviourChanged)
+    problem = `Simulation results changed. If intended, bump SIM_VERSION in src/core/engine.js, then run: node tests/golden.cjs --write`;
+  else if (diffs.length) problem = 'Only wording changed. Re-record the baseline: node tests/golden.cjs --write';
+  if (problem) {
+    console.error(problem);
+    process.exit(1);
+  }
+  console.log(`golden: ${Object.keys(result).length} cases unchanged (SIM_VERSION ${C.SIM_VERSION})`);
 }

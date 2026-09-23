@@ -14,7 +14,7 @@
   const Voices = root.DraftVoices || (typeof require !== 'undefined' ? require('./voices.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '0.6.1',
+  const RELEASE = '0.6.2',
     VERSION = 6,
     ROUNDS = 7,
     POOL_SIZE = 200;
@@ -276,57 +276,126 @@
   }
   const PHASES = ['preview', 'scouting', 'draft', 'interviews', 'season', 'owner'];
 
-  /**
-   * Rebuilds a saved game from its inputs (club, seed, settings, picks, GM answer, seasons played).
-   * Every derived field in the save (news, records, evaluations...) is ignored and recomputed,
-   * so editing a save cannot change results and text fixes never invalidate old saves.
-   * Returns the rebuilt game, or null if the inputs are invalid or do not replay.
+  /*
+   * Saves
+   * -----
+   * A save holds only the inputs of a game: settings, seed, the user's own picks, the GM answer and how
+   * many seasons were played. Everything else is recomputed by replaying, which is fast (<0.2 s for five
+   * seasons) and means a save cannot be edited into a different result.
+   *
+   * Replaying is only faithful while the simulation behaves exactly as it did when the save was made.
+   * SIM_VERSION names that behaviour: bump it whenever a change alters any simulated number or pick
+   * (tests/golden.cjs fails until you do). A save from another SIM_VERSION is refused, never silently
+   * replayed into a different history.
    */
-  function restore(saved) {
+  const SIM_VERSION = '0.6',
+    SAVE_FORMAT = 'draft-room-save',
+    SAVE_VERSION = 2;
+
+  /** The compact save for a game. */
+  function toSave(g) {
+    return {
+      format: SAVE_FORMAT,
+      version: SAVE_VERSION,
+      sim: SIM_VERSION,
+      teamId: g.teamId,
+      local: g.local,
+      seed: g.seed,
+      difficulty: g.difficulty,
+      phase: g.phase,
+      picks: myPicks(g).map((s) => s.playerId),
+      gmChoice: g.gmChoice,
+      seasons: g.career?.years.length ?? 0,
+    };
+  }
+
+  /**
+   * Replays a game from compact-save inputs. Returns null if they are invalid or do not replay.
+   * CPU clubs pick up to the user's next turn, as the app does; `stopAt` instead stops at that overall pick
+   * (used for v0.6.0 saves, which may have been stored mid-way through CPU picks).
+   */
+  function replay(s, stopAt = null) {
     try {
-      const g0 = saved;
       if (
-        !g0 ||
-        g0.version !== VERSION ||
-        !Object.hasOwn(R.DIFFICULTIES, g0.difficulty) ||
-        !Object.hasOwn(teamById, g0.teamId) ||
-        g0.draftDate !== Bio.DRAFT_DATE ||
-        typeof g0.seed !== 'string' ||
-        !g0.seed.length ||
-        g0.seed.length > 200 ||
-        typeof g0.local !== 'boolean' ||
-        !PHASES.includes(g0.phase) ||
-        !Array.isArray(g0.picks) ||
-        g0.cursor !== g0.picks.length
+        !s ||
+        !Object.hasOwn(R.DIFFICULTIES, s.difficulty) ||
+        !Object.hasOwn(teamById, s.teamId) ||
+        typeof s.seed !== 'string' ||
+        !s.seed.length ||
+        s.seed.length > 200 ||
+        typeof s.local !== 'boolean' ||
+        !PHASES.includes(s.phase) ||
+        !Array.isArray(s.picks) ||
+        !s.picks.every((id) => typeof id === 'string') ||
+        !Number.isInteger(s.seasons) ||
+        s.seasons < 0 ||
+        s.seasons > Career.SEASONS
       )
         return null;
-      const g = createGame(g0.teamId, g0.local, g0.seed, g0.difficulty);
-      if (g0.picks.length > g.schedule.length) return null;
-      if (g0.phase === 'preview') return g0.picks.length ? null : g;
+      const g = createGame(s.teamId, s.local, s.seed, s.difficulty);
+      const pristine = !s.picks.length && s.gmChoice == null && !s.seasons;
+      if (s.phase === 'preview') return pristine ? g : null;
       openScouting(g);
-      if (g0.phase === 'scouting') return g0.picks.length ? null : g;
+      if (s.phase === 'scouting') return pristine ? g : null;
       beginDraft(g);
-      for (const s of g0.picks) {
-        const slot = g.schedule[g.cursor];
-        if (!s || s.teamId !== slot.teamId) return null;
-        // CPU picks are deterministic, so a save cannot rewrite what another club did.
-        if (s.teamId !== g.teamId && aiChoice(g)?.id !== s.playerId) return null;
-        addPick(g, s.playerId);
+      const cpuPicks = () => {
+        while (g.phase === 'draft' && g.schedule[g.cursor].teamId !== g.teamId && (stopAt == null || g.cursor < stopAt))
+          addPick(g, aiChoice(g).id);
+      };
+      for (const id of s.picks) {
+        cpuPicks();
+        if (g.phase !== 'draft' || g.schedule[g.cursor].teamId !== g.teamId) return null; // more picks than turns
+        addPick(g, id); // throws on an illegal pick
       }
-      if ((g0.phase === 'draft') !== (g.phase === 'draft')) return null;
-      if (g0.gmChoice != null) chooseGM(g, g0.gmChoice);
-      const seasons = g0.career?.years?.length ?? 0;
-      if (seasons > Career.SEASONS || (g0.career != null && !seasons)) return null;
-      if (['season', 'owner'].includes(g0.phase) && !seasons) return null;
-      if (seasons) {
-        runSeason(g);
-        while (g.career.years.length < seasons) nextSeason(g);
+      cpuPicks();
+      if ((s.phase === 'draft') !== (g.phase === 'draft')) return null;
+      if (s.gmChoice != null) chooseGM(g, s.gmChoice);
+      if (['season', 'owner'].includes(s.phase) && !s.seasons) return null;
+      if (s.seasons) {
+        runSeason(g); // requires the GM answer
+        while (g.career.years.length < s.seasons) nextSeason(g);
       }
-      if (g.phase !== 'draft') g.phase = g0.phase; // e.g. revisiting interviews after season 1
+      if (g.phase !== 'draft') g.phase = s.phase; // e.g. revisiting interviews after season 1
       return g;
     } catch (_) {
       return null;
     }
+  }
+
+  /**
+   * Rebuilds a v0.6.0 save, which stored the whole game object. Derived fields are ignored; the inputs
+   * are replayed and the stored pick list must match the replay exactly (so CPU picks cannot be edited).
+   */
+  function restore(g0) {
+    if (!g0 || g0.version !== VERSION || g0.draftDate !== Bio.DRAFT_DATE || !Array.isArray(g0.picks)) return null;
+    if (g0.cursor !== g0.picks.length || !g0.picks.every((p) => p && typeof p.playerId === 'string')) return null;
+    const seasons = g0.career == null ? 0 : g0.career.years?.length;
+    if (g0.career != null && !seasons) return null;
+    const g = replay(
+      { ...g0, picks: g0.picks.filter((p) => p.teamId === g0.teamId).map((p) => p.playerId), seasons },
+      g0.picks.length,
+    );
+    if (!g) return null;
+    const ids = (list) => list.map((p) => p.teamId + ':' + p.playerId).join();
+    return ids(g.picks) === ids(g0.picks) ? g : null;
+  }
+
+  /**
+   * Loads any supported save: a compact save, a v0.6.0 export ({format:'draft-room-v06', game}) or a bare
+   * v0.6.0 game object. Returns { game } or { error: 'sim' | 'invalid', sim }.
+   */
+  function loadSave(data) {
+    if (data?.format === SAVE_FORMAT) {
+      if (data.version !== SAVE_VERSION) return { error: 'invalid' };
+      if (data.sim !== SIM_VERSION) return { error: 'sim', sim: String(data.sim) };
+      const game = replay(data);
+      return game ? { game } : { error: 'invalid' };
+    }
+    // v0.6.0 saves predate SIM_VERSION; their simulation is the one named '0.6'.
+    const legacy = data?.format === 'draft-room-v06' ? data.game : data;
+    if (legacy?.version === VERSION && SIM_VERSION !== '0.6') return { error: 'sim', sim: '0.6' };
+    const game = restore(legacy);
+    return game ? { game } : { error: 'invalid' };
   }
   const validate = (g) => restore(g) !== null;
   const api = {
@@ -379,6 +448,11 @@
     evaluate,
     validate,
     restore,
+    replay,
+    toSave,
+    loadSave,
+    SIM_VERSION,
+    SAVE_FORMAT,
     rng,
     clamp,
   };

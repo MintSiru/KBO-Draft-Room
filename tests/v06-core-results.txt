@@ -1,164 +1,165 @@
 
-> kbo-draft-room@0.6.1 test
+> kbo-draft-room@0.6.2 test
 > node --test tests/v06*.test.cjs && node tests/golden.cjs
 
 TAP version 13
 # Subtest: V6 namespace, strict phase order, 70/80 schedule
 ok 1 - V6 namespace, strict phase order, 70/80 schedule
   ---
-  duration_ms: 56.564717
+  duration_ms: 62.205761
   type: 'test'
   ...
 # Subtest: 200 candidates: quota supply, 136 high-school and 8 overseas returnees
 ok 2 - 200 candidates: quota supply, 136 high-school and 8 overseas returnees
   ---
-  duration_ms: 266.650146
+  duration_ms: 215.075035
   type: 'test'
   ...
 # Subtest: all public ability grades use 20–80 by fives; FV differs from ceiling
 ok 3 - all public ability grades use 20–80 by fives; FV differs from ceiling
   ---
-  duration_ms: 11.512363
+  duration_ms: 9.235155
   type: 'test'
   ...
 # Subtest: domestic/overseas biographies and catalog preserve chronology and eligibility
 ok 4 - domestic/overseas biographies and catalog preserve chronology and eligibility
   ---
-  duration_ms: 118.667427
+  duration_ms: 96.474779
   type: 'test'
   ...
 # Subtest: AI, media and recommendations cannot read hidden talent or preferences
 ok 5 - AI, media and recommendations cannot read hidden talent or preferences
   ---
-  duration_ms: 14.626091
+  duration_ms: 14.403874
   type: 'test'
   ...
 # Subtest: club plans vary by seed, reproduce exactly and respect positions
 ok 6 - club plans vary by seed, reproduce exactly and respect positions
   ---
-  duration_ms: 2.123099
+  duration_ms: 2.191759
   type: 'test'
   ...
 # Subtest: same seed and player talent are independent of difficulty and chosen club
 ok 7 - same seed and player talent are independent of difficulty and chosen club
   ---
-  duration_ms: 27.681763
+  duration_ms: 26.335709
   type: 'test'
   ...
 # Subtest: quota last-pick and global-supply safeguards survive adversarial selection
 ok 8 - quota last-pick and global-supply safeguards survive adversarial selection
   ---
-  duration_ms: 39.623984
+  duration_ms: 35.572678
   type: 'test'
   ...
 # Subtest: regional and recommendation candidates are eligible, unique, and immutable
 ok 9 - regional and recommendation candidates are eligible, unique, and immutable
   ---
-  duration_ms: 62.348309
+  duration_ms: 51.039175
   type: 'test'
   ...
 # Subtest: all 60 club × local × difficulty combinations finish and replay every phase/year
 ok 10 - all 60 club × local × difficulty combinations finish and replay every phase/year
   ---
-  duration_ms: 16563.323274
+  duration_ms: 16506.881951
   type: 'test'
   ...
 # Subtest: counting stats, cumulative rates, team schedules and season affiliations reconcile
 ok 11 - counting stats, cumulative rates, team schedules and season affiliations reconcile
   ---
-  duration_ms: 64.421115
+  duration_ms: 65.155734
   type: 'test'
   ...
 # Subtest: healthy established players do not randomly disappear into the futures
 ok 12 - healthy established players do not randomly disappear into the futures
   ---
-  duration_ms: 53.140831
+  duration_ms: 41.513409
   type: 'test'
   ...
 # Subtest: tool interventions affect relevant statistics without using overall-point shortcuts
 ok 13 - tool interventions affect relevant statistics without using overall-point shortcuts
   ---
-  duration_ms: 229.619249
+  duration_ms: 209.578611
   type: 'test'
   ...
 # Subtest: mature starter wins and slugger home runs have no V5 artificial caps
 ok 14 - mature starter wins and slugger home runs have no V5 artificial caps
   ---
-  duration_ms: 13.814945
+  duration_ms: 13.423417
   type: 'test'
   ...
 # Subtest: trait-specific development carries tools forward and is not four identical boosts
 ok 15 - trait-specific development carries tools forward and is not four identical boosts
   ---
-  duration_ms: 52.390427
+  duration_ms: 72.55709
   type: 'test'
   ...
 # Subtest: restore rebuilds derived data from inputs and rejects edited inputs
 ok 16 - restore rebuilds derived data from inputs and rejects edited inputs
   ---
-  duration_ms: 792.971888
+  duration_ms: 702.235844
   type: 'test'
   ...
 # Subtest: every new sort handles mixed positions and nulls in both directions
 ok 17 - every new sort handles mixed positions and nulls in both directions
   ---
-  duration_ms: 38.540075
+  duration_ms: 38.931267
+  type: 'test'
+  ...
+# Subtest: compact saves replay identically in every phase and stay tiny
+ok 18 - compact saves replay identically in every phase and stay tiny
+  ---
+  duration_ms: 531.579462
+  type: 'test'
+  ...
+# Subtest: compact saves refuse other simulation versions and invalid inputs
+ok 19 - compact saves refuse other simulation versions and invalid inputs
+  ---
+  duration_ms: 149.277618
+  type: 'test'
+  ...
+# Subtest: v0.6.0 saves (full game object) still load, bare or wrapped
+ok 20 - v0.6.0 saves (full game object) still load, bare or wrapped
+  ---
+  duration_ms: 232.025846
   type: 'test'
   ...
 # Subtest: DOM: new guide and all catalog groups open with no undefined names
-ok 18 - DOM: new guide and all catalog groups open with no undefined names
+ok 21 - DOM: new guide and all catalog groups open with no undefined names
   ---
-  duration_ms: 381.936997
+  duration_ms: 357.269767
   type: 'test'
   ...
 # Subtest: DOM: scouting phase persists, recommends three candidates, profile shows public tools and filters
-ok 19 - DOM: scouting phase persists, recommends three candidates, profile shows public tools and filters
+ok 22 - DOM: scouting phase persists, recommends three candidates, profile shows public tools and filters
   ---
-  duration_ms: 695.386759
+  duration_ms: 740.048387
   type: 'test'
   ...
 # Subtest: DOM: easy-only favorite team and complete mobile-friendly grade markup
-ok 20 - DOM: easy-only favorite team and complete mobile-friendly grade markup
+ok 23 - DOM: easy-only favorite team and complete mobile-friendly grade markup
   ---
-  duration_ms: 348.94499
+  duration_ms: 393.763825
   type: 'test'
   ...
 # Subtest: renderers only expose public current tools and preserve original scouting snapshot
-ok 21 - renderers only expose public current tools and preserve original scouting snapshot
+ok 24 - renderers only expose public current tools and preserve original scouting snapshot
   ---
-  duration_ms: 270.653058
+  duration_ms: 315.685901
   type: 'test'
   ...
-1..21
-# tests 21
+# Subtest: DOM: a save from another simulation version is kept aside, not overwritten
+ok 25 - DOM: a save from another simulation version is kept aside, not overwritten
+  ---
+  duration_ms: 91.462764
+  type: 'test'
+  ...
+1..25
+# tests 25
 # suites 0
-# pass 21
+# pass 25
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 18584.47459
-same  full    pool:pool-a
-same  numbers pool:pool-a
-same  full    pool:pool-b
-same  numbers pool:pool-b
-same  full    pool:pool-c
-same  numbers pool:pool-c
-same  full    game:lg/true/golden-a/normal/development
-same  numbers game:lg/true/golden-a/normal/development
-same  picks   game:lg/true/golden-a/normal/development
-same  full    game:kiwoom/false/golden-b/hard/immediate
-same  numbers game:kiwoom/false/golden-b/hard/immediate
-same  picks   game:kiwoom/false/golden-b/hard/immediate
-same  full    game:samsung/true/golden-c/easy/needs
-same  numbers game:samsung/true/golden-c/easy/needs
-same  picks   game:samsung/true/golden-c/easy/needs
-same  full    game:kia/false/golden-d/normal/needs
-same  numbers game:kia/false/golden-d/normal/needs
-same  picks   game:kia/false/golden-d/normal/needs
-same  full    game:hanwha/true/golden-e/hard/development
-same  numbers game:hanwha/true/golden-e/hard/development
-same  picks   game:hanwha/true/golden-e/hard/development
-same  full    game:nc/false/golden-f/easy/immediate
-same  numbers game:nc/false/golden-f/easy/immediate
-same  picks   game:nc/false/golden-f/easy/immediate
+# duration_ms 19234.752659
+golden: 9 cases unchanged (SIM_VERSION 0.6)

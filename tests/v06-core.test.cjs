@@ -27,3 +27,79 @@ test('restore rebuilds derived data from inputs and rejects edited inputs',()=>{
  for(const change of [x=>x.version=5,x=>x.picks[cpu].playerId=x.picks.at(-1).playerId,x=>x.picks[mine].playerId='p999',x=>x.career.years.push(x.career.years[0]),x=>x.gmChoice='other',x=>x.seed='',x=>x.cursor=3]){const bad=clone(g);change(bad);assert.equal(C.restore(bad),null);assert(!C.validate(bad));}
  assert(!C.validate(null));assert(!C.validate({}));});
 test('every new sort handles mixed positions and nulls in both directions',()=>{const g=C.createGame('lg',false,'sort06'),ps=C.poolFor(g).players,t=C.teamFor(g);for(const key of Object.keys(C.rules.SORTS))for(const dir of ['asc','desc']){const sorted=C.rules.sortPlayers(ps,key,dir,t);let seenNull=false,last=null;for(const p of sorted){const v=C.rules.sortValue(p,key,t);if(v==null)seenNull=true;else{assert(!seenNull);if(last!=null)assert(dir==='asc'?v>=last:v<=last);last=v;}}}});
+
+test('compact saves replay identically in every phase and stay tiny', () => {
+  const roundTrip = (g) => {
+    const save = JSON.parse(JSON.stringify(C.toSave(g)));
+    assert(JSON.stringify(save).length < 600, 'compact save');
+    assert.equal(save.sim, C.SIM_VERSION);
+    const back = C.loadSave(save).game;
+    assert.deepEqual(clone(back), clone(g));
+  };
+  const g = C.createGame('doosan', true, 'compact06', 'hard');
+  roundTrip(g);
+  C.openScouting(g);
+  roundTrip(g);
+  C.beginDraft(g);
+  C.advanceToUser(g);
+  roundTrip(g);
+  while (g.phase === 'draft') {
+    C.addPick(g, C.available(g).at(-1).id); // deliberately unusual picks
+    C.advanceToUser(g);
+    roundTrip(g);
+  }
+  C.chooseGM(g, 'needs');
+  roundTrip(g);
+  C.runSeason(g);
+  roundTrip(g);
+  while (g.career.years.length < 5) {
+    C.nextSeason(g);
+    roundTrip(g);
+  }
+  g.phase = 'owner';
+  roundTrip(g);
+  g.phase = 'interviews'; // revisiting interviews keeps the five seasons
+  roundTrip(g);
+});
+
+test('compact saves refuse other simulation versions and invalid inputs', () => {
+  const g = finish(draft('refuse06'));
+  const save = C.toSave(g);
+  assert.deepEqual(C.loadSave({ ...save, sim: '0.5' }), { error: 'sim', sim: '0.5' });
+  const invalid = [
+    { version: 1 },
+    { picks: [...save.picks, 'p001'] }, // more picks than slots
+    { picks: ['p999', ...save.picks.slice(1)] }, // not a player
+    { picks: [save.picks[1], save.picks[0], ...save.picks.slice(2)] }, // order changes who is available
+    { seasons: 6 },
+    { gmChoice: null }, // seasons need a GM answer
+    { gmChoice: 'other' },
+    { phase: 'draft' },
+    { phase: 'nope' },
+    { seed: '' },
+    { teamId: 'nowhere' },
+  ];
+  for (const change of invalid) {
+    const result = C.loadSave({ ...save, ...change });
+    if (change.picks?.[1] === save.picks[0]) {
+      // Swapping two picks can be legal; it must then produce a different, consistent game.
+      if (result.game) assert.notDeepEqual(result.game.picks, g.picks);
+      continue;
+    }
+    assert.deepEqual(result, { error: 'invalid' }, JSON.stringify(change));
+  }
+  assert.equal(C.loadSave({ ...save, phase: 'owner', seasons: 0 }).error, 'invalid');
+  assert.equal(C.loadSave(null).error, 'invalid');
+});
+
+test('v0.6.0 saves (full game object) still load, bare or wrapped', () => {
+  const demo = require('./fixtures/legacy-v060-save.json');
+  for (const data of [demo, demo.game]) {
+    const g = C.loadSave(data).game;
+    assert(g, 'legacy save loads');
+    assert.deepEqual(g.picks.map((s) => s.playerId), demo.game.picks.map((s) => s.playerId));
+    assert.equal(g.career.years.length, 5);
+    // Re-saving converts it to the compact format without changing anything.
+    assert.deepEqual(clone(C.loadSave(C.toSave(g)).game), clone(g));
+  }
+});
