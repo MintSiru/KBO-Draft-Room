@@ -1,5 +1,5 @@
 /* Reproducible all-AI tuning audit; game experiments, NOT empirical KBO statistics. */
-const C=require('../src/engine.js'),D=require('../src/data.js'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const C=require('../src/core/engine.js'),D=require('../src/core/prospects.js'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const N=Number(process.env.BALANCE_SEEDS||200),results=[],pct=(a,b)=>D.round(a*100/(b||1),2);
 for(const difficulty of ['easy','normal','hard']){
  const rounds=Array.from({length:8},(_,round)=>({round,n:0,debut:0,regular:0,fv:0,fv60:0})),years=Array.from({length:5},(_,i)=>({year:2027+i,n:0,debut:0,regular:0}));

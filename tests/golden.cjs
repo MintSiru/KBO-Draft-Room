@@ -2,7 +2,7 @@
    `node tests/golden.cjs --write` records hashes; without it, compares.
    "numbers" ignores every string, so copy edits do not trip it. */
 const crypto = require('node:crypto'), fs = require('node:fs'), path = require('node:path');
-const C = require('../src/engine.js'), D = require('../src/data.js');
+const C = require('../src/core/engine.js'), D = require('../src/core/prospects.js');
 const FILE = path.join(__dirname, 'fixtures/golden.json');
 const CONFIGS = [
   ['lg', true, 'golden-a', 'normal', 'development'],
@@ -14,7 +14,8 @@ const CONFIGS = [
 ];
 const hash = (x) => crypto.createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const numbers = (x) =>
-  Array.isArray(x) ? x.map(numbers)
+  typeof x === 'string' ? ''
+  : Array.isArray(x) ? x.map(numbers)
   : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).filter(([, v]) => typeof v !== 'string').map(([k, v]) => [k, numbers(v)]))
   : x;
 function play([team, local, seed, difficulty, gm]) {

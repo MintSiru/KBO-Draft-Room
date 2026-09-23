@@ -1,7 +1,3 @@
-
-> draft-room-kbo-prototype@0.6.0 test:browser
-> node tests/v06-browser.cjs
-
 [
   {
     "case": "desktop-normal-on",

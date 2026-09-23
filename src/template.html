@@ -3,41 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#14263f">
-<meta name="description" content="20–80 툴, 스카우트 추천, 보직 유지와 5년 성장. 오프라인 가상 KBO 드래프트 시뮬레이터 v0.6.">
-<title>DRAFT ROOM v0.6 — Read the Player</title>
-<style>/* INLINE_STYLE */
-/* INLINE_V02_STYLE */
-/* INLINE_V03_STYLE */
-/* INLINE_V04_STYLE */
-/* INLINE_V05_STYLE */
-/* INLINE_V06_STYLE */</style>
+<meta name="theme-color" content="#f4f2ec">
+<meta name="description" content="가상의 KBO 신인 드래프트를 진행하고 지명한 선수들의 5년 경력을 시뮬레이션합니다.">
+<title>드래프트 룸 v0.6.1 — KBO 신인 드래프트</title>
+<style>
+/* BUILD:STYLES */
+</style>
 </head>
 <body>
-<header class="topbar" id="page-header"><div class="shell topline"><div class="brand"><div class="brand-icon" aria-hidden="true">D</div><div><div class="brand-name">DRAFT ROOM</div><div class="brand-sub">KBO EDITION · YOUR CLUB, YOUR CALL</div></div><span class="version">BUILD 0.6</span></div><div class="top-actions"><button class="ghost" data-action="import-save">진행 불러오기</button><button class="ghost" data-action="rules" aria-label="플레이 가이드">가이드</button><button class="ghost" data-action="catalog">소속 명단</button><button class="ghost" data-action="reset" id="reset-game" hidden>새 게임</button></div></div></header>
-<div class="shell"><nav class="stepper" id="steps" aria-label="게임 진행 단계"></nav></div>
-<main class="shell" id="main"></main>
-<footer class="footer" id="page-footer"><div class="shell footer-inner"><span>DRAFT ROOM / 팬메이드 프로토타입 · 선수와 전력은 가상 데이터입니다.</span><span id="storage-status"></span></div></footer>
-<input type="file" id="import-file" accept=".json,application/json" hidden aria-label="V0.6 진행 파일 선택">
+<header class="masthead" id="page-header">
+  <div class="wrap">
+    <div class="wordmark"><b>드래프트 룸</b><span>KBO 신인 드래프트 시뮬레이션</span></div>
+    <nav aria-label="게임 메뉴">
+      <button class="btn quiet small" data-action="import-save">불러오기</button>
+      <button class="btn quiet small" data-action="rules">가이드</button>
+      <button class="btn quiet small" data-action="catalog">소속 명단</button>
+      <button class="btn quiet small" data-action="reset" id="reset-game" hidden>새 게임</button>
+    </nav>
+  </div>
+</header>
+<div class="wrap"><ol class="steps" id="steps" aria-label="진행 단계"></ol></div>
+<main class="wrap" id="main"></main>
+<footer class="colophon" id="page-footer">
+  <div class="wrap">
+    <span>팬메이드 게임입니다. 구단명 외의 선수·학교·기록·전력은 모두 가상입니다.</span>
+    <span id="storage-status"></span>
+  </div>
+</footer>
+<input type="file" id="import-file" accept=".json,application/json" hidden aria-label="진행 파일 선택">
 <div id="modal-root"></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-<noscript><p style="padding:25px">이 게임을 실행하려면 브라우저에서 JavaScript를 허용해 주세요.</p></noscript>
-<script>/* INLINE_CLUBS */</script>
-<script>/* INLINE_CATALOG */</script>
-<script>/* INLINE_KO */</script>
-<script>/* INLINE_NAMES */</script>
-<script>/* INLINE_BIO */</script>
-<script>/* INLINE_GRADES06 */</script>
-<script>/* INLINE_DATA */</script>
-<script>/* INLINE_SCOUTING06 */</script>
-<script>/* INLINE_SEASON */</script>
-<script>/* INLINE_RULES04 */</script>
-<script>/* INLINE_PRESS */</script>
-<script>/* INLINE_CAREER */</script>
-<script>/* INLINE_ENGINE */</script>
-<script>/* INLINE_VIEW04 */</script>
-<script>/* INLINE_VIEW05 */</script>
-<script>/* INLINE_VIEW06 */</script>
-<script>/* INLINE_APP */</script>
+<noscript><p style="padding:24px">이 게임을 실행하려면 JavaScript를 허용해 주세요.</p></noscript>
+<!-- BUILD:SCRIPTS -->
 </body>
 </html>

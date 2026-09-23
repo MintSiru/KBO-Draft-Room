@@ -1,6 +1,7 @@
 /* Curated complete Korean given names, NOT a crawled 2000–2007 birth-ranking database. */
-(function(root){
-'use strict';
+(function (root) {
+  'use strict';
+  // prettier-ignore
 const groups=[
  {weight:5,names:'민준 서준 도윤 예준 시우 하준 주원 지호 지후 준우 준서 건우 현우 지훈 우진 선우 민재 현준 연우 정우 승우 승현 준혁 지환 승민 유준 준영 진우 성민 태현 동현 수빈 재윤 민성 성현 태민 준호 재현 지민 정민 재민 현수 민수 성훈 상현 동건 동훈 준수 수현 승준 경민 정훈 영준 민규 승훈'.split(' ')},
  {weight:3,names:'성준 진호 태준 동혁 상민 병찬 정현 기현 태훈 재훈 석현 현빈 태영 상훈 영훈 도현 재영 정윤 재원 준원 태원 동욱 승환 재환 진영 성진 우성 성빈 종현 종민 창민 창현 효준 강민 규민 대현 경수 경훈 종훈 원준 성우 진수 동우 민우 지웅 태웅 정빈 주형 준형 동준 성원 정호 재호 윤호 상우 동민 현성 규현 주호 명준 경준 태호 지수 윤성 승호 도훈 석준 영민'.split(' ')},
