@@ -103,3 +103,50 @@ test('v0.6.0 saves (full game object) still load, bare or wrapped', () => {
     assert.deepEqual(clone(C.loadSave(C.toSave(g)).game), clone(g));
   }
 });
+
+test('tuning values are finite numbers and frozen', () => {
+  const { TUNING } = require('../src/core/tuning.js');
+  const walk = (o, path) => {
+    assert(Object.isFrozen(o), path + ' is frozen');
+    for (const [k, v] of Object.entries(o)) {
+      if (v && typeof v === 'object') walk(v, path + '.' + k);
+      else if (typeof v !== 'string') assert(Number.isFinite(v), `${path}.${k} is a finite number`);
+    }
+  };
+  walk(TUNING, 'TUNING');
+  assert.throws(() => {
+    'use strict';
+    TUNING.roles.retention.base = 1;
+  });
+});
+
+test('season steps: role rules, growth ceiling and plan score bounds', () => {
+  const { TUNING } = require('../src/core/tuning.js');
+  const always = () => 0, // every chance roll succeeds
+    never = () => 0.999999; // every chance roll fails
+  const base = { impact: 60, previous: null, yearIndex: 1, round: 1, fit: 100, daysLost: 0, blockedRegular: false };
+  assert.equal(M.decideRole({ ...base, daysLost: TUNING.health.rehabDays }, always).route, 'rehab');
+  assert.equal(M.decideRole(base, always).route, 'regular');
+  assert.equal(M.decideRole(base, always).core, true);
+  assert.deepEqual(
+    [M.decideRole({ ...base, blockedRegular: true }, always).route, M.decideRole({ ...base, blockedRegular: true }, always).reason],
+    ['backup', 'cohort-competition'],
+  );
+  assert.equal(M.decideRole(base, never).route, 'futures');
+  const lastYearRegular = { route: 'regular', performance: 0 };
+  assert.equal(M.decideRole({ ...base, previous: lastYearRegular }, always).reason, 'role-retained');
+  assert.equal(M.decideRole({ ...base, previous: lastYearRegular }, never).route, 'backup');
+  assert.equal(M.decideRole({ ...base, impact: 30, previous: { route: 'regular', performance: -2 } }, never).route, 'futures');
+
+  const p = D.generatePool('steps06').players.find((x) => x.role === 'IF');
+  const atCeiling = { ...p.potentialTools };
+  const grown = M.developTools({ ...p, growthCurve: 'early', developmentRate: 1.2 }, atCeiling, 0, 20, 0, D.rng('g'));
+  // Tools are rounded to 3 decimals after clamping, so they can sit up to 0.0005 above the ceiling.
+  for (const k of Object.keys(grown)) assert(grown[k] <= p.potentialTools[k] + 0.0005, 'growth never passes the hidden ceiling');
+
+  for (const growth of [-5, 0, 2, 50])
+    for (const route of ['regular', 'futures', 'rehab']) {
+      const s = M.planScoreOf(p, { startGrade: 40, growth, yearIndex: 0, games: route === 'regular' ? 100 : 0, route, daysLost: 0 });
+      assert(s >= TUNING.scores.plan.min && s <= TUNING.scores.plan.max);
+    }
+});

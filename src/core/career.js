@@ -6,6 +6,7 @@
   const TEAMS = root.DraftClubs || (typeof require !== 'undefined' ? require('./clubs.js') : null);
   const byTeam = Object.fromEntries(TEAMS.map((t) => [t.id, t]));
   const { rng, normal, clamp, round, mean } = D;
+  const { TUNING: T, letter } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   const SEASONS = 5;
   const fit = (p, t) => S.fit(p, t);
@@ -60,29 +61,32 @@
     return out;
   }
   function standings(seed, year, records) {
+    const L = T.league,
+      Rt = L.rating;
+    const winChance = (a, b) => 1 / (1 + Math.exp((ratings[b.teamId] - ratings[a.teamId]) / L.logisticScale));
     const ratings = {},
       table = TEAMS.map((t) => ({
         teamId: t.id,
         wins: 0,
         losses: 0,
-        games: 144,
+        games: (TEAMS.length - 1) * T.league.gamesPerPair,
         rookieContribution: records.filter((x) => x.teamId === t.id).reduce((a, x) => a + x.contribution, 0),
       }));
     for (const t of TEAMS) {
       const r = rng(seed + '-background-' + year + '-' + t.id);
       ratings[t.id] =
-        50 +
-        (11 - t.rank) * 2.2 +
-        normal(r) * 12 +
-        Math.min(9, table.find((x) => x.teamId === t.id).rookieContribution / 35);
+        Rt.base +
+        (Rt.rankPivot - t.rank) * Rt.perRank +
+        normal(r) * Rt.noise +
+        Math.min(Rt.rookieMax, table.find((x) => x.teamId === t.id).rookieContribution / Rt.rookieScale);
     }
     const r = rng(seed + '-schedule-' + year);
     for (let i = 0; i < 10; i++)
       for (let j = i + 1; j < 10; j++)
-        for (let n = 0; n < 16; n++) {
+        for (let n = 0; n < L.gamesPerPair; n++) {
           const a = table[i],
             b = table[j],
-            chance = 1 / (1 + Math.exp((ratings[b.teamId] - ratings[a.teamId]) / 23));
+            chance = winChance(a, b);
           const [w, l] = r() < chance ? [a, b] : [b, a];
           w.wins++;
           l.losses++;
@@ -97,7 +101,7 @@
       let aw = advantage,
         bw = 0;
       while (aw < need && bw < need) {
-        if (post() < 1 / (1 + Math.exp((ratings[b.teamId] - ratings[a.teamId]) / 23))) aw++;
+        if (post() < winChance(a, b)) aw++;
         else bw++;
       }
       const winner = aw > bw ? a : b;
@@ -136,17 +140,19 @@
         });
       }
     }
+    const H = T.awards.hitter,
+      P = T.awards.pitcher;
     best(
       'hitter',
       '드래프트 동기 올해의 타자',
-      (s) => s.pa >= 60,
-      (s) => s.pa * 0.055 + (s.ops - 0.65) * 50 + s.hr * 0.7,
+      (s) => s.pa >= H.minPA,
+      (s) => s.pa * H.perPA + (s.ops - H.opsPivot) * H.perOps + s.hr * H.perHR,
     );
     best(
       'pitcher',
       '드래프트 동기 올해의 투수',
-      (s) => s.outs >= 60,
-      (s) => s.outs * 0.12 + (5.5 - s.era) * 6 + s.k * 0.05,
+      (s) => s.outs >= P.minOuts,
+      (s) => s.outs * P.perOut + (P.eraPivot - s.era) * P.perEra + s.k * P.perK,
     );
     for (const x of records.filter((x) => x.teamId === league.champion && x.stats.games > 0))
       out.push({
@@ -170,17 +176,20 @@
         states.filter((s) => s.status === 'active' && s.currentTeamId === t.id).length,
       ]),
     );
-    const touched = new Set();
+    const touched = new Set(),
+      Rl = T.offseason.release,
+      Tr = T.offseason.trade;
     for (const s of states) {
-      if (s.status !== 'active' || counts[s.currentTeamId] <= 4) continue;
+      if (s.status !== 'active' || counts[s.currentTeamId] <= Rl.minClubSize) continue;
       const p = byId[s.playerId],
         rec = records.find((x) => x.playerId === s.playerId),
         r = rng(seed + '-release-' + year + '-' + p.id);
       const old = career.years.at(-1)?.records.find((x) => x.playerId === s.playerId);
+      // Stalled: old enough, below the grade bar and two straight seasons without a first-team game.
       const stalled =
-        yearIndex >= 2 && s.age >= 23 && s.scoutReady < 40 && rec.stats.games === 0 && old?.stats.games === 0;
+        yearIndex >= Rl.fromYear && s.age >= Rl.minAge && s.scoutReady < Rl.maxGrade && rec.stats.games === 0 && old?.stats.games === 0;
       const chance = stalled
-        ? clamp(0.07 + (40 - s.scoutReady) * 0.014 + Math.max(0, s.age - 23) * 0.012, 0, 0.24)
+        ? clamp(Rl.base + (Rl.maxGrade - s.scoutReady) * Rl.perGrade + Math.max(0, s.age - Rl.minAge) * Rl.perAge, 0, Rl.max)
         : 0;
       if (r() < chance) {
         const from = s.currentTeamId;
@@ -200,20 +209,21 @@
       }
     }
     const rr = rng(seed + '-trade-' + year);
-    if (rr() < 0.68) {
+    if (rr() < Tr.chance) {
       const active = states.filter(
           (s) =>
             s.status === 'active' &&
             !touched.has(s.playerId) &&
-            !records.some((x) => x.playerId === s.playerId && x.route === 'regular' && x.contribution >= 50),
+            !records.some((x) => x.playerId === s.playerId && x.route === 'regular' && x.contribution >= Tr.protectContribution),
         ),
         pairs = [];
       const plans = S.plans(seed, TEAMS);
+      const V = Tr.value;
       const publicValue = (s) =>
-        s.scoutReady * 0.65 +
-        byId[s.playerId].scoutCeiling * 0.25 -
-        Math.max(0, s.age - 22) * 1.1 +
-        (records.find((x) => x.playerId === s.playerId)?.contribution || 0) * 0.08;
+        s.scoutReady * V.perReady +
+        byId[s.playerId].scoutCeiling * V.perFV -
+        Math.max(0, s.age - V.agePivot) * V.perAge +
+        (records.find((x) => x.playerId === s.playerId)?.contribution || 0) * V.perContribution;
       for (let i = 0; i < active.length; i++)
         for (let j = i + 1; j < active.length; j++) {
           const a = active[i],
@@ -225,12 +235,12 @@
             tb = { ...byTeam[b.currentTeamId], ...plans[b.currentTeamId] },
             gainA = fit(pb, ta) - fit(pa, ta),
             gainB = fit(pa, tb) - fit(pb, tb);
-          if (gainA < 0 || gainB < 0 || gainA + gainB < 30 || Math.abs(publicValue(a) - publicValue(b)) > 8)
+          if (gainA < 0 || gainB < 0 || gainA + gainB < Tr.minCombinedGain || Math.abs(publicValue(a) - publicValue(b)) > Tr.maxValueGap)
             continue;
           pairs.push({
             a,
             b,
-            score: gainA + gainB - Math.abs(publicValue(a) - publicValue(b)) * 2 + rr() * 25,
+            score: gainA + gainB - Math.abs(publicValue(a) - publicValue(b)) * Tr.gapWeight + rr() * Tr.noise,
           });
         }
       pairs.sort((a, b) => b.score - a.score || a.a.playerId.localeCompare(b.a.playerId));
@@ -296,10 +306,10 @@
         };
       const t = { ...byTeam[state.currentTeamId], ...plans[state.currentTeamId] },
         rank = rankings[t.id + '-' + p.role].indexOf(p.id),
-        capacity = { SP: 5, RP: 7, C: 2, IF: 4, OF: 3 }[p.role];
+        capacity = T.roles.cohortCapacity[p.role];
       const rec = M.simulatePlayer(p, sel, { seed }, t, fit(p, t), yearIndex ? state : null, yearIndex, {
         blockedRegular: rank >= capacity,
-        closer: p.role === 'RP' && rank === 0 && state.ability >= 48 && yearIndex >= 1,
+        closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
       });
       Object.assign(state, rec.endState);
       return rec;
@@ -337,9 +347,10 @@
         own.map((s) => byId[s.playerId]),
         club,
       );
-      const production = clamp((total / (own.length * Math.max(1, career.years.length) * 30)) * 100, 0, 100);
-      const growth = clamp(development * 3.5 + 35, 0, 100);
-      const score = round(needs * 0.2 + production * 0.5 + growth * 0.3);
+      const Rv = T.review;
+      const production = clamp((total / (own.length * Math.max(1, career.years.length) * Rv.contributionPerSeason)) * 100, 0, 100);
+      const growth = clamp(development * Rv.growth.perPoint + Rv.growth.base, 0, 100);
+      const score = round(needs * Rv.weights.need + production * Rv.weights.production + growth * Rv.weights.growth);
       return {
         teamId: t.id,
         count: own.length,
@@ -349,10 +360,10 @@
         established,
         development: round(development, 1),
         score,
-        grade: score >= 85 ? 'A' : score >= 70 ? 'B' : score >= 55 ? 'C' : 'D',
+        grade: letter(score, Rv.gradeCuts),
         pending: own.filter((s) => {
           const st = career.players[s.playerId];
-          return st.status === 'active' && st.age <= 24 && st.scoutReady < byId[s.playerId].scoutCeiling;
+          return st.status === 'active' && st.age <= Rv.pendingMaxAge && st.scoutReady < byId[s.playerId].scoutCeiling;
         }).length,
         released: own.filter((s) => career.players[s.playerId].status === 'released').length,
         awards: career.years

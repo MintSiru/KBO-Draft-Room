@@ -1,5 +1,14 @@
 # 변경 이력
 
+## 0.6.3 — 시즌 시뮬레이션 분리와 튜닝 파일
+
+게임 결과는 0.6.2와 같습니다. golden 테스트가 일치하고, 600회 밸런스 실험 결과가 바이트 단위로 같습니다. 저장 호환에도 변화가 없습니다(`SIM_VERSION` 0.6 유지).
+
+- 시즌·경력·평가의 밸런스 숫자 282개(연차별·구간 배열 값 포함)를 `src/core/tuning.js` 한 곳에 이름과 설명을 붙여 모았습니다. 실수로 바뀌지 않게 잠가 두었습니다.
+- 약 250줄이던 `simulatePlayer`를 단계별 함수로 나눴습니다. 부상 `rollHealth`, 보직 `decideRole`, 출전 경기 `firstTeamGames`/`futuresGames`, 기록 `hitterStats`/`pitcherStats`, 성장 `developTools`, 점수 `performanceOf`/`contributionOf`/`planScoreOf`입니다.
+- `career.js`의 리그 승률, 개인상, 방출·트레이드, 5년 평가 숫자도 옮겼습니다. 소수 상수가 하나도 남지 않았습니다.
+- 튜닝 값 검사와 보직 규칙·성장 상한·계획 점수 범위 단위 테스트를 추가했습니다.
+
 ## 0.6.2 — 저장 형식 정리
 
 게임 규칙과 결과는 0.6.1과 같습니다(골든 마스터 일치).

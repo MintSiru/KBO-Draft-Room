@@ -38,6 +38,7 @@ src/
     clubs catalog names ko biography   정적 데이터와 한국어 조사
     grades prospects                   20–80 등급, 선수 풀 생성
     scouting draft-ai press voices     팀장·CPU·언론·대사
+    tuning                             밸런스 숫자(시즌·경력·평가) 모음
     season career engine               시즌·5년 경력·진행과 저장 복원
   ui/                 화면(순수 함수로 HTML 생성) + app.js(상태·이벤트)
 tests/                단위·DOM·골든·브라우저·밸런스 테스트
@@ -47,6 +48,15 @@ release.py            dist/에 배포용 HTML과 소스 zip 생성
 ```
 
 `src/`를 고쳤다면 `python3 build.py`로 `index.html`을 다시 만드세요.
+
+### 밸런스 조정
+
+시즌·경력·평가의 숫자는 모두 `src/core/tuning.js`에 이름과 설명을 붙여 모아 두었습니다. 값을 바꾸면 결과가 바뀌므로 다음 순서를 따르세요.
+
+1. `tuning.js` 수정
+2. `src/core/engine.js`의 `SIM_VERSION` 올리기. 이전 버전 저장을 다른 결과로 이어 가지 않게 합니다.
+3. `node tests/golden.cjs --write`로 기준 다시 기록
+4. `npm run test:balance`로 통계 확인
 
 ## 개발
 
