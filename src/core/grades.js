@@ -3,6 +3,8 @@
    player is rounded to five-point grades and includes observer error. */
 (function (root) {
   'use strict';
+  const { TUNING } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
+  const V = TUNING.generation.velocity;
   const clamp = (n, a = 20, b = 80) => Math.max(a, Math.min(b, n));
   const grade = (n) => clamp(Math.round(n / 5) * 5);
   const ROLES = { SP: '선발투수', RP: '불펜투수', C: '포수', IF: '내야수', OF: '외야수' };
@@ -49,8 +51,9 @@
   /** Generates hidden and public tools for one prospect. Consumes `r` in a fixed order. */
   function make(role, type, bio, band, r) {
     const pitcher = role === 'SP' || role === 'RP',
-      high = bio.entryCategory === 'high-school',
-      early = bio.entryCategory === 'college-early';
+      high = bio.entryCategory === 'high-school' || bio.entryCategory === 'study-abroad',
+      early = bio.entryCategory === 'college-early',
+      twoYear = bio.entryCategory === 'college-two-year'; // same age as early entrants, a little more finished
     const range = TALENT_BANDS[band],
       base = range[0] + r() * (range[1] - range[0]);
     const shape = (pitcher ? PITCHER_SHAPES : HITTER_SHAPES)[type];
@@ -62,13 +65,15 @@
       growthCurve = curveRoll < 0.2 ? 'early' : curveRoll < 0.78 ? 'normal' : 'late';
     const rawProject = high && band >= 2 && r() < 0.12;
     const gap =
-      (high ? 10 + r() * 8 : early ? 7 + r() * 6 : bio.proExperience ? 3 + r() * 6 : 4 + r() * 6) +
+      (high ? 10 + r() * 8 : early ? 7 + r() * 6 : twoYear ? 6 + r() * 5 : bio.proExperience ? 3 + r() * 6 : 4 + r() * 6) +
       (growthCurve === 'late' ? 2 : 0) +
       (rawProject ? 8 + r() * 5 : 0);
     const observerBias = (r() - 0.5) * (high ? 7 : 5),
-      uncertainty = high ? '높음' : early ? '보통' : bio.proExperience?.level === 'MLB' ? '보통' : '낮음';
+      uncertainty = high ? '높음' : early || twoYear ? '보통' : bio.proExperience?.level === 'MLB' ? '보통' : '낮음';
+    const arm = pitcher ? normal(r) * 3 : 0;
     for (const k of keys(role)) {
-      potentialTools[k] = clamp(base + shape[k] - center + normal(r) * 3);
+      const lift = k === 'stuff' ? arm * V.armToStuff : 0;
+      potentialTools[k] = clamp(base + shape[k] - center + normal(r) * 3 + lift);
       trueTools[k] = clamp(
         potentialTools[k] -
           gap * (k === 'speed' ? 0.4 : 0.8 + r() * 0.4) +
@@ -82,6 +87,9 @@
       trueTools.eye = clamp(potentialTools.eye - gap * 0.8);
       tools.eye = grade(trueTools.eye + observerBias + normal(r) * 4);
     }
+    const velocity = pitcher
+      ? Math.round(clamp(V.base + (trueTools.stuff - V.pivot) * V.perStuff + arm * V.perArm + (high ? 0 : V.adultBonus) + normal(r) * V.noise, V.min, V.max))
+      : null;
     const trueReady = overall(trueTools, role),
       upside = overall(potentialTools, role),
       ready = grade(overall(tools, role));
@@ -121,6 +129,7 @@
     if (ceilingGrade >= 55 && ceilingGrade - ready >= 10) pickTags.push('실링');
     if (!pickTags.length) pickTags.push(scoutCeiling - ready >= 10 ? '육성형' : '역할형');
     return {
+      velocity,
       ready,
       trueReady,
       upside,

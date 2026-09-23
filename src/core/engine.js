@@ -11,13 +11,15 @@
   const { ROLES, REGIONS, rng, clamp } = D;
   const K = D.ko,
     Bio = D.bio;
+  const { TUNING } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const Voices = root.DraftVoices || (typeof require !== 'undefined' ? require('./voices.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '0.6.4',
+  const RELEASE = '0.7.0',
     VERSION = 6,
-    ROUNDS = 7,
-    POOL_SIZE = 200;
+    ROUND_OPTIONS = [5, 8, 11], // national rounds the player can choose; 11 is the current KBO format
+    ROUNDS = 11,
+    POOL_SIZE = D.POOL_SIZE;
   const CONFIG = Object.freeze({
     nationalRounds: ROUNDS,
     seasonCount: Career.SEASONS,
@@ -62,10 +64,10 @@
           ? '역할 확보 전망'
           : '추가 육성 필요';
   }
-  function makeSchedule(local) {
+  function makeSchedule(local, rounds = ROUNDS) {
     const a = [];
     if (local) for (const t of TEAMS) a.push({ teamId: t.id, round: 0, label: '지역 1차' });
-    for (let round = 1; round <= ROUNDS; round++)
+    for (let round = 1; round <= rounds; round++)
       for (const t of TEAMS) a.push({ teamId: t.id, round, label: round + 'R' });
     return a;
   }
@@ -75,20 +77,22 @@
     pool.publicPlayers ??= pool.players.map(R.project);
     return pool.publicPlayers;
   }
-  function createGame(teamId, local = false, seed = 'default', difficulty = 'normal') {
-    if (!Object.hasOwn(teamById, teamId) || !Object.hasOwn(R.DIFFICULTIES, difficulty))
-      throw Error('구단 또는 난이도를 확인해야 합니다.');
+  function createGame(teamId, local = false, seed = 'default', difficulty = 'normal', rounds = ROUNDS) {
+    if (!Object.hasOwn(teamById, teamId) || !Object.hasOwn(R.DIFFICULTIES, difficulty) || !ROUND_OPTIONS.includes(rounds))
+      throw Error('구단, 난이도, 라운드 수를 확인해야 합니다.');
     const g = {
       version: VERSION,
       teamId,
       local: !!local,
       seed: String(seed),
       difficulty,
+      rounds,
       draftDate: Bio.DRAFT_DATE,
       phase: 'preview',
-      schedule: makeSchedule(local),
+      schedule: makeSchedule(local, rounds),
       cursor: 0,
       picks: [],
+      devSigns: [],
       news: [],
       gmChoice: null,
       season: null,
@@ -158,7 +162,7 @@
       );
     g.picks.push(s);
     g.cursor++;
-    if (g.cursor === g.schedule.length) g.phase = 'interviews';
+    if (g.cursor === g.schedule.length) g.phase = 'signing';
     return s;
   }
   function aiChoice(g) {
@@ -200,6 +204,46 @@
       teamFor(g),
     );
   }
+  // ---------------------------------------------------------------- development contracts
+
+  /** Every player tied to a club this class: draft picks, then development contracts. */
+  const signed = (g) => [...g.picks, ...(g.devSigns || [])];
+  const mySigned = (g) => signed(g).filter((s) => s.teamId === g.teamId);
+  /** Pool players nobody drafted or signed, best public rank first. */
+  function undrafted(g) {
+    const taken = new Set(signed(g).map((s) => s.playerId));
+    return poolFor(g).players.filter((p) => !taken.has(p.id));
+  }
+  function devEntry(g, teamId, playerId) {
+    const k = (g.devSigns || []).length;
+    return { teamId, round: g.rounds + 1, label: '육성', dev: true, playerId, overall: g.schedule.length + k + 1, fit: fit(getPlayer(g, playerId), teamFor(g, teamId)) };
+  }
+  /**
+   * The user signs up to `max` undrafted players; then each CPU club, in draft order, signs cpuMin–cpuMax more.
+   * CPU clubs take turns one player at a time and only see public information.
+   */
+  function signDevelopment(g, ids = []) {
+    const D_ = TUNING.devContracts;
+    if (g.phase !== 'signing') throw Error('육성선수 계약은 드래프트가 끝난 뒤에 합니다.');
+    if (!Array.isArray(ids) || ids.length > D_.max || new Set(ids).size !== ids.length) throw Error('육성선수는 최대 ' + D_.max + '명입니다.');
+    const free = new Set(undrafted(g).map((p) => p.id));
+    if (!ids.every((id) => free.has(id))) throw Error('계약할 수 없는 선수입니다.');
+    g.devSigns = [];
+    for (const id of ids) g.devSigns.push(devEntry(g, g.teamId, id));
+    const order = g.schedule.filter((s) => s.round === 1 && s.teamId !== g.teamId).map((s) => s.teamId);
+    const quota = Object.fromEntries(order.map((id) => [id, D_.cpuMin + Math.floor(rng(g.seed + '-dev-count-' + id)() * (D_.cpuMax - D_.cpuMin + 1))]));
+    for (let turn = 0; turn < D_.cpuMax; turn++)
+      for (const teamId of order) {
+        if (turn >= quota[teamId]) continue;
+        const t = teamFor(g, teamId),
+          mine = signed(g).filter((s) => s.teamId === teamId).map((s) => R.project(getPlayer(g, s.playerId)));
+        const ranked = R.aiScores(undrafted(g).map(R.project), t, mine, g.difficulty, `${g.seed}-dev-${teamId}-${turn}`);
+        if (ranked[0]) g.devSigns.push(devEntry(g, teamId, ranked[0].id));
+      }
+    g.phase = 'interviews';
+    return g.devSigns;
+  }
+
   function chooseGM(g, choice) {
     if (
       g.phase !== 'interviews' ||
@@ -257,9 +301,11 @@
       throw Error('드래프트와 단장 인터뷰를 먼저 완료해야 합니다.');
     const { byId } = poolFor(g);
     if (!g.career) {
-      g.career = Career.create(g.picks, byId, g.seed);
-      Career.advance(g.career, g.picks, byId, g.seed);
-      g.season = g.career.years[0].records.filter((s) => s.teamId === g.teamId);
+      g.career = Career.create(signed(g), byId, g.seed);
+      Career.advance(g.career, signed(g), byId, g.seed);
+      // First-year evaluation covers this club's draft picks (development contracts are judged over five years).
+      const drafted = new Set(myPicks(g).map((s) => s.playerId));
+      g.season = g.career.years[0].records.filter((s) => s.teamId === g.teamId && drafted.has(s.playerId));
       g.owner = evaluate(g, g.season);
     }
     g.phase = 'season';
@@ -267,14 +313,14 @@
   }
   function nextSeason(g) {
     if (!g.career || !['season', 'owner'].includes(g.phase)) throw Error('첫 시즌을 먼저 진행해야 합니다.');
-    const result = Career.advance(g.career, g.picks, poolFor(g).byId, g.seed);
+    const result = Career.advance(g.career, signed(g), poolFor(g).byId, g.seed);
     g.phase = 'season';
     return result;
   }
   function careerReview(g) {
-    return g.career ? Career.review(g.career, g.picks, poolFor(g).byId) : [];
+    return g.career ? Career.review(g.career, signed(g), poolFor(g).byId) : [];
   }
-  const PHASES = ['preview', 'scouting', 'draft', 'interviews', 'season', 'owner'];
+  const PHASES = ['preview', 'scouting', 'draft', 'signing', 'interviews', 'season', 'owner'];
 
   /*
    * Saves
@@ -288,7 +334,7 @@
    * (tests/golden.cjs fails until you do). A save from another SIM_VERSION is refused, never silently
    * replayed into a different history.
    */
-  const SIM_VERSION = '0.6',
+  const SIM_VERSION = '0.7',
     SAVE_FORMAT = 'draft-room-save',
     SAVE_VERSION = 2;
 
@@ -302,8 +348,10 @@
       local: g.local,
       seed: g.seed,
       difficulty: g.difficulty,
+      rounds: g.rounds,
       phase: g.phase,
       picks: myPicks(g).map((s) => s.playerId),
+      dev: (g.devSigns || []).filter((s) => s.teamId === g.teamId).map((s) => s.playerId),
       gmChoice: g.gmChoice,
       seasons: g.career?.years.length ?? 0,
     };
@@ -320,6 +368,7 @@
         !s ||
         !Object.hasOwn(R.DIFFICULTIES, s.difficulty) ||
         !Object.hasOwn(teamById, s.teamId) ||
+        !ROUND_OPTIONS.includes(s.rounds) ||
         typeof s.seed !== 'string' ||
         !s.seed.length ||
         s.seed.length > 200 ||
@@ -332,7 +381,7 @@
         s.seasons > Career.SEASONS
       )
         return null;
-      const g = createGame(s.teamId, s.local, s.seed, s.difficulty);
+      const g = createGame(s.teamId, s.local, s.seed, s.difficulty, s.rounds);
       const pristine = !s.picks.length && s.gmChoice == null && !s.seasons;
       if (s.phase === 'preview') return pristine ? g : null;
       openScouting(g);
@@ -349,6 +398,8 @@
       }
       cpuPicks();
       if ((s.phase === 'draft') !== (g.phase === 'draft')) return null;
+      if (s.phase === 'signing') return s.gmChoice == null && !s.seasons && !(s.dev || []).length ? g : null;
+      if (g.phase === 'signing') signDevelopment(g, s.dev || []);
       if (s.gmChoice != null) chooseGM(g, s.gmChoice);
       if (['season', 'owner'].includes(s.phase) && !s.seasons) return null;
       if (s.seasons) {
@@ -372,7 +423,13 @@
     const seasons = g0.career == null ? 0 : g0.career.years?.length;
     if (g0.career != null && !seasons) return null;
     const g = replay(
-      { ...g0, picks: g0.picks.filter((p) => p.teamId === g0.teamId).map((p) => p.playerId), seasons },
+      {
+        rounds: 7,
+        ...g0,
+        picks: g0.picks.filter((p) => p.teamId === g0.teamId).map((p) => p.playerId),
+        dev: (g0.devSigns || []).filter((p) => p.teamId === g0.teamId).map((p) => p.playerId),
+        seasons,
+      },
       g0.picks.length,
     );
     if (!g) return null;
@@ -424,6 +481,7 @@
     chooseGM,
     fanState,
     ROUNDS,
+    ROUND_OPTIONS,
     POOL_SIZE,
     TEAMS,
     REGIONS,
@@ -448,6 +506,11 @@
     evaluate,
     validate,
     restore,
+    signDevelopment,
+    tuning: TUNING,
+    undrafted,
+    signed,
+    mySigned,
     replay,
     toSave,
     loadSave,

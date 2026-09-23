@@ -17,7 +17,7 @@
     </section>`;
   }
 
-  function setup({ selectedTeam, difficulty, local }, t) {
+  function setup({ selectedTeam, difficulty, local, rounds }, t) {
     const clubs = C.TEAMS.map(
       (club, i) => `<tr aria-selected="${club.id === selectedTeam}">
         <td class="n">${i + 1}</td>
@@ -30,7 +30,7 @@
     return `
     <div class="page-head">
       <h1>${C.ENTRY_YEAR} KBO 신인 드래프트</h1>
-      <p>구단을 맡아 7라운드 지명을 하고, 뽑은 선수들이 ${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌 동안 어떻게 자라는지 지켜봅니다. 후보 200명은 게임마다 새로 만들어집니다.</p>
+      <p>구단을 맡아 신인을 지명하고, 뽑은 선수들이 ${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌 동안 어떻게 자라는지 지켜봅니다. 후보 ${C.POOL_SIZE}명은 게임마다 새로 만들어집니다.</p>
     </div>
     <div class="cols">
       <div>
@@ -60,8 +60,13 @@
             <p>${esc(diff[difficulty].hint)}. 선수 능력과 성장 확률은 난이도와 무관합니다.</p>
           </div>
           <div class="settings-row">
+            <b>지명 라운드</b>
+            <div class="seg" role="group" aria-label="지명 라운드">${C.ROUND_OPTIONS.map((n) => `<button data-action="rounds" data-id="${n}" aria-pressed="${rounds === n}">${n}라운드</button>`).join('')}</div>
+            <p>구단마다 라운드당 1명씩, 총 ${rounds}명을 지명합니다. 드래프트가 끝나면 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약을 할 수 있습니다.</p>
+          </div>
+          <div class="settings-row">
             <label class="check" for="local-toggle"><input type="checkbox" id="local-toggle" ${local ? 'checked' : ''}> <b>지역 1차 지명</b></label>
-            <p>${local ? '켜짐: 각 구단이 연고 지역 고졸 선수 1명을 먼저 지명한 뒤 전국 7라운드를 진행합니다. 총 8명.' : '꺼짐: 전국 7라운드만 진행합니다. 총 7명.'} 과거 연고지 제도를 단순화한 규칙입니다.</p>
+            <p>${local ? `켜짐: 각 구단이 연고 지역 고졸 선수 1명을 먼저 지명한 뒤 전국 ${rounds}라운드를 진행합니다.` : '꺼짐: 전국 라운드만 진행합니다.'} 과거 연고지 제도를 단순화한 규칙입니다.</p>
           </div>
           <button class="btn primary wide" data-action="start">${esc(C.ko.p(t.short, "으로/로"))} 시작</button>
         </div>

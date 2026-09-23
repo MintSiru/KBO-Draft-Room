@@ -1,6 +1,6 @@
 {
   "name": "kbo-draft-room",
-  "version": "0.6.4",
+  "version": "0.7.0",
   "private": true,
   "description": "Offline, single-file fictional KBO rookie draft and five-season career simulator",
   "scripts": {

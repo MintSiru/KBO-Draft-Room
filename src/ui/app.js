@@ -6,14 +6,15 @@
   const $ = (s) => document.querySelector(s);
   const STORE = 'draft-room-kbo-v6-scouting'; // unchanged since V0.6 so existing saves keep loading
   const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', '5시즌', '평가'];
-  const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, interviews: 4, season: 5, owner: 6 };
+  const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, signing: 4, interviews: 4, season: 5, owner: 6 };
 
   const newSeed = () => Date.now() + '-' + Math.random();
   const defaultView = () => ({ query: '', sort: 'rank', sortDir: 'asc', role: 'ALL', pathway: 'ALL', tier: 'ALL', pickType: 'ALL', onlyStars: false });
 
   const state = {
     game: null,
-    setup: { selectedTeam: 'kiwoom', difficulty: 'normal', local: false, seed: newSeed() },
+    setup: { selectedTeam: 'kiwoom', difficulty: 'normal', local: false, rounds: C.ROUNDS, seed: newSeed() },
+    dev: { chosen: new Set(), role: 'ALL' }, // development-contract picks before they are confirmed
     view: defaultView(), // draft-board filters
     selected: null, // player shown in the draft profile
     stars: new Set(),
@@ -31,7 +32,8 @@
   // ---------- persistence ----------
   function adopt(game, stars = []) {
     state.game = game;
-    Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty });
+    Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty, rounds: game.rounds });
+    state.dev = { chosen: new Set(), role: 'ALL' };
     state.stars = new Set(stars.filter((id) => typeof id === 'string' && C.getPlayer(game, id)));
     state.yearIndex = (game.career?.years.length || 1) - 1;
     if (game.phase === 'draft') C.advanceToUser(game);
@@ -42,6 +44,7 @@
       if (Object.hasOwn(C.rules.DIFFICULTIES, saved.difficulty)) state.setup.difficulty = saved.difficulty;
       if (Object.hasOwn(C.teamById, saved.selectedTeam)) state.setup.selectedTeam = saved.selectedTeam;
       state.setup.local = saved.local === true;
+      if (C.ROUND_OPTIONS.includes(saved.rounds)) state.setup.rounds = saved.rounds;
       const stored = saved.save ?? saved.game; // `game` is the v0.6.0 layout
       const loaded = stored ? C.loadSave(stored) : {};
       if (loaded.game) adopt(loaded.game, Array.isArray(saved.stars) ? saved.stars : []);
@@ -57,10 +60,10 @@
     state.storageOK = false;
   }
   function save() {
-    const { selectedTeam, local, difficulty } = state.setup;
+    const { selectedTeam, local, difficulty, rounds } = state.setup;
     try {
       const save = state.game ? C.toSave(state.game) : null;
-      localStorage.setItem(STORE, JSON.stringify({ selectedTeam, local, difficulty, save, stars: [...state.stars] }));
+      localStorage.setItem(STORE, JSON.stringify({ selectedTeam, local, difficulty, rounds, save, stars: [...state.stars] }));
     } catch (e) {
       state.storageOK = false;
     }
@@ -85,6 +88,7 @@
       case 'preview': return UI.forecasts(game);
       case 'scouting': return UI.briefing(game);
       case 'draft': return UI.board(game, state.view, state.stars, state.selected);
+      case 'signing': return UI.signing(game, state.dev.chosen, state.dev.role);
       case 'interviews': return UI.interviews(game);
       case 'season': return UI.season(game, state.yearIndex);
       default: return UI.review(game);
@@ -274,10 +278,30 @@
       document.querySelector(`[data-action="difficulty"][data-id="${id}"]`)?.focus();
     },
     start: () => {
-      const { selectedTeam, local, seed, difficulty } = state.setup;
+      const { selectedTeam, local, seed, difficulty, rounds } = state.setup;
       Object.assign(state, { recordsOpen: false, yearIndex: 0, selected: null, view: defaultView(), stars: new Set() });
       lastAdvance = 0;
-      state.game = C.createGame(selectedTeam, local, seed, difficulty);
+      state.game = C.createGame(selectedTeam, local, seed, difficulty, rounds);
+      state.dev = { chosen: new Set(), role: 'ALL' };
+      render();
+      toTop();
+    },
+    rounds: (id) => {
+      if (g()) return;
+      state.setup.rounds = Number(id);
+      render();
+      document.querySelector(`[data-action="rounds"][data-id="${id}"]`)?.focus();
+    },
+    'dev-toggle': (id) => {
+      const c = state.dev.chosen;
+      if (c.has(id)) c.delete(id);
+      else if (c.size < C.tuning.devContracts.max) c.add(id);
+      render();
+    },
+    'dev-role': (id) => ((state.dev.role = id), render()),
+    'dev-confirm': () => {
+      C.signDevelopment(g(), [...state.dev.chosen]);
+      state.dev = { chosen: new Set(), role: 'ALL' };
       render();
       toTop();
     },

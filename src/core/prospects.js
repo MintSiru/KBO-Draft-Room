@@ -6,6 +6,8 @@
   const Names = root.DraftNames || (typeof require !== 'undefined' ? require('./names.js') : null);
   const Ko = root.DraftKo || (typeof require !== 'undefined' ? require('./ko.js') : null);
   const G = root.DraftGrades || (typeof require !== 'undefined' ? require('./grades.js') : null);
+  const CLUBS = root.DraftClubs || (typeof require !== 'undefined' ? require('./clubs.js') : null);
+  const { TUNING } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const W = root.DraftWriter || (typeof require !== 'undefined' ? require('./writer.js') : null);
   const REGIONS = Bio.REGIONS,
     ROLES = G.ROLES;
@@ -94,6 +96,7 @@
   // Amateur tournaments. Descriptive only: results come from their own streams and never change players.
   const HS_NATIONAL = '다이아몬드 데일리배 전국고교야구대회',
     COLLEGE_NATIONAL = '퓨처 베이스볼배 대학야구 왕중왕전',
+    JUNIOR_COLLEGE_NATIONAL = '퓨처 베이스볼배 전문대학 야구대회',
     NATIONAL_QUALIFIERS = 4; // top four of each regional/conference event go to the national event
   const COLLEGE_CONFERENCES = [
     ['수도권', ['서울', '인천', '경기·강원']],
@@ -156,8 +159,19 @@
         if (i < NATIONAL_QUALIFIERS) collegeQualifiers.push(s);
       });
     }
+    // Two-year colleges: one league, then the top four meet in their own tournament.
+    const juniors = Cat.institutions.filter((x) => x.kind === 'college2');
+    const rj = rng(seed + '-school-event-2년제');
+    const juniorQualifiers = [];
+    juniors
+      .map((s) => ({ s, score: Bio.TIERS[s.tier].team * 60 + rj() * 55 }))
+      .sort((a, b) => b.score - a.score)
+      .forEach(({ s }, i) => {
+        map[s.id] = { event: '전문대학 리그', result: `${i + 1}위`, award: i === 0 ? '전문대학 리그 1위' : null, national: null };
+        if (i < NATIONAL_QUALIFIERS) juniorQualifiers.push(s);
+      });
     // National events from the qualifiers.
-    for (const [event, entrants] of [[HS_NATIONAL, hsQualifiers], [COLLEGE_NATIONAL, collegeQualifiers]]) {
+    for (const [event, entrants] of [[HS_NATIONAL, hsQualifiers], [COLLEGE_NATIONAL, collegeQualifiers], [JUNIOR_COLLEGE_NATIONAL, juniorQualifiers]]) {
       const reached = bracket(entrants, rng(seed + '-national-' + event));
       for (const s of entrants) {
         const result = roundLabel(reached.get(s.id));
@@ -167,22 +181,33 @@
     return map;
   }
 
-  // Pool composition. Each of the 8 regions gets 25 slots: 17 high-schoolers and 8 others.
-  const POOL_SIZE = 200,
-    SLOTS_PER_REGION = 25,
-    HIGH_SCHOOL_PER_REGION = 17;
+  // Pool composition. Each of the 8 regions gets 50 slots: 33 high-schoolers and 17 others (136 in total).
+  const POOL_SIZE = 400,
+    SLOTS_PER_REGION = 50,
+    HIGH_SCHOOL_PER_REGION = 33;
   const OTHER_PATHWAYS = [
-    ['대졸', 30],
-    ['대학 얼리', 16],
-    ['독립구단', 6],
-    ['해외파', 4],
-    ['마이너 복귀', 5],
-    ['해외독립 복귀', 2],
+    ['대졸', 56],
+    ['대학 얼리', 24],
+    ['2년제', 24],
+    ['독립구단', 12],
+    ['해외파', 6],
+    ['마이너 복귀', 10],
+    ['해외독립 복귀', 3],
   ];
-  const BAND_COUNTS = [110, 56, 24, 8, 2];
+  // One returnee slot is special: rarely a brief MLB career or another foreign league, otherwise the minors.
+  const RARE_RETURN = { mlb: 0.12, otherLeague: 0.15 };
+  const STUDY_ABROAD_CHANCE = 0.2; // one high-school slot per pool, sometimes, is a player who studied abroad
+  // Talent bands; the extra depth of a 400-player pool sits mostly in the lower bands.
+  const BAND_COUNTS = [250, 100, 36, 11, 3];
   const repeat = (value, n) => Array(n).fill(value);
 
   const pitcherRole = (role) => role === 'SP' || role === 'RP';
+  /** Index into the club list. Players lean towards a club from the region where they grew up. */
+  function favoriteTeam(region, r) {
+    const local = CLUBS.map((t, i) => (t.region === region ? i : -1)).filter((i) => i >= 0);
+    if (local.length && r() < TUNING.generation.localFavorite) return local[Math.floor(r() * local.length)];
+    return Math.floor(r() * CLUBS.length);
+  }
   function rollRole(r) {
     const roll = r();
     return roll < 0.32 ? 'SP' : roll < 0.49 ? 'RP' : roll < 0.58 ? 'C' : roll < 0.81 ? 'IF' : 'OF';
@@ -198,16 +223,11 @@
       usedNames = new Set(),
       players = [],
       honors = schoolHonors(seed);
-    const rareMLB = rng(seed + '-rare-mlb')() < 0.12;
-    // The 6th minor-league slot is occasionally a returnee with a brief MLB stint.
-    const otherPaths = shuffle(
-      [
-        ...OTHER_PATHWAYS.slice(0, 5).flatMap(([path, n]) => repeat(path, n)),
-        rareMLB ? 'MLB 경험 복귀' : '마이너 복귀',
-        ...repeat('해외독립 복귀', 2),
-      ],
-      r,
-    );
+    const rare = rng(seed + '-rare-return')();
+    const special = rare < RARE_RETURN.mlb ? 'MLB 경험 복귀' : rare < RARE_RETURN.mlb + RARE_RETURN.otherLeague ? '해외리그 복귀' : '마이너 복귀';
+    const otherPaths = shuffle([...OTHER_PATHWAYS.flatMap(([path, n]) => repeat(path, n)), special], r);
+    const abroad = rng(seed + '-study-abroad');
+    const studyAbroadSlot = abroad() < STUDY_ABROAD_CHANCE ? Math.floor(abroad() * HIGH_SCHOOL_PER_REGION * REGIONS.length) : -1;
     const bands = shuffle(
       BAND_COUNTS.flatMap((n, band) => repeat(band, n)),
       rng(seed + '-talent-bands'),
@@ -217,10 +237,13 @@
       const regionIndex = Math.floor(i / SLOTS_PER_REGION),
         slot = i % SLOTS_PER_REGION,
         region = REGIONS[regionIndex],
+        hsIndex = regionIndex * HIGH_SCHOOL_PER_REGION + slot,
         pathway =
-          slot < HIGH_SCHOOL_PER_REGION
-            ? '고졸'
-            : otherPaths[regionIndex * othersPerRegion + slot - HIGH_SCHOOL_PER_REGION],
+          slot >= HIGH_SCHOOL_PER_REGION
+            ? otherPaths[regionIndex * othersPerRegion + slot - HIGH_SCHOOL_PER_REGION]
+            : hsIndex === studyAbroadSlot
+              ? '야구 유학'
+              : '고졸',
         high = pathway === '고졸';
       const identity = Names.makeName(r, usedNames),
         bio = Bio.makeBiography(r, region, pathway),
@@ -237,14 +260,12 @@
       const { ready, trueReady, upside, scoutCeiling, publicScore, control, power, speed, defense } = talent;
       const throwHand = throwingHand(role, type, r);
       const batHand = battingHand(r);
-      const velocity = pitcher
-        ? round(clamp(139 + (talent.tools.stuff - 35) * 0.48 + normal(r) * 3, 131, 162))
-        : null;
+      const velocity = talent.velocity;
       const height = type === 4 && role === 'SP' ? 190 + Math.floor(r() * 7) : 174 + Math.floor(r() * 19),
         weight = round(68 + (height - 174) * 0.6 + r() * 15 + (type === 1 && !pitcher ? 7 : 0));
       const awards = [];
       if (high && ready >= 45 && r() < 0.35) awards.push('U-18 대표팀');
-      if (['대졸', '대학 얼리'].includes(pathway) && ready >= 45 && r() < 0.25) awards.push('대학 대표팀');
+      if (['대졸', '대학 얼리', '2년제'].includes(pathway) && ready >= 45 && r() < 0.25) awards.push('대학 대표팀');
       // Shared school results: school reputation affects team success, not a direct AVG/ERA multiplier.
       if (schoolTournament?.award) awards.push(schoolTournament.award);
       if (schoolTournament?.national?.award) awards.push(schoolTournament.national.award);
@@ -295,7 +316,7 @@
         record,
         risk: 0.05 + r() * 0.11,
         personality: pick(PERSONALITIES, r),
-        favoriteTeam: Math.floor(r() * 10),
+        favoriteTeam: favoriteTeam(bio.highSchoolRegion, r),
         lateDevelopment: talent.growthCurve === 'late',
         confidence: record.games >= 25 ? '보통' : '관찰 표본 적음',
       });
@@ -407,6 +428,7 @@
     shuffle,
     normal,
     generatePool,
+    POOL_SIZE,
   };
   root.DraftData = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

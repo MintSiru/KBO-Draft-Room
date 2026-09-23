@@ -32,6 +32,18 @@
     약소: { ready: -4, weight: 0.7, team: 0.36 },
   };
   const pick = (xs, r) => xs[Math.floor(r() * xs.length)];
+
+  // Per pathway: education, entry category (drives talent generation), qualification and quota eligibility.
+  const PATHWAY_INFO = {
+    고졸: { education: '고교 졸업 예정', entry: 'high-school', qualification: '고교 졸업 예정' },
+    대졸: { education: '대학 졸업(예정)', entry: 'college-graduate', qualification: '대학 졸업 예정', quota: true, collegeYear: 4 },
+    '대학 얼리': { education: '대학 재학', entry: 'college-early', qualification: '대학 2학년 얼리 참가', collegeYear: 2 },
+    '2년제': { education: '전문대 졸업 예정', entry: 'college-two-year', qualification: '2년제 대학 졸업 예정', quota: true, collegeYear: 2 },
+    '야구 유학': { education: '해외 고교 졸업 예정', entry: 'study-abroad', qualification: '해외 고교 졸업 예정' },
+    독립구단: { education: '고교 졸업', entry: 'independent', qualification: '독립구단 지원' },
+    해외파: { education: '대학 졸업(예정)', entry: 'overseas', qualification: '해외 대학 졸업' },
+  };
+  const RETURN_LEVELS = { '마이너 복귀': ['A', 'AA', 'AAA'], '해외독립 복귀': ['해외 독립'], 'MLB 경험 복귀': ['MLB'], '해외리그 복귀': ['NPB 2군', 'CPBL', 'LMB', 'ABL'] };
   function choose(xs, r) {
     let n = r() * xs.reduce((s, x) => s + (x.weight || TIERS[x.tier]?.weight || 1), 0);
     for (const x of xs) {
@@ -47,11 +59,13 @@
   }
   const iso = (y, m, d = 1) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   function makeBiography(r, region, pathway) {
-    const hs = choose(
-        Cat.institutions.filter((s) => ['high-school', 'hs-club'].includes(s.kind) && s.region === region),
-        r,
-      ),
-      high = pathway === '고졸';
+    let hs = choose(
+      Cat.institutions.filter((s) => ['high-school', 'hs-club'].includes(s.kind) && s.region === region),
+      r,
+    );
+    const high = pathway === '고졸';
+    // A study-abroad player grew up in `region` but finished high school overseas.
+    if (pathway === '야구 유학') hs = pick(Cat.institutions.filter((s) => s.kind === 'overseas-hs'), r);
     let current = hs,
       hsGrad = ENTRY_YEAR,
       withCollege = false;
@@ -62,7 +76,14 @@
       );
       hsGrad = ENTRY_YEAR - (pathway === '대학 얼리' ? 2 : 4);
     }
-    const returning = ['마이너 복귀', '해외독립 복귀', 'MLB 경험 복귀'].includes(pathway);
+    if (pathway === '2년제') {
+      current = choose(
+        Cat.institutions.filter((s) => s.kind === 'college2'),
+        r,
+      );
+      hsGrad = ENTRY_YEAR - 2;
+    }
+    const returning = Object.hasOwn(RETURN_LEVELS, pathway);
     if (pathway === '해외파') {
       current = choose(
         Cat.institutions.filter((s) => s.kind === 'overseas-college'),
@@ -71,12 +92,7 @@
       hsGrad = DRAFT_YEAR - 4;
     }
     if (returning) {
-      const level =
-        pathway === 'MLB 경험 복귀'
-          ? 'MLB'
-          : pathway === '해외독립 복귀'
-            ? '해외 독립'
-            : pick(['A', 'AA', 'AAA'], r);
+      const level = pick(RETURN_LEVELS[pathway], r);
       current = pick(
         Cat.institutions.filter((s) => s.level === level),
         r,
@@ -112,8 +128,11 @@
         tier: hs.tier,
         start: iso(hsGrad - 3, 3),
         end: iso(hsGrad, 2, 28),
-        status: hs.kind === 'hs-club' ? (high ? '활동 종료 예정' : '활동 종료') : high ? '졸업 예정' : '졸업',
-        note: hs.kind === 'hs-club' ? '고교 연령 클럽팀에서 뛰었습니다.' : '',
+        status: hs.kind === 'hs-club' ? (high ? '활동 종료 예정' : '활동 종료') : high || pathway === '야구 유학' ? '졸업 예정' : '졸업',
+        note:
+          hs.kind === 'hs-club' ? '고교 연령 클럽팀에서 뛰었습니다.'
+          : pathway === '야구 유학' ? `중학교를 마치고 ${hs.country}으로 야구 유학을 떠났습니다.`
+          : '',
       },
     ];
     if (['대졸', '대학 얼리'].includes(pathway))
@@ -130,6 +149,18 @@
           pathway === '대학 얼리'
             ? '졸업 전 조기 참가입니다. 대졸 의무지명에는 포함하지 않습니다.'
             : '게임에서는 4년제 과정으로 단순화합니다.',
+      });
+    if (pathway === '2년제')
+      history.push({
+        institutionId: current.id,
+        name: current.name,
+        kind: current.kind,
+        region: current.region,
+        tier: current.tier,
+        start: iso(hsGrad, 3),
+        end: iso(ENTRY_YEAR, 2, 28),
+        status: '졸업 예정',
+        note: '2년제 과정을 마쳤습니다. 대졸 의무지명 대상입니다.',
       });
     if (pathway === '해외파')
       history.push({
@@ -198,28 +229,10 @@
       : null;
     return {
       proExperience,
-      education: high
-        ? '고교 졸업 예정'
-        : ['대졸', '해외파'].includes(pathway)
-          ? '대학 졸업(예정)'
-          : pathway === '대학 얼리'
-            ? '대학 재학'
-            : withCollege
-              ? '대학 졸업'
-              : '고교 졸업',
-      entryCategory: returning
-        ? 'overseas-return'
-        : high
-          ? 'high-school'
-          : pathway === '대졸'
-            ? 'college-graduate'
-            : pathway === '대학 얼리'
-              ? 'college-early'
-              : pathway === '독립구단'
-                ? 'independent'
-                : 'overseas',
-      collegeYear: pathway === '대졸' ? 4 : pathway === '대학 얼리' ? 2 : null,
-      quotaEligible: pathway === '대졸',
+      education: returning ? '해외 프로 경력' : withCollege ? '대학 졸업' : PATHWAY_INFO[pathway].education,
+      entryCategory: returning ? 'overseas-return' : PATHWAY_INFO[pathway].entry,
+      collegeYear: PATHWAY_INFO[pathway]?.collegeYear ?? null,
+      quotaEligible: !!PATHWAY_INFO[pathway]?.quota,
       birthday,
       age: ageAt(birthday),
       birthRegion,
@@ -235,17 +248,7 @@
       schoolTier: current.tier,
       history,
       pathText: history.map((h) => h.name).join(' → '),
-      qualification: high
-        ? '고교 졸업 예정'
-        : pathway === '대졸'
-          ? '대학 졸업 예정'
-          : pathway === '대학 얼리'
-            ? '대학 2학년 얼리 참가'
-            : pathway === '독립구단'
-              ? '독립구단 지원'
-              : returning
-                ? '해외 경력 후 국내 프로 첫 지원'
-                : '해외 대학 졸업',
+      qualification: returning ? '해외 경력 후 국내 프로 첫 지원' : PATHWAY_INFO[pathway].qualification,
       regionalEligible: high,
       regionalRegion: high ? hs.region : null,
       regionalReason: high
@@ -265,7 +268,7 @@
       ['high-school', 'hs-club'].includes(s.kind) &&
       s.id === p.highSchoolId &&
       s.region === team.region &&
-      !p.history.some((h) => ['college', 'independent', 'overseas-college'].includes(h.kind))
+      !p.history.some((h) => ['college', 'college2', 'independent', 'overseas-college'].includes(h.kind))
     );
   }
   const api = { DRAFT_DATE, DRAFT_YEAR, ENTRY_YEAR, REGIONS, CITIES, TIERS, ageAt, makeBiography, eligible };

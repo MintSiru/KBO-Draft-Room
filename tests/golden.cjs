@@ -30,6 +30,7 @@ const simRecord = (r) => ({ ...only(r, RECORD_KEYS), stats: numbersOf(r.stats), 
 function simGame({ game: g, review, fans }) {
   return {
     picks: g.picks.map((s) => [s.overall, s.teamId, s.playerId, s.fit]),
+    dev: (g.devSigns || []).map((s) => [s.overall, s.teamId, s.playerId]),
     news: g.news.map((n) => [n.playerId, n.delta]),
     forecasts: g.forecasts.map((f) => f.picks.map((s) => [s.teamId, s.round, s.playerId])),
     scout: g.scoutReport.candidates.map((c) => c.playerId),
@@ -52,6 +53,7 @@ function play([team, local, seed, difficulty, gm]) {
   const g = C.createGame(team, local, seed, difficulty);
   C.openScouting(g); C.beginDraft(g);
   while (g.phase === 'draft') C.addPick(g, C.aiChoice(g).id);
+  C.signDevelopment(g, C.undrafted(g).slice(2, 5).map((p) => p.id));
   C.chooseGM(g, gm); C.runSeason(g);
   while (g.career.years.length < 5) C.nextSeason(g);
   return { game: g, review: C.careerReview(g), fans: C.fanState(g) };

@@ -11,6 +11,18 @@
   const freeze = (o) => (Object.values(o).forEach((v) => v && typeof v === 'object' && freeze(v)), Object.freeze(o));
 
   const TUNING = {
+    generation: {
+      // Pitchers get an arm-strength roll (mean 0, sd 1). It lifts stuff (potential and current) and velocity;
+      // command and breaking balls do not depend on it, so a hard thrower with poor command still grades low.
+      // Top velocity = base + (true stuff - pivot) × perStuff + arm × perArm (+ adultBonus if not a high-schooler).
+      // Share of players whose childhood favourite is a club from the region they grew up in.
+      localFavorite: 0.45,
+      velocity: { base: 146, pivot: 40, perStuff: 0.35, perArm: 3.2, armToStuff: 4, adultBonus: 1, noise: 1.5, min: 132, max: 161 },
+    },
+
+    // Development ("육성") contracts after the draft. They cannot hold a regular role in their first season.
+    devContracts: { max: 5, cpuMin: 3, cpuMax: 5 },
+
     health: {
       longInjuryShare: 0.22, // share of injuries that are long
       longDays: [65, 66],
@@ -97,8 +109,9 @@
       agingPerYear: { speed: 0.38, other: 0.28 },
     },
 
-    // Descriptive only: each season's top velocity follows the change in true stuff.
-    velocity: { perStuff: 0.48, noise: 0.8, min: 128, max: 163 },
+    // Descriptive only: each season's top velocity follows the change in true stuff
+    // (same slope as generation.velocity.perStuff).
+    velocity: { noise: 0.8, min: 128, max: 163 },
 
     scores: {
       // Last season's form, fed into next year's retention.

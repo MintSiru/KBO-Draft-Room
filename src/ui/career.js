@@ -9,7 +9,7 @@
   function rows(g, year = 'all', teamId = 'ALL', scope = 'origin', sort = 'rank', level = 'stats') {
     const years = g.career?.years || [],
       chosen = year === 'all' ? null : years.find((y) => String(y.year) === String(year)) || years.at(-1);
-    const out = g.picks
+    const out = C.signed(g)
       .map((s) => {
         const p = player(g, s.playerId),
           state = g.career?.players[p.id],
@@ -85,7 +85,7 @@
   }
 
   function development(g, year) {
-    const own = new Set(C.myPicks(g).map((s) => s.playerId));
+    const own = new Set(C.mySigned(g).map((s) => s.playerId));
     const cards = year.records
       .filter((r) => own.has(r.playerId))
       .map((r) => {
@@ -191,7 +191,7 @@
 
   function profile(g, id) {
     const p = player(g, id),
-      sel = g.picks.find((s) => s.playerId === id);
+      sel = C.signed(g).find((s) => s.playerId === id);
     if (!p || !sel) return '<p>지명 선수를 찾을 수 없습니다.</p>';
     const hist = g.career ? C.Career.history(g.career, id) : [],
       state = g.career?.players[id];
@@ -201,7 +201,7 @@
     const pending = state?.status === 'active' && hist.length === 5 && hist.at(-1).age <= 24 && state.scoutReady < p.scoutCeiling;
     const r = p.record;
     return `<div class="career-profile">
-      <span class="kicker">${teamName(sel.teamId)} ${esc(sel.label)} 지명${now !== sel.teamId ? ` · 현재 ${teamName(now)}` : ''}</span>
+      <span class="kicker">${teamName(sel.teamId)} ${esc(sel.label)} ${sel.dev ? '계약' : '지명'}${now !== sel.teamId ? ` · 현재 ${teamName(now)}` : ''}</span>
       <h2>${esc(p.name)}</h2>
       <p>${C.ROLES[p.role]} · ${esc(p.pathway)}${p.quotaEligible ? ' (대졸 의무 대상)' : ''} · ${UI.hand(p)} · ${p.height}cm ${p.weight}kg</p>
       <p class="muted">${esc(p.pathText)} · ${p.birthday} 출생 · 지명 당시 만 ${p.age}세${hist.length ? `, ${hist.at(-1).year}년 말 만 ${hist.at(-1).age}세` : ''}</p>

@@ -95,6 +95,8 @@
 
     let weakness;
     if (pitcher && p.velocity <= 141) weakness = fill(one(SLOW, r), vars);
+    else if (pitcher && p.velocity >= 147 && p.tools.stuff <= 40 && p.tools.command > 30)
+      weakness = one(['구속은 나오는데 공이 가볍다. 회전수가 아쉽다.', '빠른 공이 밋밋하게 들어간다. 구속만큼 헛스윙이 안 나온다.'], r);
     else if (worstGrade >= 50) weakness = '약점이 두드러지지 않는다. 한 가지 확실한 무기를 만드는 게 과제다.';
     else if (worstGrade >= 40) weakness = fill(one(SHORT, r), { ...vars, tool: G.LABELS[worstTool] });
     else weakness = fill(one(BAD[noteKey(p, worstTool)], r), vars);
@@ -124,7 +126,7 @@
   function amateurFact(p) {
     const r = p.record;
     if (!r) return '';
-    const where = p.pathway === '고졸' ? '올해 고교 무대에서' : ['대졸', '대학 얼리'].includes(p.pathway) ? '대학리그에서' : p.proExperience ? '해외 마지막 시즌' : '지난 시즌';
+    const where = p.pathway === '고졸' ? '올해 고교 무대에서' : ['대졸', '대학 얼리', '2년제'].includes(p.pathway) ? '대학리그에서' : p.proExperience ? '해외 마지막 시즌' : '지난 시즌';
     if (r.kind === 'pitcher') {
       const ip = `${Math.floor(r.outs / 3)}${r.outs % 3 ? '⅓⅔'[r.outs % 3 - 1] : ''}`;
       return `${where} ${r.games}경기 ${ip}이닝, 평균자책점 ${r.era.toFixed(2)}, 탈삼진 ${r.k}개를 기록했다.`;
@@ -138,8 +140,6 @@
    */
   function draftNews(p, t, selection, f, r) {
     const role = ROLES[p.role];
-    // Wording judges a steal by the national pick number (the regional round is not part of the order).
-    f = { ...f, value: selection.round === 1 && p.rank <= f.nationalPick - 5 };
     const age = p.age ? `(${p.age})` : '';
     const where = selection.round === 0 ? '지역 1차 지명으로' : `1라운드 ${((selection.overall - 1) % 10) + 1}순위로`;
     const hook =
@@ -147,6 +147,8 @@
       : f.local ? '연고 출신'
       : p.pathway === '고졸' && p.rank <= 5 ? '고교 최대어'
       : p.proExperience ? '해외파 유턴'
+      : p.pathway === '야구 유학' ? '유학파'
+      : p.pathway === '2년제' ? '2년제 출신'
       : p.pathway === '독립구단' ? '독립리그 출신'
       : role;
     const headlines = f.reach
@@ -204,6 +206,8 @@
     else add('인내', ['2~3년은 기다려야 할 듯', '퓨처스에서 몸 좀 만들고 오자', '급하게 쓰지 말고 제대로 키우자']);
     if (p.pathway === '독립구단') add('응원', ['독립리그에서 버틴 거 대단하다', '다시 기회 잡은 거 멋지다']);
     if (p.pathway === '대졸') add('담담', ['대학 4년 동안 꾸준했지', '대졸이라 적응은 빠를 듯']);
+    if (p.pathway === '2년제') add('담담', ['2년제에서 몸 좀 만들고 나왔겠지', '전문대 리그 기록 좋던데', '고졸 때보다 확실히 성장했다더라']);
+    if (p.pathway === '야구 유학') add('기대', ['유학파는 기본기가 탄탄하던데', '어린 나이에 혼자 유학 간 것부터 대단하다']);
     if (p.proExperience || p.pathway === '해외파') add('기대', ['해외 경험 있는 선수 반갑다', '미국에서 뭘 배워 왔는지 궁금']);
     add('응원', ['잘 커서 오래 뛰자', '이름 외워 둔다', '사인볼 받으러 간다', '부상 없이만 크자']);
     const names = some(HANDLES, 3, r);

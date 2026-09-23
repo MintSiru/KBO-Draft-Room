@@ -308,7 +308,8 @@
         rank = rankings[t.id + '-' + p.role].indexOf(p.id),
         capacity = T.roles.cohortCapacity[p.role];
       const rec = M.simulatePlayer(p, sel, { seed }, t, fit(p, t), yearIndex ? state : null, yearIndex, {
-        blockedRegular: rank >= capacity,
+        // Development-contract players cannot be regulars in their first season.
+        blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
         closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
       });
       Object.assign(state, rec.endState);

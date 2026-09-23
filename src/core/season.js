@@ -287,7 +287,7 @@
   function seasonVelocity(p, after, r) {
     if (!isPitcher(p) || p.velocity == null) return null;
     const V = T.velocity;
-    return round(clamp(p.velocity + (after.stuff - p.trueTools.stuff) * V.perStuff + normal(r) * V.noise, V.min, V.max));
+    return round(clamp(p.velocity + (after.stuff - p.trueTools.stuff) * T.generation.velocity.perStuff + normal(r) * V.noise, V.min, V.max));
   }
   const growthLabel = (growth) => T.scores.growthLabels.find(([min]) => growth >= min)?.[1] ?? '기량 후퇴';
 

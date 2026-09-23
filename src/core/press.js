@@ -66,7 +66,9 @@
       )
       .map((f) => f.name);
     const reach = remainingRank > (selection.round === 0 ? 5 : 12),
-      value = selection.round === 1 && p.rank <= selection.overall - 5;
+      // National pick number: the regional round is not part of the order.
+      nationalPick = selection.overall - prior.filter((s) => s.round === 0).length,
+      value = selection.round === 1 && p.rank <= nationalPick - 5;
     const label = selection.round === 0 ? '지역 1차' : '전국 1라운드',
       r = D.rng(seed + '-news-' + selection.overall),
       role = D.ROLES[p.role];
@@ -75,7 +77,7 @@
       p,
       t,
       selection,
-      { reach, value, matched, fit, owned, local: selection.round === 0, remainingRank, nationalPick: selection.overall - prior.filter((s) => s.round === 0).length },
+      { reach, value, matched, fit, owned, local: selection.round === 0, remainingRank, nationalPick },
       D.rng(seed + '-news-text-' + selection.overall),
     );
     const delta = D.clamp(

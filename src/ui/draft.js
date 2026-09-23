@@ -5,7 +5,7 @@
     UI = root.DraftUI;
   const { esc, tag, player, hand } = UI;
 
-  const PATHWAYS = ['고졸', '대졸', '대학 얼리', '독립구단', '해외파', '마이너 복귀', '해외독립 복귀', 'MLB 경험 복귀'];
+  const PATHWAYS = ['고졸', '대졸', '대학 얼리', '2년제', '독립구단', '해외파', '야구 유학', '마이너 복귀', '해외독립 복귀', '해외리그 복귀', 'MLB 경험 복귀'];
   const TIERS = ['명문', '강호', '중견', '약소', '미분류'];
   const PICK_TYPES = ['즉전감', '플로어', '실링', '육성형', '역할형'];
   const roundLabel = (slot) => (slot?.round === 0 ? '지역 1차' : `${slot?.round || 1}라운드`);
@@ -70,7 +70,7 @@
   function amateurLine(p) {
     const r = p.record;
     const where =
-      p.pathway === '고졸' ? '고교 대회' : ['대졸', '대학 얼리'].includes(p.pathway) ? '대학 리그' : p.pathway === '독립구단' ? '독립리그' : '해외 리그';
+      p.pathway === '고졸' ? '고교 대회' : p.pathway === '야구 유학' ? '해외 고교 대회' : ['대졸', '대학 얼리', '2년제'].includes(p.pathway) ? '대학 리그' : p.pathway === '독립구단' ? '독립리그' : '해외 리그';
     const main =
       r.kind === 'pitcher'
         ? `<span><b>${r.era.toFixed(2)}</b>ERA</span><span><b>${C.innings(r.outs)}</b>이닝</span><span><b>${r.k}</b>삼진</span><span><b>${r.bb}</b>볼넷</span>`
@@ -131,7 +131,7 @@
 
   function myPicks(g) {
     const mine = C.myPicks(g),
-      total = C.ROUNDS + (g.local ? 1 : 0);
+      total = g.rounds + (g.local ? 1 : 0);
     return `<section class="box">
       <h3>${UI.teamName(g.teamId)} 지명 <small class="muted">${mine.length}/${total}</small></h3>
       ${mine.length
@@ -164,7 +164,7 @@
     return `<p class="callout">${
       q.remaining <= q.missing
         ? '<b>마지막 전국 지명권입니다.</b> 국내 대학 졸업예정자만 지명할 수 있습니다.'
-        : '<b>대졸 의무 지명 0/1</b> · 국내 대학 졸업예정자를 1명 이상 뽑아야 합니다(대학 얼리 제외).'
+        : '<b>대졸 의무 지명 0/1</b> · 국내 4년제·2년제 대학 졸업예정자를 1명 이상 뽑아야 합니다(대학 얼리 제외).'
     }</p>`;
   }
 
@@ -172,7 +172,7 @@
     const t = C.teamFor(g),
       slot = g.schedule[g.cursor],
       mine = C.myPicks(g).length,
-      total = C.ROUNDS + (g.local ? 1 : 0);
+      total = g.rounds + (g.local ? 1 : 0);
     const list = filterPlayers(g, v, stars, t);
     const selected = selectedId && C.available(g).some((p) => p.id === selectedId) ? player(g, selectedId) : null;
     const strip = C.TEAMS.map((club) => {

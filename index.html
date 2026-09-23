@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f4f2ec">
 <meta name="description" content="가상의 KBO 신인 드래프트를 진행하고 지명한 선수들의 5년 경력을 시뮬레이션합니다.">
-<title>드래프트 룸 v0.6.4 — KBO 신인 드래프트</title>
+<title>드래프트 룸 v0.7.0 — KBO 신인 드래프트</title>
 <style>
 /* Draft Room — one stylesheet. Scorebook look: paper, ink rules, tables; the club colour is the only accent. */
 :root {
@@ -347,6 +347,182 @@ details[open] > summary { margin-bottom: 6px; }
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <noscript><p style="padding:24px">이 게임을 실행하려면 JavaScript를 허용해 주세요.</p></noscript>
 <script>
+/* Balance knobs for seasons, careers and evaluations, in one place.
+   These are fictional tuning values, not an empirical KBO model.
+
+   Changing any number here changes simulated results, which changes what old saves replay into.
+   After a change: bump SIM_VERSION in engine.js, then re-record tests/golden.cjs with --write.
+
+   Conventions: a `[base, span]` pair means base + floor(r() * span); `byYear` arrays are indexed by
+   pro year (0 = rookie season) and the last entry applies to every later year. */
+(function (root) {
+  'use strict';
+  const freeze = (o) => (Object.values(o).forEach((v) => v && typeof v === 'object' && freeze(v)), Object.freeze(o));
+
+  const TUNING = {
+    generation: {
+      // Pitchers get an arm-strength roll (mean 0, sd 1). It lifts stuff (potential and current) and velocity;
+      // command and breaking balls do not depend on it, so a hard thrower with poor command still grades low.
+      // Top velocity = base + (true stuff - pivot) × perStuff + arm × perArm (+ adultBonus if not a high-schooler).
+      // Share of players whose childhood favourite is a club from the region they grew up in.
+      localFavorite: 0.45,
+      velocity: { base: 146, pivot: 40, perStuff: 0.35, perArm: 3.2, armToStuff: 4, adultBonus: 1, noise: 1.5, min: 132, max: 161 },
+    },
+
+    // Development ("육성") contracts after the draft. They cannot hold a regular role in their first season.
+    devContracts: { max: 5, cpuMin: 3, cpuMax: 5 },
+
+    health: {
+      longInjuryShare: 0.22, // share of injuries that are long
+      longDays: [65, 66],
+      shortDays: [7, 28],
+      rehabDays: 105, // this many lost days means the season is spent in rehab
+      playingDays: 165, // games played scale by (1 - daysLost / playingDays)
+      growthDays: 210, // growth scales by (1 - daysLost / growthDays)
+      heavyInjuryDays: 100,
+      heavyInjuryGrowthPenalty: 0.6,
+      planPenaltyDays: 60,
+      planPenalty: 4,
+    },
+
+    roles: {
+      impactNoise: 3, // season-to-season noise on the ability used for role decisions
+      // Extra call-up chance for early picks: byRound (round 0/1, 2, 3; later rounds get 0) × byYear.
+      draftInvestment: { byRound: [0.18, 0.18, 0.1, 0.04], byYear: [1, 0.2, 0] },
+      // Last year's regular keeps the job with base + (ability - pivot) × perAbility + form × perForm.
+      retention: { base: 0.87, pivot: 48, perAbility: 0.009, perForm: 0.018, min: 0.66, max: 0.97 },
+      // A regular who loses the job drops to the futures only when both ability and form are this low.
+      demotion: { maxAbility: 38, maxForm: -0.8, poorForm: -0.5 },
+      // Call-up: base + sigmoid((ability - pivot) / scale) × weight + bonuses.
+      callUp: { base: 0.025, pivot: 40, scale: 3.6, weight: 0.83, afterBackup: 0.08, needFit: 80, needBonus: 0.045, min: 0.015, max: 0.98 },
+      // Once called up, the chance the role is a regular one.
+      regular: { pivotByYear: [47, 45], scale: 3.6, weightByYear: [0.68, 0.86], afterBackup: 0.08, min: 0.01, max: 0.95 },
+      // Otherwise backup rather than a short cameo: clamp((ability - pivot) / scale).
+      backupOverCameo: { pivot: 30, scale: 25, min: 0.2, max: 0.83 },
+      core: { minAbility: 55, fromYear: 1 }, // "핵심" regulars
+      // Regular slots per club and position among this draft class; beyond it a regular becomes backup.
+      cohortCapacity: { SP: 5, RP: 7, C: 2, IF: 4, OF: 3 },
+      closer: { minAbility: 48, fromYear: 1 },
+    },
+
+    games: {
+      regular: {
+        SP: { baseByYear: [20, 24, 26], spanByYear: [5, 5, 6] },
+        RP: { baseByYear: [44], spanByYear: [21] },
+        hitter: { baseByYear: [88, 105, 120], spanByYear: [25, 25, 21] },
+      },
+      backup: { SP: [9, 11], RP: [22, 19], hitter: [40, 36] },
+      cameo: { pitcher: [2, 7], hitter: [5, 15] },
+      // Futures games alongside each role; the development route gets a [base, span] range.
+      futures: { regular: { pitcher: 2, hitter: 5 }, backup: { pitcher: 9, hitter: 35 }, development: { pitcher: [20, 8], hitter: [80, 25] } },
+      hitterSeasonCap: 144, // first-team + futures games for a hitter
+    },
+
+    hitting: {
+      paPerGame: { core: 4.25, regular: 3.95, futures: 3.6, cameo: 1.8, bench: 2.55 },
+      avg: { base: 0.2, pivot: 30, perContact: 0.0027, futuresBonus: 0.035, noise: 0.018, min: 0.16, max: 0.355 },
+      hr: { base: 0.007, pivot: 32, perPower: 0.00145, futuresBonus: 0.004, min: 0.001, max: 0.085 },
+      walk: { base: 0.04, pivot: 30, perEye: 0.002, min: 0.025, max: 0.16 },
+      strikeout: { base: 0.3, pivot: 30, perContact: 0.003, min: 0.1, max: 0.36, minNonHitShare: 0.5 },
+      hitShare: { min: 0.08, max: 0.38 }, // per-AB non-HR hit chance bounds
+      triple: { pivot: 30, perSpeed: 0.0009, max: 0.035 },
+      double: { base: 0.18, pivot: 40, perPower: 0.0025 },
+      rbi: { perHit: 0.32, perHR: 1.65 },
+      steal: { pivot: 25, gamesPerUnit: 205, base: 0.6, spread: 0.6 },
+    },
+
+    pitching: {
+      era: { base: 7.75, perStuff: 0.025, perCommand: 0.029, perBreaking: 0.016, futuresBonus: 0.95, noise: 0.45, min: 1.9, max: 8.5 },
+      startIP: { base: 3.45, perStamina: 0.047, regular: 0.05, other: -0.45, noise: 1.1, min: 2.5, max: 7.6 },
+      reliefIP: { base: 0.85, noise: 0.7, min: 0.33, max: 2 },
+      spotStartShare: 0.65, // share of a non-regular SP's games that are starts
+      k9: { base: 1.0, pivot: 20, perStuff: 0.22, perBreaking: 0.02, min: 3.5, max: 13 },
+      bb9: { base: 6.2, perCommand: 0.066, min: 1.1, max: 5.6 },
+      qualityStart: { minOuts: 18, maxRuns: 3 },
+      // Starter win: at least minOuts, then base + (pivotRuns - runs) × perRun + team strength, then bullpen holds.
+      startWin: { minOuts: 15, base: 0.3, pivotRuns: 5, perRun: 0.075, rankPivot: 11, perRank: 0.01, defaultRank: 6, min: 0.08, max: 0.78, bullpenHold: 0.86 },
+      relief: { win: 0.045, save: 0.57, hold: 0.29 }, // cumulative thresholds on one roll
+    },
+
+    growth: {
+      rateByCurve: {
+        early: { start: 0.43, perYear: 0.045, min: 0.2 },
+        late: { firstYears: 0.14, later: 0.44, switchYear: 2 },
+        normal: 0.32,
+      },
+      speedShare: 0.6, // speed closes its gap more slowly
+      noise: 0.65,
+      minGain: -2.5,
+      maxGain: 8,
+      agingFrom: { speed: 26, other: 29 },
+      agingPerYear: { speed: 0.38, other: 0.28 },
+    },
+
+    // Descriptive only: each season's top velocity follows the change in true stuff
+    // (same slope as generation.velocity.perStuff).
+    velocity: { noise: 0.8, min: 128, max: 163 },
+
+    scores: {
+      // Last season's form, fed into next year's retention.
+      performance: { eraPivot: 4.5, eraScale: 1.3, opsPivot: 0.72, opsScale: 0.12, limit: 2 },
+      // 0–100 first-team contribution index (not WAR).
+      contribution: { perInning: 0.42, eraPivot: 4.7, perEra: 7, perPA: 0.095, opsPivot: 0.7, perOps: 45, defensePivot: 45, perDefense: 0.15 },
+      // Plan score: base + progress × perProgress + bonuses; progress = growth / expected growth.
+      plan: { base: 28, perProgress: 43, played: 8, regular: 8, min: 10, max: 100 },
+      expectedGrowth: { min: 0.65, share: 0.2, projectShare: 0.13, projectGap: 20, projectYears: 2 },
+      progress: { nearCeiling: 2, max: 1.3 },
+      growthLabels: [[3, '뚜렷한 성장'], [1.4, '꾸준한 발전'], [0.3, '기술 발전'], [0, '완성도 유지']],
+    },
+
+    firstYear: {
+      weights: { need: 0.4, plan: 0.25, future: 0.35 },
+      future: { base: 50, fvPivot: 45, perFV: 3, perGrowth: 4 },
+      gradeCuts: [89, 77, 63], // A, B, C; below is D
+    },
+
+    league: {
+      gamesPerPair: 16, // 9 opponents × 16 = 144 games
+      rating: { base: 50, rankPivot: 11, perRank: 2.2, noise: 12, rookieScale: 35, rookieMax: 9 },
+      logisticScale: 23, // win chance = 1 / (1 + exp(ratingGap / scale))
+    },
+
+    awards: {
+      hitter: { minPA: 60, perPA: 0.055, opsPivot: 0.65, perOps: 50, perHR: 0.7 },
+      pitcher: { minOuts: 60, perOut: 0.12, eraPivot: 5.5, perEra: 6, perK: 0.05 },
+    },
+
+    offseason: {
+      release: { minClubSize: 4, fromYear: 2, minAge: 23, maxGrade: 40, base: 0.07, perGrade: 0.014, perAge: 0.012, max: 0.24 },
+      trade: {
+        chance: 0.68,
+        protectContribution: 50, // regulars at or above this are never traded
+        minCombinedGain: 30,
+        maxValueGap: 8,
+        value: { perReady: 0.65, perFV: 0.25, agePivot: 22, perAge: 1.1, perContribution: 0.08 },
+        gapWeight: 2,
+        noise: 25,
+      },
+    },
+
+    review: {
+      weights: { need: 0.2, production: 0.5, growth: 0.3 },
+      contributionPerSeason: 30, // per player-season, for 100 production points
+      growth: { base: 35, perPoint: 3.5 },
+      gradeCuts: [85, 70, 55],
+      pendingMaxAge: 24,
+    },
+  };
+
+  /** Value for pro year `yearIndex` from a byYear array (the last entry covers later years). */
+  const byYear = (list, yearIndex) => list[Math.min(yearIndex, list.length - 1)];
+  const letter = (score, cuts) => (score >= cuts[0] ? 'A' : score >= cuts[1] ? 'B' : score >= cuts[2] ? 'C' : 'D');
+
+  const api = { TUNING: freeze(TUNING), byYear, letter };
+  root.DraftTuning = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
 /* The ten KBO clubs. Club names are real; every rating and record here is fictional.
    `rank` is the fictional previous-season finish and sets the draft order (worst first).
    `needs` lists the three priority positions, most urgent first. */
@@ -549,6 +725,90 @@ details[open] > summary { margin-bottom: 6px; }
     {"id":"pro03","name":"메트로 코멧츠","level":"MLB","kind":"overseas-pro","country":"미국","region":null,"tier":null,"fictional":true},
     {"id":"pro04","name":"데저트 파이오니어스","level":"해외 독립","kind":"overseas-independent","country":"미국","region":null,"tier":null,"fictional":true},
     {"id":"pro05","name":"캐니언 썬버즈","level":"해외 독립","kind":"overseas-independent","country":"미국","region":null,"tier":null,"fictional":true},
+    // V0.7 additions for the 400-player pool (fictional)
+    {"id":"hs122","name":"신답고","region":"서울","tier":"강호","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs123","name":"응암고","region":"서울","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs124","name":"청파고","region":"서울","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs125","name":"효창고","region":"서울","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs126","name":"번동고","region":"서울","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs127","name":"금곡고","region":"경기·강원","tier":"강호","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs128","name":"운양고","region":"경기·강원","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs129","name":"호원고","region":"경기·강원","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs130","name":"내촌고","region":"경기·강원","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs131","name":"묵호고","region":"경기·강원","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs132","name":"부개고","region":"인천","tier":"강호","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs133","name":"간석고","region":"인천","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs134","name":"청천고","region":"인천","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs135","name":"석남고","region":"인천","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs136","name":"영흥고","region":"인천","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs137","name":"갈마고","region":"대전·충청·전북","tier":"강호","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs138","name":"가수원고","region":"대전·충청·전북","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs139","name":"봉명고","region":"대전·충청·전북","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs140","name":"모현고","region":"대전·충청·전북","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs141","name":"나운고","region":"대전·충청·전북","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs142","name":"만촌고","region":"대구·경북","tier":"강호","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs143","name":"범물고","region":"대구·경북","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs144","name":"칠성고","region":"대구·경북","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs145","name":"해평고","region":"대구·경북","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs146","name":"황성고","region":"대구·경북","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs147","name":"가음정고","region":"경남","tier":"강호","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs148","name":"내서고","region":"경남","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs149","name":"동읍고","region":"경남","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs150","name":"삼방고","region":"경남","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs151","name":"도남고","region":"경남","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs152","name":"광안고","region":"부산·울산","tier":"강호","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs153","name":"명장고","region":"부산·울산","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs154","name":"온산고","region":"부산·울산","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs155","name":"화봉고","region":"부산·울산","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs156","name":"덕천고","region":"부산·울산","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs157","name":"풍암고","region":"광주·전남·제주","tier":"강호","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs158","name":"쌍촌고","region":"광주·전남·제주","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs159","name":"신가고","region":"광주·전남·제주","tier":"중견","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs160","name":"오림고","region":"광주·전남·제주","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs161","name":"노형고","region":"광주·전남·제주","tier":"약소","kind":"high-school","country":"대한민국","fictional":true},
+    {"id":"hs162","name":"은평BC","region":"서울","tier":"중견","kind":"hs-club","country":"대한민국","fictional":true},
+    {"id":"hs163","name":"일산BC","region":"경기·강원","tier":"중견","kind":"hs-club","country":"대한민국","fictional":true},
+    {"id":"hs164","name":"연수BC","region":"인천","tier":"약소","kind":"hs-club","country":"대한민국","fictional":true},
+    {"id":"hs165","name":"둔산BC","region":"대전·충청·전북","tier":"중견","kind":"hs-club","country":"대한민국","fictional":true},
+    {"id":"hs166","name":"수성BC","region":"대구·경북","tier":"약소","kind":"hs-club","country":"대한민국","fictional":true},
+    {"id":"hs167","name":"마산BC","region":"경남","tier":"약소","kind":"hs-club","country":"대한민국","fictional":true},
+    {"id":"hs168","name":"기장BC","region":"부산·울산","tier":"중견","kind":"hs-club","country":"대한민국","fictional":true},
+    {"id":"hs169","name":"순천BC","region":"광주·전남·제주","tier":"약소","kind":"hs-club","country":"대한민국","fictional":true},
+    {"id":"uni20","name":"성곡대","region":"서울","tier":"강호","kind":"college","country":"대한민국","fictional":true},
+    {"id":"uni21","name":"한탄대","region":"경기·강원","tier":"중견","kind":"college","country":"대한민국","fictional":true},
+    {"id":"uni22","name":"부평대","region":"인천","tier":"약소","kind":"college","country":"대한민국","fictional":true},
+    {"id":"uni23","name":"보문대","region":"대전·충청·전북","tier":"강호","kind":"college","country":"대한민국","fictional":true},
+    {"id":"uni24","name":"비슬대","region":"대구·경북","tier":"중견","kind":"college","country":"대한민국","fictional":true},
+    {"id":"uni25","name":"황령대","region":"부산·울산","tier":"중견","kind":"college","country":"대한민국","fictional":true},
+    {"id":"uni26","name":"무학대","region":"경남","tier":"약소","kind":"college","country":"대한민국","fictional":true},
+    {"id":"uni27","name":"월출대","region":"광주·전남·제주","tier":"중견","kind":"college","country":"대한민국","fictional":true},
+    {"id":"jc00","name":"노들과학대","region":"서울","tier":"강호","kind":"college2","country":"대한민국","fictional":true},
+    {"id":"jc01","name":"광교정보대","region":"경기·강원","tier":"강호","kind":"college2","country":"대한민국","fictional":true},
+    {"id":"jc02","name":"계산과학대","region":"인천","tier":"중견","kind":"college2","country":"대한민국","fictional":true},
+    {"id":"jc03","name":"유등과학대","region":"대전·충청·전북","tier":"중견","kind":"college2","country":"대한민국","fictional":true},
+    {"id":"jc04","name":"금호강정보대","region":"대구·경북","tier":"중견","kind":"college2","country":"대한민국","fictional":true},
+    {"id":"jc05","name":"낙동과학대","region":"부산·울산","tier":"강호","kind":"college2","country":"대한민국","fictional":true},
+    {"id":"jc06","name":"진해과학대","region":"경남","tier":"약소","kind":"college2","country":"대한민국","fictional":true},
+    {"id":"jc07","name":"영산강정보대","region":"광주·전남·제주","tier":"약소","kind":"college2","country":"대한민국","fictional":true},
+    {"id":"ind06","name":"고양 스트라이커스","region":"경기·강원","tier":null,"kind":"independent","country":"대한민국","fictional":true},
+    {"id":"ind07","name":"인천 씨호크스","region":"인천","tier":null,"kind":"independent","country":"대한민국","fictional":true},
+    {"id":"ind08","name":"세종 블루윙스","region":"대전·충청·전북","tier":null,"kind":"independent","country":"대한민국","fictional":true},
+    {"id":"ind09","name":"양산 타이드","region":"경남","tier":null,"kind":"independent","country":"대한민국","fictional":true},
+    {"id":"ov09","name":"미국 파인릿지대","region":null,"tier":null,"kind":"overseas-college","country":"미국","weight":10,"academicStartMonth":9,"academicEndMonth":6,"fictional":true},
+    {"id":"ov10","name":"미국 레드클레이대","region":null,"tier":null,"kind":"overseas-college","country":"미국","weight":10,"academicStartMonth":9,"academicEndMonth":6,"fictional":true},
+    {"id":"ov11","name":"일본 오미국제대","region":null,"tier":null,"kind":"overseas-college","country":"일본","weight":10,"academicStartMonth":4,"academicEndMonth":3,"fictional":true},
+    {"id":"ohs00","name":"일본 미나토국제고","region":null,"tier":null,"kind":"overseas-hs","country":"일본","fictional":true},
+    {"id":"ohs01","name":"일본 호쿠요학원고","region":null,"tier":null,"kind":"overseas-hs","country":"일본","fictional":true},
+    {"id":"ohs02","name":"일본 기타하마고","region":null,"tier":null,"kind":"overseas-hs","country":"일본","fictional":true},
+    {"id":"ohs03","name":"미국 레드우드아카데미","region":null,"tier":null,"kind":"overseas-hs","country":"미국","fictional":true},
+    {"id":"pro06","name":"파인밸리 호크스","level":"A","kind":"overseas-pro","country":"미국","region":null,"tier":null,"fictional":true},
+    {"id":"pro07","name":"콜드스프링 라이더스","level":"AA","kind":"overseas-pro","country":"미국","region":null,"tier":null,"fictional":true},
+    {"id":"pro08","name":"캐피털 시그널스","level":"AAA","kind":"overseas-pro","country":"미국","region":null,"tier":null,"fictional":true},
+    {"id":"pro09","name":"나니와 펠리컨스","level":"NPB 2군","kind":"overseas-pro","country":"일본","region":null,"tier":null,"fictional":true},
+    {"id":"pro10","name":"타이난 라이트닝","level":"CPBL","kind":"overseas-pro","country":"대만","region":null,"tier":null,"fictional":true},
+    {"id":"pro11","name":"코아우일라 스콜피온스","level":"LMB","kind":"overseas-pro","country":"멕시코","region":null,"tier":null,"fictional":true},
+    {"id":"pro12","name":"골드코스트 서퍼스","level":"ABL","kind":"overseas-pro","country":"호주","region":null,"tier":null,"fictional":true},
+    {"id":"pro13","name":"산인 드래곤플라이즈","level":"해외 독립","kind":"overseas-independent","country":"일본","region":null,"tier":null,"fictional":true},
   ];
   const api = { institutions, byId: Object.fromEntries(institutions.map((x) => [x.id, x])) };
   root.DraftCatalog = api;
@@ -673,6 +933,18 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     약소: { ready: -4, weight: 0.7, team: 0.36 },
   };
   const pick = (xs, r) => xs[Math.floor(r() * xs.length)];
+
+  // Per pathway: education, entry category (drives talent generation), qualification and quota eligibility.
+  const PATHWAY_INFO = {
+    고졸: { education: '고교 졸업 예정', entry: 'high-school', qualification: '고교 졸업 예정' },
+    대졸: { education: '대학 졸업(예정)', entry: 'college-graduate', qualification: '대학 졸업 예정', quota: true, collegeYear: 4 },
+    '대학 얼리': { education: '대학 재학', entry: 'college-early', qualification: '대학 2학년 얼리 참가', collegeYear: 2 },
+    '2년제': { education: '전문대 졸업 예정', entry: 'college-two-year', qualification: '2년제 대학 졸업 예정', quota: true, collegeYear: 2 },
+    '야구 유학': { education: '해외 고교 졸업 예정', entry: 'study-abroad', qualification: '해외 고교 졸업 예정' },
+    독립구단: { education: '고교 졸업', entry: 'independent', qualification: '독립구단 지원' },
+    해외파: { education: '대학 졸업(예정)', entry: 'overseas', qualification: '해외 대학 졸업' },
+  };
+  const RETURN_LEVELS = { '마이너 복귀': ['A', 'AA', 'AAA'], '해외독립 복귀': ['해외 독립'], 'MLB 경험 복귀': ['MLB'], '해외리그 복귀': ['NPB 2군', 'CPBL', 'LMB', 'ABL'] };
   function choose(xs, r) {
     let n = r() * xs.reduce((s, x) => s + (x.weight || TIERS[x.tier]?.weight || 1), 0);
     for (const x of xs) {
@@ -688,11 +960,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
   const iso = (y, m, d = 1) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   function makeBiography(r, region, pathway) {
-    const hs = choose(
-        Cat.institutions.filter((s) => ['high-school', 'hs-club'].includes(s.kind) && s.region === region),
-        r,
-      ),
-      high = pathway === '고졸';
+    let hs = choose(
+      Cat.institutions.filter((s) => ['high-school', 'hs-club'].includes(s.kind) && s.region === region),
+      r,
+    );
+    const high = pathway === '고졸';
+    // A study-abroad player grew up in `region` but finished high school overseas.
+    if (pathway === '야구 유학') hs = pick(Cat.institutions.filter((s) => s.kind === 'overseas-hs'), r);
     let current = hs,
       hsGrad = ENTRY_YEAR,
       withCollege = false;
@@ -703,7 +977,14 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       );
       hsGrad = ENTRY_YEAR - (pathway === '대학 얼리' ? 2 : 4);
     }
-    const returning = ['마이너 복귀', '해외독립 복귀', 'MLB 경험 복귀'].includes(pathway);
+    if (pathway === '2년제') {
+      current = choose(
+        Cat.institutions.filter((s) => s.kind === 'college2'),
+        r,
+      );
+      hsGrad = ENTRY_YEAR - 2;
+    }
+    const returning = Object.hasOwn(RETURN_LEVELS, pathway);
     if (pathway === '해외파') {
       current = choose(
         Cat.institutions.filter((s) => s.kind === 'overseas-college'),
@@ -712,12 +993,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       hsGrad = DRAFT_YEAR - 4;
     }
     if (returning) {
-      const level =
-        pathway === 'MLB 경험 복귀'
-          ? 'MLB'
-          : pathway === '해외독립 복귀'
-            ? '해외 독립'
-            : pick(['A', 'AA', 'AAA'], r);
+      const level = pick(RETURN_LEVELS[pathway], r);
       current = pick(
         Cat.institutions.filter((s) => s.level === level),
         r,
@@ -753,8 +1029,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         tier: hs.tier,
         start: iso(hsGrad - 3, 3),
         end: iso(hsGrad, 2, 28),
-        status: hs.kind === 'hs-club' ? (high ? '활동 종료 예정' : '활동 종료') : high ? '졸업 예정' : '졸업',
-        note: hs.kind === 'hs-club' ? '고교 연령 클럽팀에서 뛰었습니다.' : '',
+        status: hs.kind === 'hs-club' ? (high ? '활동 종료 예정' : '활동 종료') : high || pathway === '야구 유학' ? '졸업 예정' : '졸업',
+        note:
+          hs.kind === 'hs-club' ? '고교 연령 클럽팀에서 뛰었습니다.'
+          : pathway === '야구 유학' ? `중학교를 마치고 ${hs.country}으로 야구 유학을 떠났습니다.`
+          : '',
       },
     ];
     if (['대졸', '대학 얼리'].includes(pathway))
@@ -771,6 +1050,18 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           pathway === '대학 얼리'
             ? '졸업 전 조기 참가입니다. 대졸 의무지명에는 포함하지 않습니다.'
             : '게임에서는 4년제 과정으로 단순화합니다.',
+      });
+    if (pathway === '2년제')
+      history.push({
+        institutionId: current.id,
+        name: current.name,
+        kind: current.kind,
+        region: current.region,
+        tier: current.tier,
+        start: iso(hsGrad, 3),
+        end: iso(ENTRY_YEAR, 2, 28),
+        status: '졸업 예정',
+        note: '2년제 과정을 마쳤습니다. 대졸 의무지명 대상입니다.',
       });
     if (pathway === '해외파')
       history.push({
@@ -839,28 +1130,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       : null;
     return {
       proExperience,
-      education: high
-        ? '고교 졸업 예정'
-        : ['대졸', '해외파'].includes(pathway)
-          ? '대학 졸업(예정)'
-          : pathway === '대학 얼리'
-            ? '대학 재학'
-            : withCollege
-              ? '대학 졸업'
-              : '고교 졸업',
-      entryCategory: returning
-        ? 'overseas-return'
-        : high
-          ? 'high-school'
-          : pathway === '대졸'
-            ? 'college-graduate'
-            : pathway === '대학 얼리'
-              ? 'college-early'
-              : pathway === '독립구단'
-                ? 'independent'
-                : 'overseas',
-      collegeYear: pathway === '대졸' ? 4 : pathway === '대학 얼리' ? 2 : null,
-      quotaEligible: pathway === '대졸',
+      education: returning ? '해외 프로 경력' : withCollege ? '대학 졸업' : PATHWAY_INFO[pathway].education,
+      entryCategory: returning ? 'overseas-return' : PATHWAY_INFO[pathway].entry,
+      collegeYear: PATHWAY_INFO[pathway]?.collegeYear ?? null,
+      quotaEligible: !!PATHWAY_INFO[pathway]?.quota,
       birthday,
       age: ageAt(birthday),
       birthRegion,
@@ -876,17 +1149,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       schoolTier: current.tier,
       history,
       pathText: history.map((h) => h.name).join(' → '),
-      qualification: high
-        ? '고교 졸업 예정'
-        : pathway === '대졸'
-          ? '대학 졸업 예정'
-          : pathway === '대학 얼리'
-            ? '대학 2학년 얼리 참가'
-            : pathway === '독립구단'
-              ? '독립구단 지원'
-              : returning
-                ? '해외 경력 후 국내 프로 첫 지원'
-                : '해외 대학 졸업',
+      qualification: returning ? '해외 경력 후 국내 프로 첫 지원' : PATHWAY_INFO[pathway].qualification,
       regionalEligible: high,
       regionalRegion: high ? hs.region : null,
       regionalReason: high
@@ -906,7 +1169,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       ['high-school', 'hs-club'].includes(s.kind) &&
       s.id === p.highSchoolId &&
       s.region === team.region &&
-      !p.history.some((h) => ['college', 'independent', 'overseas-college'].includes(h.kind))
+      !p.history.some((h) => ['college', 'college2', 'independent', 'overseas-college'].includes(h.kind))
     );
   }
   const api = { DRAFT_DATE, DRAFT_YEAR, ENTRY_YEAR, REGIONS, CITIES, TIERS, ageAt, makeBiography, eligible };
@@ -920,6 +1183,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
    player is rounded to five-point grades and includes observer error. */
 (function (root) {
   'use strict';
+  const { TUNING } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
+  const V = TUNING.generation.velocity;
   const clamp = (n, a = 20, b = 80) => Math.max(a, Math.min(b, n));
   const grade = (n) => clamp(Math.round(n / 5) * 5);
   const ROLES = { SP: '선발투수', RP: '불펜투수', C: '포수', IF: '내야수', OF: '외야수' };
@@ -966,8 +1231,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   /** Generates hidden and public tools for one prospect. Consumes `r` in a fixed order. */
   function make(role, type, bio, band, r) {
     const pitcher = role === 'SP' || role === 'RP',
-      high = bio.entryCategory === 'high-school',
-      early = bio.entryCategory === 'college-early';
+      high = bio.entryCategory === 'high-school' || bio.entryCategory === 'study-abroad',
+      early = bio.entryCategory === 'college-early',
+      twoYear = bio.entryCategory === 'college-two-year'; // same age as early entrants, a little more finished
     const range = TALENT_BANDS[band],
       base = range[0] + r() * (range[1] - range[0]);
     const shape = (pitcher ? PITCHER_SHAPES : HITTER_SHAPES)[type];
@@ -979,13 +1245,15 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       growthCurve = curveRoll < 0.2 ? 'early' : curveRoll < 0.78 ? 'normal' : 'late';
     const rawProject = high && band >= 2 && r() < 0.12;
     const gap =
-      (high ? 10 + r() * 8 : early ? 7 + r() * 6 : bio.proExperience ? 3 + r() * 6 : 4 + r() * 6) +
+      (high ? 10 + r() * 8 : early ? 7 + r() * 6 : twoYear ? 6 + r() * 5 : bio.proExperience ? 3 + r() * 6 : 4 + r() * 6) +
       (growthCurve === 'late' ? 2 : 0) +
       (rawProject ? 8 + r() * 5 : 0);
     const observerBias = (r() - 0.5) * (high ? 7 : 5),
-      uncertainty = high ? '높음' : early ? '보통' : bio.proExperience?.level === 'MLB' ? '보통' : '낮음';
+      uncertainty = high ? '높음' : early || twoYear ? '보통' : bio.proExperience?.level === 'MLB' ? '보통' : '낮음';
+    const arm = pitcher ? normal(r) * 3 : 0;
     for (const k of keys(role)) {
-      potentialTools[k] = clamp(base + shape[k] - center + normal(r) * 3);
+      const lift = k === 'stuff' ? arm * V.armToStuff : 0;
+      potentialTools[k] = clamp(base + shape[k] - center + normal(r) * 3 + lift);
       trueTools[k] = clamp(
         potentialTools[k] -
           gap * (k === 'speed' ? 0.4 : 0.8 + r() * 0.4) +
@@ -999,6 +1267,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       trueTools.eye = clamp(potentialTools.eye - gap * 0.8);
       tools.eye = grade(trueTools.eye + observerBias + normal(r) * 4);
     }
+    const velocity = pitcher
+      ? Math.round(clamp(V.base + (trueTools.stuff - V.pivot) * V.perStuff + arm * V.perArm + (high ? 0 : V.adultBonus) + normal(r) * V.noise, V.min, V.max))
+      : null;
     const trueReady = overall(trueTools, role),
       upside = overall(potentialTools, role),
       ready = grade(overall(tools, role));
@@ -1038,6 +1309,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     if (ceilingGrade >= 55 && ceilingGrade - ready >= 10) pickTags.push('실링');
     if (!pickTags.length) pickTags.push(scoutCeiling - ready >= 10 ? '육성형' : '역할형');
     return {
+      velocity,
       ready,
       trueReady,
       upside,
@@ -1174,6 +1446,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
 
     let weakness;
     if (pitcher && p.velocity <= 141) weakness = fill(one(SLOW, r), vars);
+    else if (pitcher && p.velocity >= 147 && p.tools.stuff <= 40 && p.tools.command > 30)
+      weakness = one(['구속은 나오는데 공이 가볍다. 회전수가 아쉽다.', '빠른 공이 밋밋하게 들어간다. 구속만큼 헛스윙이 안 나온다.'], r);
     else if (worstGrade >= 50) weakness = '약점이 두드러지지 않는다. 한 가지 확실한 무기를 만드는 게 과제다.';
     else if (worstGrade >= 40) weakness = fill(one(SHORT, r), { ...vars, tool: G.LABELS[worstTool] });
     else weakness = fill(one(BAD[noteKey(p, worstTool)], r), vars);
@@ -1203,7 +1477,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   function amateurFact(p) {
     const r = p.record;
     if (!r) return '';
-    const where = p.pathway === '고졸' ? '올해 고교 무대에서' : ['대졸', '대학 얼리'].includes(p.pathway) ? '대학리그에서' : p.proExperience ? '해외 마지막 시즌' : '지난 시즌';
+    const where = p.pathway === '고졸' ? '올해 고교 무대에서' : ['대졸', '대학 얼리', '2년제'].includes(p.pathway) ? '대학리그에서' : p.proExperience ? '해외 마지막 시즌' : '지난 시즌';
     if (r.kind === 'pitcher') {
       const ip = `${Math.floor(r.outs / 3)}${r.outs % 3 ? '⅓⅔'[r.outs % 3 - 1] : ''}`;
       return `${where} ${r.games}경기 ${ip}이닝, 평균자책점 ${r.era.toFixed(2)}, 탈삼진 ${r.k}개를 기록했다.`;
@@ -1217,8 +1491,6 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
    */
   function draftNews(p, t, selection, f, r) {
     const role = ROLES[p.role];
-    // Wording judges a steal by the national pick number (the regional round is not part of the order).
-    f = { ...f, value: selection.round === 1 && p.rank <= f.nationalPick - 5 };
     const age = p.age ? `(${p.age})` : '';
     const where = selection.round === 0 ? '지역 1차 지명으로' : `1라운드 ${((selection.overall - 1) % 10) + 1}순위로`;
     const hook =
@@ -1226,6 +1498,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       : f.local ? '연고 출신'
       : p.pathway === '고졸' && p.rank <= 5 ? '고교 최대어'
       : p.proExperience ? '해외파 유턴'
+      : p.pathway === '야구 유학' ? '유학파'
+      : p.pathway === '2년제' ? '2년제 출신'
       : p.pathway === '독립구단' ? '독립리그 출신'
       : role;
     const headlines = f.reach
@@ -1283,6 +1557,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     else add('인내', ['2~3년은 기다려야 할 듯', '퓨처스에서 몸 좀 만들고 오자', '급하게 쓰지 말고 제대로 키우자']);
     if (p.pathway === '독립구단') add('응원', ['독립리그에서 버틴 거 대단하다', '다시 기회 잡은 거 멋지다']);
     if (p.pathway === '대졸') add('담담', ['대학 4년 동안 꾸준했지', '대졸이라 적응은 빠를 듯']);
+    if (p.pathway === '2년제') add('담담', ['2년제에서 몸 좀 만들고 나왔겠지', '전문대 리그 기록 좋던데', '고졸 때보다 확실히 성장했다더라']);
+    if (p.pathway === '야구 유학') add('기대', ['유학파는 기본기가 탄탄하던데', '어린 나이에 혼자 유학 간 것부터 대단하다']);
     if (p.proExperience || p.pathway === '해외파') add('기대', ['해외 경험 있는 선수 반갑다', '미국에서 뭘 배워 왔는지 궁금']);
     add('응원', ['잘 커서 오래 뛰자', '이름 외워 둔다', '사인볼 받으러 간다', '부상 없이만 크자']);
     const names = some(HANDLES, 3, r);
@@ -1303,6 +1579,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const Names = root.DraftNames || (typeof require !== 'undefined' ? require('./names.js') : null);
   const Ko = root.DraftKo || (typeof require !== 'undefined' ? require('./ko.js') : null);
   const G = root.DraftGrades || (typeof require !== 'undefined' ? require('./grades.js') : null);
+  const CLUBS = root.DraftClubs || (typeof require !== 'undefined' ? require('./clubs.js') : null);
+  const { TUNING } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const W = root.DraftWriter || (typeof require !== 'undefined' ? require('./writer.js') : null);
   const REGIONS = Bio.REGIONS,
     ROLES = G.ROLES;
@@ -1391,6 +1669,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   // Amateur tournaments. Descriptive only: results come from their own streams and never change players.
   const HS_NATIONAL = '다이아몬드 데일리배 전국고교야구대회',
     COLLEGE_NATIONAL = '퓨처 베이스볼배 대학야구 왕중왕전',
+    JUNIOR_COLLEGE_NATIONAL = '퓨처 베이스볼배 전문대학 야구대회',
     NATIONAL_QUALIFIERS = 4; // top four of each regional/conference event go to the national event
   const COLLEGE_CONFERENCES = [
     ['수도권', ['서울', '인천', '경기·강원']],
@@ -1453,8 +1732,19 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         if (i < NATIONAL_QUALIFIERS) collegeQualifiers.push(s);
       });
     }
+    // Two-year colleges: one league, then the top four meet in their own tournament.
+    const juniors = Cat.institutions.filter((x) => x.kind === 'college2');
+    const rj = rng(seed + '-school-event-2년제');
+    const juniorQualifiers = [];
+    juniors
+      .map((s) => ({ s, score: Bio.TIERS[s.tier].team * 60 + rj() * 55 }))
+      .sort((a, b) => b.score - a.score)
+      .forEach(({ s }, i) => {
+        map[s.id] = { event: '전문대학 리그', result: `${i + 1}위`, award: i === 0 ? '전문대학 리그 1위' : null, national: null };
+        if (i < NATIONAL_QUALIFIERS) juniorQualifiers.push(s);
+      });
     // National events from the qualifiers.
-    for (const [event, entrants] of [[HS_NATIONAL, hsQualifiers], [COLLEGE_NATIONAL, collegeQualifiers]]) {
+    for (const [event, entrants] of [[HS_NATIONAL, hsQualifiers], [COLLEGE_NATIONAL, collegeQualifiers], [JUNIOR_COLLEGE_NATIONAL, juniorQualifiers]]) {
       const reached = bracket(entrants, rng(seed + '-national-' + event));
       for (const s of entrants) {
         const result = roundLabel(reached.get(s.id));
@@ -1464,22 +1754,33 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     return map;
   }
 
-  // Pool composition. Each of the 8 regions gets 25 slots: 17 high-schoolers and 8 others.
-  const POOL_SIZE = 200,
-    SLOTS_PER_REGION = 25,
-    HIGH_SCHOOL_PER_REGION = 17;
+  // Pool composition. Each of the 8 regions gets 50 slots: 33 high-schoolers and 17 others (136 in total).
+  const POOL_SIZE = 400,
+    SLOTS_PER_REGION = 50,
+    HIGH_SCHOOL_PER_REGION = 33;
   const OTHER_PATHWAYS = [
-    ['대졸', 30],
-    ['대학 얼리', 16],
-    ['독립구단', 6],
-    ['해외파', 4],
-    ['마이너 복귀', 5],
-    ['해외독립 복귀', 2],
+    ['대졸', 56],
+    ['대학 얼리', 24],
+    ['2년제', 24],
+    ['독립구단', 12],
+    ['해외파', 6],
+    ['마이너 복귀', 10],
+    ['해외독립 복귀', 3],
   ];
-  const BAND_COUNTS = [110, 56, 24, 8, 2];
+  // One returnee slot is special: rarely a brief MLB career or another foreign league, otherwise the minors.
+  const RARE_RETURN = { mlb: 0.12, otherLeague: 0.15 };
+  const STUDY_ABROAD_CHANCE = 0.2; // one high-school slot per pool, sometimes, is a player who studied abroad
+  // Talent bands; the extra depth of a 400-player pool sits mostly in the lower bands.
+  const BAND_COUNTS = [250, 100, 36, 11, 3];
   const repeat = (value, n) => Array(n).fill(value);
 
   const pitcherRole = (role) => role === 'SP' || role === 'RP';
+  /** Index into the club list. Players lean towards a club from the region where they grew up. */
+  function favoriteTeam(region, r) {
+    const local = CLUBS.map((t, i) => (t.region === region ? i : -1)).filter((i) => i >= 0);
+    if (local.length && r() < TUNING.generation.localFavorite) return local[Math.floor(r() * local.length)];
+    return Math.floor(r() * CLUBS.length);
+  }
   function rollRole(r) {
     const roll = r();
     return roll < 0.32 ? 'SP' : roll < 0.49 ? 'RP' : roll < 0.58 ? 'C' : roll < 0.81 ? 'IF' : 'OF';
@@ -1495,16 +1796,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       usedNames = new Set(),
       players = [],
       honors = schoolHonors(seed);
-    const rareMLB = rng(seed + '-rare-mlb')() < 0.12;
-    // The 6th minor-league slot is occasionally a returnee with a brief MLB stint.
-    const otherPaths = shuffle(
-      [
-        ...OTHER_PATHWAYS.slice(0, 5).flatMap(([path, n]) => repeat(path, n)),
-        rareMLB ? 'MLB 경험 복귀' : '마이너 복귀',
-        ...repeat('해외독립 복귀', 2),
-      ],
-      r,
-    );
+    const rare = rng(seed + '-rare-return')();
+    const special = rare < RARE_RETURN.mlb ? 'MLB 경험 복귀' : rare < RARE_RETURN.mlb + RARE_RETURN.otherLeague ? '해외리그 복귀' : '마이너 복귀';
+    const otherPaths = shuffle([...OTHER_PATHWAYS.flatMap(([path, n]) => repeat(path, n)), special], r);
+    const abroad = rng(seed + '-study-abroad');
+    const studyAbroadSlot = abroad() < STUDY_ABROAD_CHANCE ? Math.floor(abroad() * HIGH_SCHOOL_PER_REGION * REGIONS.length) : -1;
     const bands = shuffle(
       BAND_COUNTS.flatMap((n, band) => repeat(band, n)),
       rng(seed + '-talent-bands'),
@@ -1514,10 +1810,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       const regionIndex = Math.floor(i / SLOTS_PER_REGION),
         slot = i % SLOTS_PER_REGION,
         region = REGIONS[regionIndex],
+        hsIndex = regionIndex * HIGH_SCHOOL_PER_REGION + slot,
         pathway =
-          slot < HIGH_SCHOOL_PER_REGION
-            ? '고졸'
-            : otherPaths[regionIndex * othersPerRegion + slot - HIGH_SCHOOL_PER_REGION],
+          slot >= HIGH_SCHOOL_PER_REGION
+            ? otherPaths[regionIndex * othersPerRegion + slot - HIGH_SCHOOL_PER_REGION]
+            : hsIndex === studyAbroadSlot
+              ? '야구 유학'
+              : '고졸',
         high = pathway === '고졸';
       const identity = Names.makeName(r, usedNames),
         bio = Bio.makeBiography(r, region, pathway),
@@ -1534,14 +1833,12 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       const { ready, trueReady, upside, scoutCeiling, publicScore, control, power, speed, defense } = talent;
       const throwHand = throwingHand(role, type, r);
       const batHand = battingHand(r);
-      const velocity = pitcher
-        ? round(clamp(139 + (talent.tools.stuff - 35) * 0.48 + normal(r) * 3, 131, 162))
-        : null;
+      const velocity = talent.velocity;
       const height = type === 4 && role === 'SP' ? 190 + Math.floor(r() * 7) : 174 + Math.floor(r() * 19),
         weight = round(68 + (height - 174) * 0.6 + r() * 15 + (type === 1 && !pitcher ? 7 : 0));
       const awards = [];
       if (high && ready >= 45 && r() < 0.35) awards.push('U-18 대표팀');
-      if (['대졸', '대학 얼리'].includes(pathway) && ready >= 45 && r() < 0.25) awards.push('대학 대표팀');
+      if (['대졸', '대학 얼리', '2년제'].includes(pathway) && ready >= 45 && r() < 0.25) awards.push('대학 대표팀');
       // Shared school results: school reputation affects team success, not a direct AVG/ERA multiplier.
       if (schoolTournament?.award) awards.push(schoolTournament.award);
       if (schoolTournament?.national?.award) awards.push(schoolTournament.national.award);
@@ -1592,7 +1889,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         record,
         risk: 0.05 + r() * 0.11,
         personality: pick(PERSONALITIES, r),
-        favoriteTeam: Math.floor(r() * 10),
+        favoriteTeam: favoriteTeam(bio.highSchoolRegion, r),
         lateDevelopment: talent.growthCurve === 'late',
         confidence: record.games >= 25 ? '보통' : '관찰 표본 적음',
       });
@@ -1704,6 +2001,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     shuffle,
     normal,
     generatePool,
+    POOL_SIZE,
   };
   root.DraftData = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -1827,169 +2125,6 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
   const api = { STYLES, needCoverage, plans, value, fit, score, explanation, recommend };
   root.DraftScouting = api;
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-})(typeof window !== 'undefined' ? window : globalThis);
-</script>
-<script>
-/* Balance knobs for seasons, careers and evaluations, in one place.
-   These are fictional tuning values, not an empirical KBO model.
-
-   Changing any number here changes simulated results, which changes what old saves replay into.
-   After a change: bump SIM_VERSION in engine.js, then re-record tests/golden.cjs with --write.
-
-   Conventions: a `[base, span]` pair means base + floor(r() * span); `byYear` arrays are indexed by
-   pro year (0 = rookie season) and the last entry applies to every later year. */
-(function (root) {
-  'use strict';
-  const freeze = (o) => (Object.values(o).forEach((v) => v && typeof v === 'object' && freeze(v)), Object.freeze(o));
-
-  const TUNING = {
-    health: {
-      longInjuryShare: 0.22, // share of injuries that are long
-      longDays: [65, 66],
-      shortDays: [7, 28],
-      rehabDays: 105, // this many lost days means the season is spent in rehab
-      playingDays: 165, // games played scale by (1 - daysLost / playingDays)
-      growthDays: 210, // growth scales by (1 - daysLost / growthDays)
-      heavyInjuryDays: 100,
-      heavyInjuryGrowthPenalty: 0.6,
-      planPenaltyDays: 60,
-      planPenalty: 4,
-    },
-
-    roles: {
-      impactNoise: 3, // season-to-season noise on the ability used for role decisions
-      // Extra call-up chance for early picks: byRound (round 0/1, 2, 3; later rounds get 0) × byYear.
-      draftInvestment: { byRound: [0.18, 0.18, 0.1, 0.04], byYear: [1, 0.2, 0] },
-      // Last year's regular keeps the job with base + (ability - pivot) × perAbility + form × perForm.
-      retention: { base: 0.87, pivot: 48, perAbility: 0.009, perForm: 0.018, min: 0.66, max: 0.97 },
-      // A regular who loses the job drops to the futures only when both ability and form are this low.
-      demotion: { maxAbility: 38, maxForm: -0.8, poorForm: -0.5 },
-      // Call-up: base + sigmoid((ability - pivot) / scale) × weight + bonuses.
-      callUp: { base: 0.025, pivot: 40, scale: 3.6, weight: 0.83, afterBackup: 0.08, needFit: 80, needBonus: 0.045, min: 0.015, max: 0.98 },
-      // Once called up, the chance the role is a regular one.
-      regular: { pivotByYear: [47, 45], scale: 3.6, weightByYear: [0.68, 0.86], afterBackup: 0.08, min: 0.01, max: 0.95 },
-      // Otherwise backup rather than a short cameo: clamp((ability - pivot) / scale).
-      backupOverCameo: { pivot: 30, scale: 25, min: 0.2, max: 0.83 },
-      core: { minAbility: 55, fromYear: 1 }, // "핵심" regulars
-      // Regular slots per club and position among this draft class; beyond it a regular becomes backup.
-      cohortCapacity: { SP: 5, RP: 7, C: 2, IF: 4, OF: 3 },
-      closer: { minAbility: 48, fromYear: 1 },
-    },
-
-    games: {
-      regular: {
-        SP: { baseByYear: [20, 24, 26], spanByYear: [5, 5, 6] },
-        RP: { baseByYear: [44], spanByYear: [21] },
-        hitter: { baseByYear: [88, 105, 120], spanByYear: [25, 25, 21] },
-      },
-      backup: { SP: [9, 11], RP: [22, 19], hitter: [40, 36] },
-      cameo: { pitcher: [2, 7], hitter: [5, 15] },
-      // Futures games alongside each role; the development route gets a [base, span] range.
-      futures: { regular: { pitcher: 2, hitter: 5 }, backup: { pitcher: 9, hitter: 35 }, development: { pitcher: [20, 8], hitter: [80, 25] } },
-      hitterSeasonCap: 144, // first-team + futures games for a hitter
-    },
-
-    hitting: {
-      paPerGame: { core: 4.25, regular: 3.95, futures: 3.6, cameo: 1.8, bench: 2.55 },
-      avg: { base: 0.2, pivot: 30, perContact: 0.0027, futuresBonus: 0.035, noise: 0.018, min: 0.16, max: 0.355 },
-      hr: { base: 0.007, pivot: 32, perPower: 0.00145, futuresBonus: 0.004, min: 0.001, max: 0.085 },
-      walk: { base: 0.04, pivot: 30, perEye: 0.002, min: 0.025, max: 0.16 },
-      strikeout: { base: 0.3, pivot: 30, perContact: 0.003, min: 0.1, max: 0.36, minNonHitShare: 0.5 },
-      hitShare: { min: 0.08, max: 0.38 }, // per-AB non-HR hit chance bounds
-      triple: { pivot: 30, perSpeed: 0.0009, max: 0.035 },
-      double: { base: 0.18, pivot: 40, perPower: 0.0025 },
-      rbi: { perHit: 0.32, perHR: 1.65 },
-      steal: { pivot: 25, gamesPerUnit: 205, base: 0.6, spread: 0.6 },
-    },
-
-    pitching: {
-      era: { base: 7.75, perStuff: 0.025, perCommand: 0.029, perBreaking: 0.016, futuresBonus: 0.95, noise: 0.45, min: 1.9, max: 8.5 },
-      startIP: { base: 3.45, perStamina: 0.047, regular: 0.05, other: -0.45, noise: 1.1, min: 2.5, max: 7.6 },
-      reliefIP: { base: 0.85, noise: 0.7, min: 0.33, max: 2 },
-      spotStartShare: 0.65, // share of a non-regular SP's games that are starts
-      k9: { base: 1.0, pivot: 20, perStuff: 0.22, perBreaking: 0.02, min: 3.5, max: 13 },
-      bb9: { base: 6.2, perCommand: 0.066, min: 1.1, max: 5.6 },
-      qualityStart: { minOuts: 18, maxRuns: 3 },
-      // Starter win: at least minOuts, then base + (pivotRuns - runs) × perRun + team strength, then bullpen holds.
-      startWin: { minOuts: 15, base: 0.3, pivotRuns: 5, perRun: 0.075, rankPivot: 11, perRank: 0.01, defaultRank: 6, min: 0.08, max: 0.78, bullpenHold: 0.86 },
-      relief: { win: 0.045, save: 0.57, hold: 0.29 }, // cumulative thresholds on one roll
-    },
-
-    growth: {
-      rateByCurve: {
-        early: { start: 0.43, perYear: 0.045, min: 0.2 },
-        late: { firstYears: 0.14, later: 0.44, switchYear: 2 },
-        normal: 0.32,
-      },
-      speedShare: 0.6, // speed closes its gap more slowly
-      noise: 0.65,
-      minGain: -2.5,
-      maxGain: 8,
-      agingFrom: { speed: 26, other: 29 },
-      agingPerYear: { speed: 0.38, other: 0.28 },
-    },
-
-    // Descriptive only: each season's top velocity follows the change in true stuff.
-    velocity: { perStuff: 0.48, noise: 0.8, min: 128, max: 163 },
-
-    scores: {
-      // Last season's form, fed into next year's retention.
-      performance: { eraPivot: 4.5, eraScale: 1.3, opsPivot: 0.72, opsScale: 0.12, limit: 2 },
-      // 0–100 first-team contribution index (not WAR).
-      contribution: { perInning: 0.42, eraPivot: 4.7, perEra: 7, perPA: 0.095, opsPivot: 0.7, perOps: 45, defensePivot: 45, perDefense: 0.15 },
-      // Plan score: base + progress × perProgress + bonuses; progress = growth / expected growth.
-      plan: { base: 28, perProgress: 43, played: 8, regular: 8, min: 10, max: 100 },
-      expectedGrowth: { min: 0.65, share: 0.2, projectShare: 0.13, projectGap: 20, projectYears: 2 },
-      progress: { nearCeiling: 2, max: 1.3 },
-      growthLabels: [[3, '뚜렷한 성장'], [1.4, '꾸준한 발전'], [0.3, '기술 발전'], [0, '완성도 유지']],
-    },
-
-    firstYear: {
-      weights: { need: 0.4, plan: 0.25, future: 0.35 },
-      future: { base: 50, fvPivot: 45, perFV: 3, perGrowth: 4 },
-      gradeCuts: [89, 77, 63], // A, B, C; below is D
-    },
-
-    league: {
-      gamesPerPair: 16, // 9 opponents × 16 = 144 games
-      rating: { base: 50, rankPivot: 11, perRank: 2.2, noise: 12, rookieScale: 35, rookieMax: 9 },
-      logisticScale: 23, // win chance = 1 / (1 + exp(ratingGap / scale))
-    },
-
-    awards: {
-      hitter: { minPA: 60, perPA: 0.055, opsPivot: 0.65, perOps: 50, perHR: 0.7 },
-      pitcher: { minOuts: 60, perOut: 0.12, eraPivot: 5.5, perEra: 6, perK: 0.05 },
-    },
-
-    offseason: {
-      release: { minClubSize: 4, fromYear: 2, minAge: 23, maxGrade: 40, base: 0.07, perGrade: 0.014, perAge: 0.012, max: 0.24 },
-      trade: {
-        chance: 0.68,
-        protectContribution: 50, // regulars at or above this are never traded
-        minCombinedGain: 30,
-        maxValueGap: 8,
-        value: { perReady: 0.65, perFV: 0.25, agePivot: 22, perAge: 1.1, perContribution: 0.08 },
-        gapWeight: 2,
-        noise: 25,
-      },
-    },
-
-    review: {
-      weights: { need: 0.2, production: 0.5, growth: 0.3 },
-      contributionPerSeason: 30, // per player-season, for 100 production points
-      growth: { base: 35, perPoint: 3.5 },
-      gradeCuts: [85, 70, 55],
-      pendingMaxAge: 24,
-    },
-  };
-
-  /** Value for pro year `yearIndex` from a byYear array (the last entry covers later years). */
-  const byYear = (list, yearIndex) => list[Math.min(yearIndex, list.length - 1)];
-  const letter = (score, cuts) => (score >= cuts[0] ? 'A' : score >= cuts[1] ? 'B' : score >= cuts[2] ? 'C' : 'D');
-
-  const api = { TUNING: freeze(TUNING), byYear, letter };
-  root.DraftTuning = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -2283,7 +2418,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   function seasonVelocity(p, after, r) {
     if (!isPitcher(p) || p.velocity == null) return null;
     const V = T.velocity;
-    return round(clamp(p.velocity + (after.stuff - p.trueTools.stuff) * V.perStuff + normal(r) * V.noise, V.min, V.max));
+    return round(clamp(p.velocity + (after.stuff - p.trueTools.stuff) * T.generation.velocity.perStuff + normal(r) * V.noise, V.min, V.max));
   }
   const growthLabel = (growth) => T.scores.growthLabels.find(([min]) => growth >= min)?.[1] ?? '기량 후퇴';
 
@@ -2596,7 +2731,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       )
       .map((f) => f.name);
     const reach = remainingRank > (selection.round === 0 ? 5 : 12),
-      value = selection.round === 1 && p.rank <= selection.overall - 5;
+      // National pick number: the regional round is not part of the order.
+      nationalPick = selection.overall - prior.filter((s) => s.round === 0).length,
+      value = selection.round === 1 && p.rank <= nationalPick - 5;
     const label = selection.round === 0 ? '지역 1차' : '전국 1라운드',
       r = D.rng(seed + '-news-' + selection.overall),
       role = D.ROLES[p.role];
@@ -2605,7 +2742,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       p,
       t,
       selection,
-      { reach, value, matched, fit, owned, local: selection.round === 0, remainingRank, nationalPick: selection.overall - prior.filter((s) => s.round === 0).length },
+      { reach, value, matched, fit, owned, local: selection.round === 0, remainingRank, nationalPick },
       D.rng(seed + '-news-text-' + selection.overall),
     );
     const delta = D.clamp(
@@ -3025,7 +3162,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         rank = rankings[t.id + '-' + p.role].indexOf(p.id),
         capacity = T.roles.cohortCapacity[p.role];
       const rec = M.simulatePlayer(p, sel, { seed }, t, fit(p, t), yearIndex ? state : null, yearIndex, {
-        blockedRegular: rank >= capacity,
+        // Development-contract players cannot be regulars in their first season.
+        blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
         closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
       });
       Object.assign(state, rec.endState);
@@ -3118,6 +3256,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     late: ['생각보다 늦게 불려서 마음 졸였습니다. 그래도 불러 주신 팀에서 보여 드리겠습니다.', '기다리는 동안 솔직히 불안했어요. 이제 순번은 신경 안 쓰고 야구만 하겠습니다.', '순번은 늦었지만 출발선은 같다고 생각합니다.'],
     independent: ['{prev|을/를} 거쳐 독립리그에서 다시 준비했습니다. 포기 안 하길 잘했어요.', '한 번 떨어지고 나서 매일 새벽에 훈련했습니다. 그 시간이 오늘을 만든 것 같습니다.', '다시 불릴 수 있다고 믿고 버텼습니다. 기다려 준 가족한테 제일 고맙습니다.'],
     early_college: ['2학년인데 얼리로 나왔습니다. 빨리 프로에서 부딪혀 보고 싶었어요.', '대학 감독님이 도전해 보라고 등을 밀어 주셨습니다.'],
+    two_year: ['2년제에서 빨리 프로에 도전하고 싶었습니다.', '{school}에서 2년 동안 몸을 만들었습니다. 고등학교 때보다 훨씬 준비됐다고 생각해요.', '2년 동안 매일 웨이트부터 다시 했습니다. 그게 오늘 이름이 불린 이유 같아요.'],
+    abroad: ['중학교 졸업하고 혼자 유학을 갔습니다. 한국 프로는 늘 목표였어요.', '밖에서 3년 동안 야구하면서 많이 배웠습니다. 이제 한국에서 보여 드릴 차례예요.'],
     college: ['고등학교 때 지명을 못 받고 대학에 갔습니다. 4년 동안 준비한 게 헛되지 않았네요.', '{school}에서 4년 동안 많이 배웠습니다. 그때 지명 못 받은 게 오히려 약이 됐어요.'],
     overseas: ['해외에서 혼자 야구하면서 한국 무대가 계속 그리웠습니다.', '밖에서 배운 걸 한국에서 보여 드리고 싶어요.', '돌아오는 결정이 쉽지 않았는데, 불러 주셔서 감사합니다.'],
     plain: ['{team}에 오게 돼서 정말 기쁩니다.', '부모님이 제일 먼저 생각났어요.', '{school} 감독님이랑 동료들한테 고맙다는 말부터 하고 싶습니다.', '어릴 때부터 꿈꾸던 순간입니다.'],
@@ -3172,6 +3312,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         : p.pathway === '독립구단' ? 'independent'
         : p.pathway === '대학 얼리' ? 'early_college'
         : p.pathway === '대졸' ? 'college'
+        : p.pathway === '2년제' ? 'two_year'
+        : p.pathway === '야구 유학' ? 'abroad'
         : p.pathway === '해외파' || p.proExperience ? 'overseas'
         : pickNo && p.rank < pickNo - 12 ? 'late'
         : pickNo && p.rank > pickNo + 12 ? 'early'
@@ -3269,13 +3411,15 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const { ROLES, REGIONS, rng, clamp } = D;
   const K = D.ko,
     Bio = D.bio;
+  const { TUNING } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const Voices = root.DraftVoices || (typeof require !== 'undefined' ? require('./voices.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '0.6.4',
+  const RELEASE = '0.7.0',
     VERSION = 6,
-    ROUNDS = 7,
-    POOL_SIZE = 200;
+    ROUND_OPTIONS = [5, 8, 11], // national rounds the player can choose; 11 is the current KBO format
+    ROUNDS = 11,
+    POOL_SIZE = D.POOL_SIZE;
   const CONFIG = Object.freeze({
     nationalRounds: ROUNDS,
     seasonCount: Career.SEASONS,
@@ -3320,10 +3464,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           ? '역할 확보 전망'
           : '추가 육성 필요';
   }
-  function makeSchedule(local) {
+  function makeSchedule(local, rounds = ROUNDS) {
     const a = [];
     if (local) for (const t of TEAMS) a.push({ teamId: t.id, round: 0, label: '지역 1차' });
-    for (let round = 1; round <= ROUNDS; round++)
+    for (let round = 1; round <= rounds; round++)
       for (const t of TEAMS) a.push({ teamId: t.id, round, label: round + 'R' });
     return a;
   }
@@ -3333,20 +3477,22 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     pool.publicPlayers ??= pool.players.map(R.project);
     return pool.publicPlayers;
   }
-  function createGame(teamId, local = false, seed = 'default', difficulty = 'normal') {
-    if (!Object.hasOwn(teamById, teamId) || !Object.hasOwn(R.DIFFICULTIES, difficulty))
-      throw Error('구단 또는 난이도를 확인해야 합니다.');
+  function createGame(teamId, local = false, seed = 'default', difficulty = 'normal', rounds = ROUNDS) {
+    if (!Object.hasOwn(teamById, teamId) || !Object.hasOwn(R.DIFFICULTIES, difficulty) || !ROUND_OPTIONS.includes(rounds))
+      throw Error('구단, 난이도, 라운드 수를 확인해야 합니다.');
     const g = {
       version: VERSION,
       teamId,
       local: !!local,
       seed: String(seed),
       difficulty,
+      rounds,
       draftDate: Bio.DRAFT_DATE,
       phase: 'preview',
-      schedule: makeSchedule(local),
+      schedule: makeSchedule(local, rounds),
       cursor: 0,
       picks: [],
+      devSigns: [],
       news: [],
       gmChoice: null,
       season: null,
@@ -3416,7 +3562,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       );
     g.picks.push(s);
     g.cursor++;
-    if (g.cursor === g.schedule.length) g.phase = 'interviews';
+    if (g.cursor === g.schedule.length) g.phase = 'signing';
     return s;
   }
   function aiChoice(g) {
@@ -3458,6 +3604,46 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       teamFor(g),
     );
   }
+  // ---------------------------------------------------------------- development contracts
+
+  /** Every player tied to a club this class: draft picks, then development contracts. */
+  const signed = (g) => [...g.picks, ...(g.devSigns || [])];
+  const mySigned = (g) => signed(g).filter((s) => s.teamId === g.teamId);
+  /** Pool players nobody drafted or signed, best public rank first. */
+  function undrafted(g) {
+    const taken = new Set(signed(g).map((s) => s.playerId));
+    return poolFor(g).players.filter((p) => !taken.has(p.id));
+  }
+  function devEntry(g, teamId, playerId) {
+    const k = (g.devSigns || []).length;
+    return { teamId, round: g.rounds + 1, label: '육성', dev: true, playerId, overall: g.schedule.length + k + 1, fit: fit(getPlayer(g, playerId), teamFor(g, teamId)) };
+  }
+  /**
+   * The user signs up to `max` undrafted players; then each CPU club, in draft order, signs cpuMin–cpuMax more.
+   * CPU clubs take turns one player at a time and only see public information.
+   */
+  function signDevelopment(g, ids = []) {
+    const D_ = TUNING.devContracts;
+    if (g.phase !== 'signing') throw Error('육성선수 계약은 드래프트가 끝난 뒤에 합니다.');
+    if (!Array.isArray(ids) || ids.length > D_.max || new Set(ids).size !== ids.length) throw Error('육성선수는 최대 ' + D_.max + '명입니다.');
+    const free = new Set(undrafted(g).map((p) => p.id));
+    if (!ids.every((id) => free.has(id))) throw Error('계약할 수 없는 선수입니다.');
+    g.devSigns = [];
+    for (const id of ids) g.devSigns.push(devEntry(g, g.teamId, id));
+    const order = g.schedule.filter((s) => s.round === 1 && s.teamId !== g.teamId).map((s) => s.teamId);
+    const quota = Object.fromEntries(order.map((id) => [id, D_.cpuMin + Math.floor(rng(g.seed + '-dev-count-' + id)() * (D_.cpuMax - D_.cpuMin + 1))]));
+    for (let turn = 0; turn < D_.cpuMax; turn++)
+      for (const teamId of order) {
+        if (turn >= quota[teamId]) continue;
+        const t = teamFor(g, teamId),
+          mine = signed(g).filter((s) => s.teamId === teamId).map((s) => R.project(getPlayer(g, s.playerId)));
+        const ranked = R.aiScores(undrafted(g).map(R.project), t, mine, g.difficulty, `${g.seed}-dev-${teamId}-${turn}`);
+        if (ranked[0]) g.devSigns.push(devEntry(g, teamId, ranked[0].id));
+      }
+    g.phase = 'interviews';
+    return g.devSigns;
+  }
+
   function chooseGM(g, choice) {
     if (
       g.phase !== 'interviews' ||
@@ -3515,9 +3701,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       throw Error('드래프트와 단장 인터뷰를 먼저 완료해야 합니다.');
     const { byId } = poolFor(g);
     if (!g.career) {
-      g.career = Career.create(g.picks, byId, g.seed);
-      Career.advance(g.career, g.picks, byId, g.seed);
-      g.season = g.career.years[0].records.filter((s) => s.teamId === g.teamId);
+      g.career = Career.create(signed(g), byId, g.seed);
+      Career.advance(g.career, signed(g), byId, g.seed);
+      // First-year evaluation covers this club's draft picks (development contracts are judged over five years).
+      const drafted = new Set(myPicks(g).map((s) => s.playerId));
+      g.season = g.career.years[0].records.filter((s) => s.teamId === g.teamId && drafted.has(s.playerId));
       g.owner = evaluate(g, g.season);
     }
     g.phase = 'season';
@@ -3525,14 +3713,14 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
   function nextSeason(g) {
     if (!g.career || !['season', 'owner'].includes(g.phase)) throw Error('첫 시즌을 먼저 진행해야 합니다.');
-    const result = Career.advance(g.career, g.picks, poolFor(g).byId, g.seed);
+    const result = Career.advance(g.career, signed(g), poolFor(g).byId, g.seed);
     g.phase = 'season';
     return result;
   }
   function careerReview(g) {
-    return g.career ? Career.review(g.career, g.picks, poolFor(g).byId) : [];
+    return g.career ? Career.review(g.career, signed(g), poolFor(g).byId) : [];
   }
-  const PHASES = ['preview', 'scouting', 'draft', 'interviews', 'season', 'owner'];
+  const PHASES = ['preview', 'scouting', 'draft', 'signing', 'interviews', 'season', 'owner'];
 
   /*
    * Saves
@@ -3546,7 +3734,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
    * (tests/golden.cjs fails until you do). A save from another SIM_VERSION is refused, never silently
    * replayed into a different history.
    */
-  const SIM_VERSION = '0.6',
+  const SIM_VERSION = '0.7',
     SAVE_FORMAT = 'draft-room-save',
     SAVE_VERSION = 2;
 
@@ -3560,8 +3748,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       local: g.local,
       seed: g.seed,
       difficulty: g.difficulty,
+      rounds: g.rounds,
       phase: g.phase,
       picks: myPicks(g).map((s) => s.playerId),
+      dev: (g.devSigns || []).filter((s) => s.teamId === g.teamId).map((s) => s.playerId),
       gmChoice: g.gmChoice,
       seasons: g.career?.years.length ?? 0,
     };
@@ -3578,6 +3768,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         !s ||
         !Object.hasOwn(R.DIFFICULTIES, s.difficulty) ||
         !Object.hasOwn(teamById, s.teamId) ||
+        !ROUND_OPTIONS.includes(s.rounds) ||
         typeof s.seed !== 'string' ||
         !s.seed.length ||
         s.seed.length > 200 ||
@@ -3590,7 +3781,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         s.seasons > Career.SEASONS
       )
         return null;
-      const g = createGame(s.teamId, s.local, s.seed, s.difficulty);
+      const g = createGame(s.teamId, s.local, s.seed, s.difficulty, s.rounds);
       const pristine = !s.picks.length && s.gmChoice == null && !s.seasons;
       if (s.phase === 'preview') return pristine ? g : null;
       openScouting(g);
@@ -3607,6 +3798,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       }
       cpuPicks();
       if ((s.phase === 'draft') !== (g.phase === 'draft')) return null;
+      if (s.phase === 'signing') return s.gmChoice == null && !s.seasons && !(s.dev || []).length ? g : null;
+      if (g.phase === 'signing') signDevelopment(g, s.dev || []);
       if (s.gmChoice != null) chooseGM(g, s.gmChoice);
       if (['season', 'owner'].includes(s.phase) && !s.seasons) return null;
       if (s.seasons) {
@@ -3630,7 +3823,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     const seasons = g0.career == null ? 0 : g0.career.years?.length;
     if (g0.career != null && !seasons) return null;
     const g = replay(
-      { ...g0, picks: g0.picks.filter((p) => p.teamId === g0.teamId).map((p) => p.playerId), seasons },
+      {
+        rounds: 7,
+        ...g0,
+        picks: g0.picks.filter((p) => p.teamId === g0.teamId).map((p) => p.playerId),
+        dev: (g0.devSigns || []).filter((p) => p.teamId === g0.teamId).map((p) => p.playerId),
+        seasons,
+      },
       g0.picks.length,
     );
     if (!g) return null;
@@ -3682,6 +3881,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     chooseGM,
     fanState,
     ROUNDS,
+    ROUND_OPTIONS,
     POOL_SIZE,
     TEAMS,
     REGIONS,
@@ -3706,6 +3906,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     evaluate,
     validate,
     restore,
+    signDevelopment,
+    tuning: TUNING,
+    undrafted,
+    signed,
+    mySigned,
     replay,
     toSave,
     loadSave,
@@ -3815,7 +4020,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     </section>`;
   }
 
-  function setup({ selectedTeam, difficulty, local }, t) {
+  function setup({ selectedTeam, difficulty, local, rounds }, t) {
     const clubs = C.TEAMS.map(
       (club, i) => `<tr aria-selected="${club.id === selectedTeam}">
         <td class="n">${i + 1}</td>
@@ -3828,7 +4033,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     return `
     <div class="page-head">
       <h1>${C.ENTRY_YEAR} KBO 신인 드래프트</h1>
-      <p>구단을 맡아 7라운드 지명을 하고, 뽑은 선수들이 ${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌 동안 어떻게 자라는지 지켜봅니다. 후보 200명은 게임마다 새로 만들어집니다.</p>
+      <p>구단을 맡아 신인을 지명하고, 뽑은 선수들이 ${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌 동안 어떻게 자라는지 지켜봅니다. 후보 ${C.POOL_SIZE}명은 게임마다 새로 만들어집니다.</p>
     </div>
     <div class="cols">
       <div>
@@ -3858,8 +4063,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
             <p>${esc(diff[difficulty].hint)}. 선수 능력과 성장 확률은 난이도와 무관합니다.</p>
           </div>
           <div class="settings-row">
+            <b>지명 라운드</b>
+            <div class="seg" role="group" aria-label="지명 라운드">${C.ROUND_OPTIONS.map((n) => `<button data-action="rounds" data-id="${n}" aria-pressed="${rounds === n}">${n}라운드</button>`).join('')}</div>
+            <p>구단마다 라운드당 1명씩, 총 ${rounds}명을 지명합니다. 드래프트가 끝나면 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약을 할 수 있습니다.</p>
+          </div>
+          <div class="settings-row">
             <label class="check" for="local-toggle"><input type="checkbox" id="local-toggle" ${local ? 'checked' : ''}> <b>지역 1차 지명</b></label>
-            <p>${local ? '켜짐: 각 구단이 연고 지역 고졸 선수 1명을 먼저 지명한 뒤 전국 7라운드를 진행합니다. 총 8명.' : '꺼짐: 전국 7라운드만 진행합니다. 총 7명.'} 과거 연고지 제도를 단순화한 규칙입니다.</p>
+            <p>${local ? `켜짐: 각 구단이 연고 지역 고졸 선수 1명을 먼저 지명한 뒤 전국 ${rounds}라운드를 진행합니다.` : '꺼짐: 전국 라운드만 진행합니다.'} 과거 연고지 제도를 단순화한 규칙입니다.</p>
           </div>
           <button class="btn primary wide" data-action="start">${esc(C.ko.p(t.short, "으로/로"))} 시작</button>
         </div>
@@ -3954,7 +4164,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     UI = root.DraftUI;
   const { esc, tag, player, hand } = UI;
 
-  const PATHWAYS = ['고졸', '대졸', '대학 얼리', '독립구단', '해외파', '마이너 복귀', '해외독립 복귀', 'MLB 경험 복귀'];
+  const PATHWAYS = ['고졸', '대졸', '대학 얼리', '2년제', '독립구단', '해외파', '야구 유학', '마이너 복귀', '해외독립 복귀', '해외리그 복귀', 'MLB 경험 복귀'];
   const TIERS = ['명문', '강호', '중견', '약소', '미분류'];
   const PICK_TYPES = ['즉전감', '플로어', '실링', '육성형', '역할형'];
   const roundLabel = (slot) => (slot?.round === 0 ? '지역 1차' : `${slot?.round || 1}라운드`);
@@ -4019,7 +4229,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   function amateurLine(p) {
     const r = p.record;
     const where =
-      p.pathway === '고졸' ? '고교 대회' : ['대졸', '대학 얼리'].includes(p.pathway) ? '대학 리그' : p.pathway === '독립구단' ? '독립리그' : '해외 리그';
+      p.pathway === '고졸' ? '고교 대회' : p.pathway === '야구 유학' ? '해외 고교 대회' : ['대졸', '대학 얼리', '2년제'].includes(p.pathway) ? '대학 리그' : p.pathway === '독립구단' ? '독립리그' : '해외 리그';
     const main =
       r.kind === 'pitcher'
         ? `<span><b>${r.era.toFixed(2)}</b>ERA</span><span><b>${C.innings(r.outs)}</b>이닝</span><span><b>${r.k}</b>삼진</span><span><b>${r.bb}</b>볼넷</span>`
@@ -4080,7 +4290,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
 
   function myPicks(g) {
     const mine = C.myPicks(g),
-      total = C.ROUNDS + (g.local ? 1 : 0);
+      total = g.rounds + (g.local ? 1 : 0);
     return `<section class="box">
       <h3>${UI.teamName(g.teamId)} 지명 <small class="muted">${mine.length}/${total}</small></h3>
       ${mine.length
@@ -4113,7 +4323,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     return `<p class="callout">${
       q.remaining <= q.missing
         ? '<b>마지막 전국 지명권입니다.</b> 국내 대학 졸업예정자만 지명할 수 있습니다.'
-        : '<b>대졸 의무 지명 0/1</b> · 국내 대학 졸업예정자를 1명 이상 뽑아야 합니다(대학 얼리 제외).'
+        : '<b>대졸 의무 지명 0/1</b> · 국내 4년제·2년제 대학 졸업예정자를 1명 이상 뽑아야 합니다(대학 얼리 제외).'
     }</p>`;
   }
 
@@ -4121,7 +4331,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     const t = C.teamFor(g),
       slot = g.schedule[g.cursor],
       mine = C.myPicks(g).length,
-      total = C.ROUNDS + (g.local ? 1 : 0);
+      total = g.rounds + (g.local ? 1 : 0);
     const list = filterPlayers(g, v, stars, t);
     const selected = selectedId && C.available(g).some((p) => p.id === selectedId) ? player(g, selectedId) : null;
     const strip = C.TEAMS.map((club) => {
@@ -4168,6 +4378,61 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
+/* Screen 3½: development ("육성") contracts with undrafted players, right after the draft. */
+(function (root) {
+  'use strict';
+  const C = root.DraftCore,
+    UI = root.DraftUI;
+  const { esc, tag, hand } = UI;
+
+  function signing(g, chosen, role) {
+    const max = C.tuning.devContracts.max,
+      t = C.teamFor(g);
+    const list = C.undrafted(g).filter((p) => role === 'ALL' || p.role === role).slice(0, 80);
+    const chip = (id, name) => `<button class="chip" data-action="dev-role" data-id="${id}" aria-pressed="${role === id}">${name}</button>`;
+    const rows = list
+      .map((p) => {
+        const on = chosen.has(p.id),
+          full = !on && chosen.size >= max;
+        return `<tr class="${on ? 'mine' : ''}">
+          <td class="n">${p.rank}</td>
+          <td><b>${esc(p.name)}</b> <small>${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)} · ${hand(p)}${p.velocity ? ` · ${p.velocity}km/h` : ''}</small></td>
+          <td class="n">${p.ready} / ${p.scoutCeiling}</td>
+          <td class="hide-narrow">${esc(p.strength)}</td>
+          <td><button class="btn small ${on ? 'primary' : 'quiet'}" data-action="dev-toggle" data-id="${p.id}" aria-pressed="${on}" ${full ? 'disabled' : ''}>${on ? '선택됨' : '선택'}</button></td>
+        </tr>`;
+      })
+      .join('');
+    const picked = [...chosen].map((id) => C.getPlayer(g, id));
+    return `
+    <div class="page-head">
+      <h1>육성선수 계약</h1>
+      <p>드래프트에서 지명되지 않은 선수 중 최대 ${max}명과 육성선수 계약을 맺을 수 있습니다. 육성선수는 첫 시즌에는 1군 주전이 될 수 없고, 이후에는 지명 선수와 똑같이 경쟁합니다. 우리가 먼저 고르고, 이어서 다른 구단들이 계약합니다.</p>
+    </div>
+    <div class="cols">
+      <section>
+        <div class="chips" style="margin-bottom:8px">${[['ALL', '전체'], ...Object.entries(C.ROLES)].map(([id, name]) => chip(id, name)).join('')}</div>
+        <div class="table-scroll"><table class="t">
+          <thead><tr><th class="n">순위</th><th>선수</th><th class="n">현재 / 미래</th><th class="hide-narrow">스카우트 노트</th><th></th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="5" class="empty">남은 선수가 없습니다.</td></tr>'}</tbody>
+        </table></div>
+        <p class="note">미지명 선수 중 공개 순위 상위 80명까지 보여 줍니다.</p>
+      </section>
+      <aside class="box">
+        <h3>${esc(t.short)} 육성선수 <small class="muted">${chosen.size}/${max}</small></h3>
+        ${picked.length ? `<ul class="mine-list">${picked.map((p) => `<li><span>육성</span><b>${esc(p.name)}</b><span>${C.ROLES[p.role]}</span></li>`).join('')}</ul>` : '<p class="note">아직 고른 선수가 없습니다.</p>'}
+        <div class="actions">
+          <button class="btn primary wide" data-action="dev-confirm">${chosen.size ? `${chosen.size}명과 계약` : '계약 없이 넘어가기'}</button>
+        </div>
+      </aside>
+    </div>
+    ${UI.pickLog(g)}`;
+  }
+
+  Object.assign(UI, { signing });
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
 /* Screen 4: the GM's press conference promise and the rookies' first interviews. */
 (function (root) {
   'use strict';
@@ -4203,6 +4468,18 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     </section>`;
   }
 
+  function devList(g) {
+    const dev = (g.devSigns || []).filter((s) => s.teamId === g.teamId);
+    if (!dev.length) return '';
+    return `<h2 class="rule">육성선수 계약 <small>${dev.length}명</small></h2>
+      <ul class="event-list">${dev
+        .map((s) => {
+          const p = player(g, s.playerId);
+          return `<li><b>${esc(p.name)}</b> ${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)} <small>${esc(p.strength)}</small></li>`;
+        })
+        .join('')}</ul>`;
+  }
+
   function interviews(g) {
     const quotes = C.myPicks(g)
       .map((s) => {
@@ -4221,6 +4498,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     ${gm(g)}
     <h2 class="rule">입단 소감</h2>
     <div class="quotes">${quotes}</div>
+    ${devList(g)}
     ${UI.pickLog(g)}
     <div class="actions">
       <button class="btn primary" data-action="simulate" ${g.gmChoice ? '' : 'disabled'}>${g.career ? '시즌 화면으로 돌아가기' : `${C.ENTRY_YEAR} 시즌 진행`}</button>
@@ -4243,7 +4521,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   function rows(g, year = 'all', teamId = 'ALL', scope = 'origin', sort = 'rank', level = 'stats') {
     const years = g.career?.years || [],
       chosen = year === 'all' ? null : years.find((y) => String(y.year) === String(year)) || years.at(-1);
-    const out = g.picks
+    const out = C.signed(g)
       .map((s) => {
         const p = player(g, s.playerId),
           state = g.career?.players[p.id],
@@ -4319,7 +4597,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
 
   function development(g, year) {
-    const own = new Set(C.myPicks(g).map((s) => s.playerId));
+    const own = new Set(C.mySigned(g).map((s) => s.playerId));
     const cards = year.records
       .filter((r) => own.has(r.playerId))
       .map((r) => {
@@ -4425,7 +4703,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
 
   function profile(g, id) {
     const p = player(g, id),
-      sel = g.picks.find((s) => s.playerId === id);
+      sel = C.signed(g).find((s) => s.playerId === id);
     if (!p || !sel) return '<p>지명 선수를 찾을 수 없습니다.</p>';
     const hist = g.career ? C.Career.history(g.career, id) : [],
       state = g.career?.players[id];
@@ -4435,7 +4713,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     const pending = state?.status === 'active' && hist.length === 5 && hist.at(-1).age <= 24 && state.scoutReady < p.scoutCeiling;
     const r = p.record;
     return `<div class="career-profile">
-      <span class="kicker">${teamName(sel.teamId)} ${esc(sel.label)} 지명${now !== sel.teamId ? ` · 현재 ${teamName(now)}` : ''}</span>
+      <span class="kicker">${teamName(sel.teamId)} ${esc(sel.label)} ${sel.dev ? '계약' : '지명'}${now !== sel.teamId ? ` · 현재 ${teamName(now)}` : ''}</span>
       <h2>${esc(p.name)}</h2>
       <p>${C.ROLES[p.role]} · ${esc(p.pathway)}${p.quotaEligible ? ' (대졸 의무 대상)' : ''} · ${UI.hand(p)} · ${p.height}cm ${p.weight}kg</p>
       <p class="muted">${esc(p.pathText)} · ${p.birthday} 출생 · 지명 당시 만 ${p.age}세${hist.length ? `, ${hist.at(-1).year}년 말 만 ${hist.at(-1).age}세` : ''}</p>
@@ -4567,8 +4845,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
 
   const catalogKinds = {
-    'high-school': '고교', 'hs-club': '고교 연령 클럽', college: '국내 대학', independent: '독립구단',
-    'overseas-college': '해외 대학', 'overseas-pro': '해외 프로 구단', 'overseas-independent': '해외 독립 구단',
+    'high-school': '고교', 'hs-club': '고교 연령 클럽', college: '국내 대학 (4년제)', college2: '국내 대학 (2년제)', independent: '독립구단',
+    'overseas-hs': '해외 고교 (야구 유학)', 'overseas-college': '해외 대학', 'overseas-pro': '해외 프로 구단', 'overseas-independent': '해외 독립 구단',
   };
 
   const dialogs = {
@@ -4641,8 +4919,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       <h3>진행 순서</h3>
       <ol>
         <li>구단·난이도·지역 1차 지명 여부를 고릅니다. 지명 순서는 지난 시즌 성적의 역순이며 매 라운드 같습니다.</li>
-        <li>언론 두 곳의 1라운드 예상과 스카우트 팀장의 추천 3명을 봅니다.</li>
-        <li>전국 7라운드(지역 1차를 켜면 연고 지역 고졸 1명 추가)를 지명합니다. 구단마다 국내 대학 졸업예정자를 1명 이상 뽑아야 하며, 대학 얼리 참가자는 포함되지 않습니다.</li>
+        <li>후보 ${C.POOL_SIZE}명: 고졸, 4년제 대졸·얼리, 2년제, 독립구단, 해외 대학, 해외 리그 복귀, 드물게 야구 유학파까지 있습니다. 언론 두 곳의 1라운드 예상과 스카우트 팀장의 추천 3명을 봅니다.</li>
+        <li>전국 ${C.ROUND_OPTIONS.join('·')}라운드 중 하나를 골라 지명합니다(지역 1차를 켜면 연고 지역 고졸 1명 추가). 구단마다 국내 4년제·2년제 대학 졸업예정자를 1명 이상 뽑아야 하며, 대학 얼리 참가자는 포함되지 않습니다.</li>
+        <li>드래프트가 끝나면 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약을 할 수 있습니다. 육성선수는 첫 시즌에 1군 주전이 될 수 없습니다. 다른 구단도 3–5명씩 계약합니다.</li>
         <li>단장 기자회견에서 첫해 목표를 약속하고, 입단 소감을 듣습니다.</li>
         <li>${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌을 한 해씩 진행합니다. 보직·기록·성장·건강이 다음 해로 이어지고, 2년 차가 끝난 뒤부터 트레이드, 3년 차가 끝난 뒤부터 방출이 생길 수 있습니다.</li>
         <li>5년이 끝나면 10개 구단의 드래프트를 비교 평가합니다.</li>
@@ -4677,14 +4956,15 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const $ = (s) => document.querySelector(s);
   const STORE = 'draft-room-kbo-v6-scouting'; // unchanged since V0.6 so existing saves keep loading
   const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', '5시즌', '평가'];
-  const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, interviews: 4, season: 5, owner: 6 };
+  const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, signing: 4, interviews: 4, season: 5, owner: 6 };
 
   const newSeed = () => Date.now() + '-' + Math.random();
   const defaultView = () => ({ query: '', sort: 'rank', sortDir: 'asc', role: 'ALL', pathway: 'ALL', tier: 'ALL', pickType: 'ALL', onlyStars: false });
 
   const state = {
     game: null,
-    setup: { selectedTeam: 'kiwoom', difficulty: 'normal', local: false, seed: newSeed() },
+    setup: { selectedTeam: 'kiwoom', difficulty: 'normal', local: false, rounds: C.ROUNDS, seed: newSeed() },
+    dev: { chosen: new Set(), role: 'ALL' }, // development-contract picks before they are confirmed
     view: defaultView(), // draft-board filters
     selected: null, // player shown in the draft profile
     stars: new Set(),
@@ -4702,7 +4982,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   // ---------- persistence ----------
   function adopt(game, stars = []) {
     state.game = game;
-    Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty });
+    Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty, rounds: game.rounds });
+    state.dev = { chosen: new Set(), role: 'ALL' };
     state.stars = new Set(stars.filter((id) => typeof id === 'string' && C.getPlayer(game, id)));
     state.yearIndex = (game.career?.years.length || 1) - 1;
     if (game.phase === 'draft') C.advanceToUser(game);
@@ -4713,6 +4994,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       if (Object.hasOwn(C.rules.DIFFICULTIES, saved.difficulty)) state.setup.difficulty = saved.difficulty;
       if (Object.hasOwn(C.teamById, saved.selectedTeam)) state.setup.selectedTeam = saved.selectedTeam;
       state.setup.local = saved.local === true;
+      if (C.ROUND_OPTIONS.includes(saved.rounds)) state.setup.rounds = saved.rounds;
       const stored = saved.save ?? saved.game; // `game` is the v0.6.0 layout
       const loaded = stored ? C.loadSave(stored) : {};
       if (loaded.game) adopt(loaded.game, Array.isArray(saved.stars) ? saved.stars : []);
@@ -4728,10 +5010,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     state.storageOK = false;
   }
   function save() {
-    const { selectedTeam, local, difficulty } = state.setup;
+    const { selectedTeam, local, difficulty, rounds } = state.setup;
     try {
       const save = state.game ? C.toSave(state.game) : null;
-      localStorage.setItem(STORE, JSON.stringify({ selectedTeam, local, difficulty, save, stars: [...state.stars] }));
+      localStorage.setItem(STORE, JSON.stringify({ selectedTeam, local, difficulty, rounds, save, stars: [...state.stars] }));
     } catch (e) {
       state.storageOK = false;
     }
@@ -4756,6 +5038,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       case 'preview': return UI.forecasts(game);
       case 'scouting': return UI.briefing(game);
       case 'draft': return UI.board(game, state.view, state.stars, state.selected);
+      case 'signing': return UI.signing(game, state.dev.chosen, state.dev.role);
       case 'interviews': return UI.interviews(game);
       case 'season': return UI.season(game, state.yearIndex);
       default: return UI.review(game);
@@ -4945,10 +5228,30 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       document.querySelector(`[data-action="difficulty"][data-id="${id}"]`)?.focus();
     },
     start: () => {
-      const { selectedTeam, local, seed, difficulty } = state.setup;
+      const { selectedTeam, local, seed, difficulty, rounds } = state.setup;
       Object.assign(state, { recordsOpen: false, yearIndex: 0, selected: null, view: defaultView(), stars: new Set() });
       lastAdvance = 0;
-      state.game = C.createGame(selectedTeam, local, seed, difficulty);
+      state.game = C.createGame(selectedTeam, local, seed, difficulty, rounds);
+      state.dev = { chosen: new Set(), role: 'ALL' };
+      render();
+      toTop();
+    },
+    rounds: (id) => {
+      if (g()) return;
+      state.setup.rounds = Number(id);
+      render();
+      document.querySelector(`[data-action="rounds"][data-id="${id}"]`)?.focus();
+    },
+    'dev-toggle': (id) => {
+      const c = state.dev.chosen;
+      if (c.has(id)) c.delete(id);
+      else if (c.size < C.tuning.devContracts.max) c.add(id);
+      render();
+    },
+    'dev-role': (id) => ((state.dev.role = id), render()),
+    'dev-confirm': () => {
+      C.signDevelopment(g(), [...state.dev.chosen]);
+      state.dev = { chosen: new Set(), role: 'ALL' };
       render();
       toTop();
     },

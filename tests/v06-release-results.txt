@@ -1,1 +1,1 @@
-PASS packaged build: fresh start, v0.6.0 autosave converted to compact save, example file import, 80-player records, no page errors.
+PASS packaged build: fresh start, older autosave kept aside, example import (161 players in the records), no page errors.

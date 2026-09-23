@@ -2,7 +2,7 @@
   {
     "case": "desktop-normal-on",
     "offline": true,
-    "picks": 80,
+    "picks": 120,
     "seasons": 5,
     "exportImport": true,
     "firstYearImage": true,
@@ -15,7 +15,7 @@
   {
     "case": "mobile-hard-off",
     "offline": true,
-    "picks": 70,
+    "picks": 110,
     "seasons": 5,
     "exportImport": true,
     "firstYearImage": true,
@@ -28,7 +28,7 @@
   {
     "case": "tablet-easy-on",
     "offline": true,
-    "picks": 80,
+    "picks": 120,
     "seasons": 5,
     "exportImport": true,
     "firstYearImage": true,
@@ -41,7 +41,7 @@
   {
     "case": "smallphone-normal-off",
     "offline": true,
-    "picks": 70,
+    "picks": 110,
     "seasons": 5,
     "exportImport": true,
     "firstYearImage": true,

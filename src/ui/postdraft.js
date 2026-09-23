@@ -33,6 +33,18 @@
     </section>`;
   }
 
+  function devList(g) {
+    const dev = (g.devSigns || []).filter((s) => s.teamId === g.teamId);
+    if (!dev.length) return '';
+    return `<h2 class="rule">육성선수 계약 <small>${dev.length}명</small></h2>
+      <ul class="event-list">${dev
+        .map((s) => {
+          const p = player(g, s.playerId);
+          return `<li><b>${esc(p.name)}</b> ${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)} <small>${esc(p.strength)}</small></li>`;
+        })
+        .join('')}</ul>`;
+  }
+
   function interviews(g) {
     const quotes = C.myPicks(g)
       .map((s) => {
@@ -51,6 +63,7 @@
     ${gm(g)}
     <h2 class="rule">입단 소감</h2>
     <div class="quotes">${quotes}</div>
+    ${devList(g)}
     ${UI.pickLog(g)}
     <div class="actions">
       <button class="btn primary" data-action="simulate" ${g.gmChoice ? '' : 'disabled'}>${g.career ? '시즌 화면으로 돌아가기' : `${C.ENTRY_YEAR} 시즌 진행`}</button>
