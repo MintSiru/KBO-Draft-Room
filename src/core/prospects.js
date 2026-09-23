@@ -90,33 +90,82 @@
       ['기동형 외야수', '주루 판단과 번트, 작전 수행이 좋다.', '강한 타구를 꾸준히 만드는 것이 과제다.', '타격 중심 이동'],
     ],
   };
+  // Amateur tournaments. Descriptive only: results come from their own streams and never change players.
+  const HS_NATIONAL = '다이아몬드 데일리배 전국고교야구대회',
+    COLLEGE_NATIONAL = '퓨처 베이스볼배 대학야구 왕중왕전',
+    NATIONAL_QUALIFIERS = 4; // top four of each regional/conference event go to the national event
+  const COLLEGE_CONFERENCES = [
+    ['수도권', ['서울', '인천', '경기·강원']],
+    ['충청·호남권', ['대전·충청·전북', '광주·전남·제주']],
+    ['영남권', ['대구·경북', '부산·울산', '경남']],
+  ];
+  const placeLabel = (i) => (i === 0 ? '우승' : i === 1 ? '준우승' : i < 4 ? '4강' : i < 8 ? '8강' : '예선');
+  const strength = (s) => Bio.TIERS[s.tier].team;
+
+  /** Single-elimination bracket; the strongest entrants get byes up to the next power of two. */
+  function bracket(entrants, r) {
+    let size = 1;
+    while (size < entrants.length) size *= 2;
+    const seeded = [...entrants].sort((a, b) => strength(b) - strength(a) || a.id.localeCompare(b.id));
+    const reached = new Map(seeded.map((s) => [s.id, size]));
+    // Standard seeding so top seeds meet late (1 v 16, 8 v 9, ...); missing low seeds are byes.
+    let order = [0];
+    while (order.length < size) order = order.flatMap((i) => [i, order.length * 2 - 1 - i]);
+    let round = order.map((i) => seeded[i] ?? null);
+    for (let alive = size; alive > 1; alive /= 2) {
+      const next = [];
+      for (let i = 0; i < round.length; i += 2) {
+        const [a, b] = [round[i], round[i + 1]];
+        const winner = !a ? b : !b ? a : r() < 1 / (1 + Math.exp((strength(b) - strength(a)) * 4)) ? a : b;
+        if (winner) reached.set(winner.id, alive / 2);
+        next.push(winner);
+      }
+      round = next;
+    }
+    return reached; // id -> best round reached (1 = champion, 2 = final, 4 = semi-final ...)
+  }
+  const roundLabel = (n) => (n === 1 ? '우승' : n === 2 ? '준우승' : `${n}강`);
+
   function schoolHonors(seed) {
     const map = {};
-    const groups = [
-      ...REGIONS.map((region) => ({
-        label: region + ' 고교대회',
-        list: Cat.institutions.filter(
-          (x) => ['high-school', 'hs-club'].includes(x.kind) && x.region === region,
-        ),
-      })),
-      { label: '전국 대학대회', list: Cat.institutions.filter((x) => x.kind === 'college') },
-    ];
-    for (const group of groups) {
-      const r = rng(seed + '-school-event-' + group.label);
-      const ranks = group.list
-        .map((s) => ({ s, score: Bio.TIERS[s.tier].team * 60 + r() * 55 }))
-        .sort((a, b) => b.score - a.score);
-      ranks.forEach(
-        ({ s }, i) =>
-          (map[s.id] = {
-            event: group.label,
-            result: i === 0 ? '우승' : i === 1 ? '준우승' : i < 4 ? '4강' : i < 8 ? '8강' : '예선',
-            award: i < 2 ? group.label + ' ' + (i === 0 ? '우승' : '준우승') : null,
-          }),
-      );
+    // Regional events. The seed key keeps its original label so the rankings (and players) stay the same.
+    const regional = REGIONS.map((region) => ({
+      key: region + ' 고교대회',
+      label: region + ' 권역 주말리그',
+      list: Cat.institutions.filter((x) => ['high-school', 'hs-club'].includes(x.kind) && x.region === region),
+    }));
+    const hsQualifiers = [];
+    for (const group of regional) {
+      const r = rng(seed + '-school-event-' + group.key);
+      const ranks = group.list.map((s) => ({ s, score: Bio.TIERS[s.tier].team * 60 + r() * 55 })).sort((a, b) => b.score - a.score);
+      ranks.forEach(({ s }, i) => {
+        map[s.id] = { event: group.label, result: placeLabel(i), award: i < 2 ? `${group.label} ${placeLabel(i)}` : null, national: null };
+        if (i < NATIONAL_QUALIFIERS) hsQualifiers.push(s);
+      });
+    }
+    // College league: one ranking over all colleges (original stream), read per conference.
+    const colleges = Cat.institutions.filter((x) => x.kind === 'college');
+    const r = rng(seed + '-school-event-전국 대학대회');
+    const collegeRank = colleges.map((s) => ({ s, score: Bio.TIERS[s.tier].team * 60 + r() * 55 })).sort((a, b) => b.score - a.score).map((x) => x.s);
+    const collegeQualifiers = [];
+    for (const [name, regions] of COLLEGE_CONFERENCES) {
+      const label = `대학리그 ${name}`;
+      collegeRank.filter((s) => regions.includes(s.region)).forEach((s, i) => {
+        map[s.id] = { event: label, result: placeLabel(i), award: i < 2 ? `${label} ${placeLabel(i)}` : null, national: null };
+        if (i < NATIONAL_QUALIFIERS) collegeQualifiers.push(s);
+      });
+    }
+    // National events from the qualifiers.
+    for (const [event, entrants] of [[HS_NATIONAL, hsQualifiers], [COLLEGE_NATIONAL, collegeQualifiers]]) {
+      const reached = bracket(entrants, rng(seed + '-national-' + event));
+      for (const s of entrants) {
+        const result = roundLabel(reached.get(s.id));
+        map[s.id].national = { event, result, award: reached.get(s.id) <= 2 ? `${event} ${result}` : null };
+      }
     }
     return map;
   }
+
   // Pool composition. Each of the 8 regions gets 25 slots: 17 high-schoolers and 8 others.
   const POOL_SIZE = 200,
     SLOTS_PER_REGION = 25,
@@ -197,6 +246,7 @@
       if (['대졸', '대학 얼리'].includes(pathway) && ready >= 45 && r() < 0.25) awards.push('대학 대표팀');
       // Shared school results: school reputation affects team success, not a direct AVG/ERA multiplier.
       if (schoolTournament?.award) awards.push(schoolTournament.award);
+      if (schoolTournament?.national?.award) awards.push(schoolTournament.national.award);
       if (ready >= 45 && r() < 0.25) awards.push(pitcher ? '소속 대회 우수투수상' : '소속 대회 타격상');
       const record = amateurRecord(
         {

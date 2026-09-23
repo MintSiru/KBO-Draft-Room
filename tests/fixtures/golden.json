@@ -3,15 +3,15 @@
   "hashes": {
     "pool:pool-a": {
       "sim": "bc38d8eba00a3f8731db94e8d36f2a60b02d94315ab145939f7808a328b66f10",
-      "full": "7f51452c323e33e8231f54ac3372666b2f2aada052d58387ea128d543cc16e51"
+      "full": "20a021e13cb9f9de4deef2c8aca7dc413b5c760519641c7e97a08710105d1bb5"
     },
     "pool:pool-b": {
       "sim": "ec2bba094fbee710b2cf01e8f4f0591f059a609fabf6f0f0f3b37f3c80192cbb",
-      "full": "fc163944954f75acab54e516ff825d81a68ee541429daac3f2675d1328d3cbad"
+      "full": "adf1e0f02fef3131754e9fa5d4b75249907a04964b501ac6069109130dbd5034"
     },
     "pool:pool-c": {
       "sim": "ca316196c5079b5f5bcf195c26138f3ec1a57eb35ce8e628ae5385bf2ca7b355",
-      "full": "74bbc7fef70129df52238b505d301f9bbb55381534c6ca6de8ce71418807a520"
+      "full": "9701f03ca69b70e3b462aafd4734c80471ca4515a16c8ab5ab5421cda7dc8a07"
     },
     "game:lg/true/golden-a/normal/development": {
       "sim": "7072e89eb9f39569ac61f776dcfa4338feb614257d7bd429895453c1c2aab886",

@@ -115,7 +115,8 @@
         <details><summary>배경 · 이력</summary>
           <dl class="facts">
             <dt>생년월일</dt><dd>${p.birthday}</dd><dt>출생지</dt><dd>${esc(p.birthplace)}</dd>
-            <dt>야구부 평판</dt><dd>${esc(p.schoolTier || '해당 없음')}${p.schoolTier ? ` · ${esc(p.schoolStyle)}` : ''}${p.schoolTournament ? ` · ${esc(p.schoolTournament.event)} ${esc(p.schoolTournament.result)}` : ''}</dd>
+            <dt>야구부 평판</dt><dd>${esc(p.schoolTier || '해당 없음')}${p.schoolTier ? ` · ${esc(p.schoolStyle)}` : ''}</dd>
+            ${p.schoolTournament ? `<dt>대회 성적</dt><dd>${esc(p.schoolTournament.event)} ${esc(p.schoolTournament.result)}${p.schoolTournament.national ? `<br>${esc(p.schoolTournament.national.event)} ${esc(p.schoolTournament.national.result)}` : ''}</dd>` : ''}
             <dt>지역 1차</dt><dd>${p.regionalEligible ? esc(p.regionalRegion) + ' 대상' : '대상 아님'}</dd>
             <dt>성격</dt><dd>${esc(p.personality)}</dd>
           </dl>
