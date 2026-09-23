@@ -3,3 +3,4 @@ tests/screenshots*/
 tests/*-save.json
 dist/
 tests/tmp/
+__pycache__/
