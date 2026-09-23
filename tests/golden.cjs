@@ -1,6 +1,10 @@
 /* Golden master: proves refactors do not change the simulation.
    `node tests/golden.cjs --write` records hashes; without it, compares.
-   "numbers" ignores every string, so copy edits do not trip it. */
+
+   Two hashes per case:
+   - `sim`: an explicit list of simulated values (generated talent, picks, roles, stats, growth, standings,
+     moves, scores). Adding a new descriptive field does not change it; changing the simulation does.
+   - `full`: everything, including wording. Only-wording changes may be re-recorded freely. */
 const crypto = require('node:crypto'), fs = require('node:fs'), path = require('node:path');
 const C = require('../src/core/engine.js'), D = require('../src/core/prospects.js');
 const FILE = path.join(__dirname, 'fixtures/golden.json');
@@ -13,11 +17,37 @@ const CONFIGS = [
   ['nc', false, 'golden-f', 'easy', 'immediate'],
 ];
 const hash = (x) => crypto.createHash('sha256').update(JSON.stringify(x)).digest('hex');
-const numbers = (x) =>
-  typeof x === 'string' ? ''
-  : Array.isArray(x) ? x.map(numbers)
-  : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).filter(([, v]) => typeof v !== 'string').map(([k, v]) => [k, numbers(v)]))
-  : x;
+const only = (o, keys) => (o == null ? o : Object.fromEntries(keys.map((k) => [k, o[k]])));
+const numbersOf = (o) => (o == null ? o : Object.fromEntries(Object.entries(o).filter(([, v]) => typeof v === 'number')));
+
+const PLAYER_KEYS = ['id', 'rank', 'name', 'role', 'type', 'pathway', 'region', 'currentInstitutionId', 'highSchoolId', 'birthday', 'age',
+  'height', 'weight', 'throwHand', 'batHand', 'velocity', 'ready', 'scoutCeiling', 'floorGrade', 'ceilingGrade', 'publicScore', 'tools',
+  'futureTools', 'trueTools', 'potentialTools', 'growthCurve', 'developmentRate', 'observerBias', 'risk', 'favoriteTeam', 'pickTags',
+  'uncertainty', 'regionalEligible', 'quotaEligible'];
+const simPlayer = (p) => ({ ...only(p, PLAYER_KEYS), record: numbersOf(p.record) });
+const RECORD_KEYS = ['playerId', 'teamId', 'year', 'age', 'route', 'roleTier', 'growth', 'scoutReady', 'publicTools', 'planScore', 'contribution', 'daysLost', 'limited'];
+const simRecord = (r) => ({ ...only(r, RECORD_KEYS), stats: numbersOf(r.stats), futures: numbersOf(r.futures), end: only(r.endState, ['ability', 'tools', 'performance']) });
+function simGame({ game: g, review, fans }) {
+  return {
+    picks: g.picks.map((s) => [s.overall, s.teamId, s.playerId, s.fit]),
+    news: g.news.map((n) => [n.playerId, n.delta]),
+    forecasts: g.forecasts.map((f) => f.picks.map((s) => [s.teamId, s.round, s.playerId])),
+    scout: g.scoutReport.candidates.map((c) => c.playerId),
+    plans: g.clubPlans,
+    owner: g.owner && only(g.owner, ['score', 'grade', 'needScore', 'production', 'future', 'baseScore']),
+    fans: fans.timeline.map((x) => [x.delta, x.score]),
+    years: g.career.years.map((y) => ({
+      records: y.records.map(simRecord),
+      table: y.league.table.map((t) => [t.teamId, t.wins, t.losses, t.rank]),
+      champion: y.league.champion,
+      series: y.league.series.map((x) => [x.home, x.away, x.homeWins, x.awayWins]),
+      awards: y.awards.map((a) => [a.id, a.playerId, a.teamId]),
+      events: y.events.map((e) => [e.type, e.fromTeamId, e.toTeamId, ...e.playerIds]),
+    })),
+    players: Object.values(g.career.players).map((s) => only(s, ['playerId', 'status', 'currentTeamId', 'ability', 'scoutReady'])),
+    review: review.map((x) => numbersOf(x)),
+  };
+}
 function play([team, local, seed, difficulty, gm]) {
   const g = C.createGame(team, local, seed, difficulty);
   C.openScouting(g); C.beginDraft(g);
@@ -29,18 +59,17 @@ function play([team, local, seed, difficulty, gm]) {
 const result = {};
 for (const seed of ['pool-a', 'pool-b', 'pool-c']) {
   const pool = D.generatePool(seed).players;
-  result['pool:' + seed] = { full: hash(pool), numbers: hash(numbers(pool)) };
+  result['pool:' + seed] = { sim: hash(pool.map(simPlayer)), full: hash(pool) };
 }
 for (const cfg of CONFIGS) {
   const out = play(cfg);
-  const picks = out.game.picks.map((s) => s.playerId);
-  result['game:' + cfg.join('/')] = { full: hash(out), numbers: hash(numbers(out)), picks: hash(picks) };
+  result['game:' + cfg.join('/')] = { sim: hash(simGame(out)), full: hash(out) };
 }
 const expected = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : null;
 const diffs = [];
 for (const [k, v] of Object.entries(expected?.hashes ?? {}))
   for (const kind of Object.keys(v)) if (result[k]?.[kind] !== v[kind]) diffs.push({ k, kind });
-// `full` includes wording; `numbers` and `picks` are the simulation itself.
+// `sim` is the simulation itself; `full` also covers wording and descriptive fields.
 const behaviourChanged = diffs.some((d) => d.kind !== 'full');
 const sameSim = expected?.sim === C.SIM_VERSION;
 
