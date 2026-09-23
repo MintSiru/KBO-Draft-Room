@@ -1,1 +1,0 @@
-PASS packaged standalone HTML: fresh start + validated 5-year example + 80-player records; no page errors.

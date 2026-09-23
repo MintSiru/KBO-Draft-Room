@@ -6,13 +6,14 @@ const M=root.DraftSeason||(typeof require!=='undefined'?require('./season.js'):n
 const TEAMS=root.DraftClubs||(typeof require!=='undefined'?require('./clubs.js'):null);
 const byTeam=Object.fromEntries(TEAMS.map(t=>[t.id,t]));
 const {rng,normal,clamp,round,mean}=D;
+const S=root.DraftScouting||(typeof require!=='undefined'?require('./scouting06.js'):null);
 const SEASONS=5;
-const fit=(p,t)=>{const n=t.needs.indexOf(p.role);return n===0?100:n===1?80:n===2?60:25;};
-function create(picks,byId){return {years:[],players:Object.fromEntries(picks.map(s=>{const p=byId[s.playerId];return [p.id,{playerId:p.id,originTeamId:s.teamId,currentTeamId:s.teamId,status:'active',ability:p.trueReady,scoutReady:p.ready,route:null,limited:false,age:p.age}];})),events:[]};}
+const fit=(p,t)=>S.fit(p,t);
+function create(picks,byId,seed=''){return {seed,years:[],players:Object.fromEntries(picks.map(s=>{const p=byId[s.playerId];return [p.id,{playerId:p.id,originTeamId:s.teamId,currentTeamId:s.teamId,status:'active',ability:p.trueReady,tools:{...p.trueTools},publicTools:{...p.tools},scoutReady:p.ready,route:null,limited:false,age:p.age}];})),events:[]};}
 function totalStats(records,key='stats'){
  const first=records[0]?.[key];if(!first)return null;
  const out={kind:first.kind};
- const keys=first.kind==='pitcher'?['games','outs','er','k','bb','wins','holds','saves']:['games','ab','pa','hits','bb','hr','doubles','triples','rbi','sb'];
+ const keys=first.kind==='pitcher'?['games','gs','qs','outs','er','k','bb','wins','holds','saves']:['games','ab','pa','hits','bb','k','hr','doubles','triples','rbi','sb'];
  for(const k of keys)out[k]=records.reduce((n,x)=>n+(x[key]?.[k]||0),0);
  if(out.kind==='pitcher')out.era=out.outs?round(out.er*27/out.outs,2):null;
  else {out.avg=out.ab?round(out.hits/out.ab,3):null;out.ops=out.ab?round((out.hits+out.bb)/(out.ab+out.bb)+(out.hits+out.doubles+2*out.triples+3*out.hr)/out.ab,3):null;}
@@ -48,18 +49,20 @@ function offseason(seed,yearIndex,career,records,byId,picks){
  const counts=Object.fromEntries(TEAMS.map(t=>[t.id,states.filter(s=>s.status==='active'&&s.currentTeamId===t.id).length]));
  const touched=new Set();
  for(const s of states){if(s.status!=='active'||counts[s.currentTeamId]<=4)continue;const p=byId[s.playerId],rec=records.find(x=>x.playerId===s.playerId),r=rng(seed+'-release-'+year+'-'+p.id);
-  const stalled=s.scoutReady<54&&rec.stats.games===0;
-  const chance=stalled?clamp(.055+(54-s.scoutReady)*.012+Math.max(0,s.age-23)*.018,0,.28):0;
-  if(r()<chance){const from=s.currentTeamId;events.push({id:year+'-release-'+p.id,type:'release',year,fromTeamId:from,toTeamId:null,playerIds:[p.id],reason:'1군 기회 부족과 더딘 공개 기량 발전, 포지션 경쟁을 함께 고려한 방출입니다.'});counts[from]--;s.status='released';s.currentTeamId=null;touched.add(p.id);}
+  const old=career.years.at(-1)?.records.find(x=>x.playerId===s.playerId);
+  const stalled=yearIndex>=2&&s.age>=23&&s.scoutReady<40&&rec.stats.games===0&&old?.stats.games===0;
+  const chance=stalled?clamp(.07+(40-s.scoutReady)*.014+Math.max(0,s.age-23)*.012,0,.24):0;
+  if(r()<chance){const from=s.currentTeamId;events.push({id:year+'-release-'+p.id,type:'release',year,fromTeamId:from,toTeamId:null,playerIds:[p.id],reason:'만 23세 이상, 2년 연속 1군 기록 없음과 현재 공개 기량 40 미만을 함께 고려한 방출입니다.'});counts[from]--;s.status='released';s.currentTeamId=null;touched.add(p.id);}
  }
  const rr=rng(seed+'-trade-'+year);
  if(rr()<.68){
-  const active=states.filter(s=>s.status==='active'&&!touched.has(s.playerId)),pairs=[];
+  const active=states.filter(s=>s.status==='active'&&!touched.has(s.playerId)&&!records.some(x=>x.playerId===s.playerId&&x.route==='regular'&&x.contribution>=50)),pairs=[];
+  const plans=S.plans(seed,TEAMS);
   const publicValue=s=>s.scoutReady*.65+byId[s.playerId].scoutCeiling*.25-Math.max(0,s.age-22)*1.1+(records.find(x=>x.playerId===s.playerId)?.contribution||0)*.08;
   for(let i=0;i<active.length;i++)for(let j=i+1;j<active.length;j++){
    const a=active[i],b=active[j],pa=byId[a.playerId],pb=byId[b.playerId];if(a.currentTeamId===b.currentTeamId||pa.role===pb.role)continue;
-   const ta=byTeam[a.currentTeamId],tb=byTeam[b.currentTeamId],gainA=fit(pb,ta)-fit(pa,ta),gainB=fit(pa,tb)-fit(pb,tb);
-   if(gainA<0||gainB<0||gainA+gainB<30||Math.abs(publicValue(a)-publicValue(b))>16)continue;
+   const ta={...byTeam[a.currentTeamId],...plans[a.currentTeamId]},tb={...byTeam[b.currentTeamId],...plans[b.currentTeamId]},gainA=fit(pb,ta)-fit(pa,ta),gainB=fit(pa,tb)-fit(pb,tb);
+   if(gainA<0||gainB<0||gainA+gainB<30||Math.abs(publicValue(a)-publicValue(b))>8)continue;
    pairs.push({a,b,score:gainA+gainB-Math.abs(publicValue(a)-publicValue(b))*2+rr()*25});
   }
   pairs.sort((a,b)=>b.score-a.score||a.a.playerId.localeCompare(b.a.playerId));
@@ -69,11 +72,13 @@ function offseason(seed,yearIndex,career,records,byId,picks){
 }
 function advance(career,picks,byId,seed){
  const yearIndex=career.years.length;if(yearIndex>=SEASONS)throw Error('5시즌이 모두 끝났습니다.');
- const year=D.bio.ENTRY_YEAR+yearIndex;
+ const year=D.bio.ENTRY_YEAR+yearIndex,plans=S.plans(seed,TEAMS),rankings={};
+ for(const t of TEAMS)for(const role of Object.keys(D.ROLES)){rankings[t.id+'-'+role]=Object.values(career.players).filter(s=>s.status==='active'&&s.currentTeamId===t.id&&byId[s.playerId].role===role).sort((a,b)=>(b.ability+(b.route==='regular'?5:0))-(a.ability+(a.route==='regular'?5:0))||a.playerId.localeCompare(b.playerId)).map(s=>s.playerId);}
  const records=picks.map(sel=>{
   const p=byId[sel.playerId],state=career.players[p.id];
   if(state.status!=='active')return {playerId:p.id,label:sel.label,year,teamId:null,age:D.bio.ageAt(p.birthday,year+'-12-31'),route:'released',routeLabel:'방출 · 무소속',stats:M.emptyStats(p),futures:M.emptyStats(p),growth:0,growthLabel:'프로 기록 없음',developmentNote:'방출 이전 경력은 보존됩니다. 재계약·독립리그 경력은 이번 버전의 범위 밖입니다.',note:'현재 무소속으로 추가 프로 성적을 생성하지 않습니다.',limited:false,contribution:0,planScore:0,target:'경력 보존',scoutReady:state.scoutReady};
-  const t=byTeam[state.currentTeamId],rec=M.simulatePlayer(p,sel,{seed},t,fit(p,t),yearIndex?state:null,yearIndex);
+  const t={...byTeam[state.currentTeamId],...plans[state.currentTeamId]},rank=rankings[t.id+'-'+p.role].indexOf(p.id),capacity={SP:5,RP:7,C:2,IF:4,OF:3}[p.role];
+  const rec=M.simulatePlayer(p,sel,{seed},t,fit(p,t),yearIndex?state:null,yearIndex,{blockedRegular:rank>=capacity,closer:p.role==='RP'&&rank===0&&state.ability>=48&&yearIndex>=1});
   Object.assign(state,rec.endState);return rec;
  });
  const league=standings(seed,year,records),honors=awards(year,records,league);
@@ -88,11 +93,12 @@ function review(career,picks,byId){
   const debut=own.filter(s=>history(career,s.playerId).some(r=>r.stats.games>0)).length;
   const established=own.filter(s=>history(career,s.playerId).some(r=>r.route==='regular')).length;
   const development=mean(own.map(s=>{const h=history(career,s.playerId);return (h.at(-1)?.scoutReady??byId[s.playerId].ready)-byId[s.playerId].ready;}));
-  const needs=t.needs.filter(role=>own.some(s=>byId[s.playerId].role===role)).length/3*100;
-  const production=clamp(total/(own.length*Math.max(1,career.years.length)*20)*100,0,100);
+  const club={...t,...S.plans(career.seed,TEAMS)[t.id]};
+  const needs=t.needs.reduce((n,role,i)=>{const candidates=own.map(s=>byId[s.playerId]).filter(p=>p.role===role);return n+(candidates.length?[50,30,20][i]*Math.max(...candidates.map(p=>fit(p,club)))/[100,80,60][i]:0);},0);
+  const production=clamp(total/(own.length*Math.max(1,career.years.length)*30)*100,0,100);
   const growth=clamp(development*3.5+35,0,100);
   const score=round(needs*.2+production*.5+growth*.3);
-  return {teamId:t.id,count:own.length,total:round(total),atHome:round(atHome),debut,established,development:round(development,1),score,grade:score>=85?'A':score>=70?'B':score>=55?'C':'D',released:own.filter(s=>career.players[s.playerId].status==='released').length,awards:career.years.flatMap(y=>y.awards).filter(a=>ids.has(a.playerId)&&a.scope==='draft-class').length};
+  return {teamId:t.id,count:own.length,total:round(total),atHome:round(atHome),debut,established,development:round(development,1),score,grade:score>=85?'A':score>=70?'B':score>=55?'C':'D',pending:own.filter(s=>{const st=career.players[s.playerId];return st.status==='active'&&st.age<=24&&st.scoutReady<byId[s.playerId].scoutCeiling;}).length,released:own.filter(s=>career.players[s.playerId].status==='released').length,awards:career.years.flatMap(y=>y.awards).filter(a=>ids.has(a.playerId)&&a.scope==='draft-class').length};
  }).sort((a,b)=>b.score-a.score||b.total-a.total||a.teamId.localeCompare(b.teamId));
 }
 root.DraftCareer={SEASONS,create,advance,history,totalStats,review,standings};if(typeof module!=='undefined'&&module.exports)module.exports=root.DraftCareer;
