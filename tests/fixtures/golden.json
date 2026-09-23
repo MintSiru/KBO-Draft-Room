@@ -1,0 +1,44 @@
+{
+  "pool:pool-a": {
+    "full": "100dcc5a9f91ecfe651955b33fc6a05dd8d50de5b9fbb060db88e80955dadf57",
+    "numbers": "52c868a04449f82033cf95ab38257d4f8815e8277c8c8ddc491aefb045b70ccd"
+  },
+  "pool:pool-b": {
+    "full": "2313cad513d75e1d979ecfec2d401235314c5e3a986cb580a34e58144f5d89ba",
+    "numbers": "16cf04b092289938c881fe9f4944c1a314fdd19681a00f0a529172af71e6a7aa"
+  },
+  "pool:pool-c": {
+    "full": "a6dce4fd4d68eff14fce06f93d20b5ea6f3488bf6c92f60d7ec0b153880ca58b",
+    "numbers": "c24be5fa3c3791b66e36ca3047f1f1e5692f55e1e4fc74c5f171698a3f947489"
+  },
+  "game:lg/true/golden-a/normal/development": {
+    "full": "4a8827481b69c5d73e1412ac0a84404983516fa86c8b90d0540f63a4d1226b64",
+    "numbers": "a6b4bd306fe73b180ba95bbfd6c075182d83eed738c54be735707ed2b9a14464",
+    "picks": "46d764969be906bfdca00b560f5ec3f4656b851d2af6ce464c2cab93fbdf7a2e"
+  },
+  "game:kiwoom/false/golden-b/hard/immediate": {
+    "full": "60fbbe96f8e809bfdbac5075e56649c8c70cf48fffc480fba522981d26973e52",
+    "numbers": "90020f34dbf97eb22c5a8df7164e964f5d3a3e04d480fef8ca724596752eaa2a",
+    "picks": "860849f82a513ee0f6d9e4b36ab6eaff5c058db69d2feb2cacc0a45091945afa"
+  },
+  "game:samsung/true/golden-c/easy/needs": {
+    "full": "5c4663bc6a98ad198c5591f98000f35f264849412563df6571f0326c63402d4a",
+    "numbers": "466ae82ed6891f8735940cd007068622c3cf19a3bea44c14dfb511931ae6116e",
+    "picks": "03c33b70248fa826bb2526b9ec2bf201814419cb6b8460870478c0d036e0d159"
+  },
+  "game:kia/false/golden-d/normal/needs": {
+    "full": "a0344e6522951a96ed0bfcaf870fdc08825512f220da96f3cd88f92f8eda05dd",
+    "numbers": "259c9993527a07b3ba4077b3d3b207a94f30981cdcadafe9ca9e71770bd09856",
+    "picks": "5e545862d78115d7811cc83093e6093d1c33a5cfc4d586740bf5c7c7297ba3f2"
+  },
+  "game:hanwha/true/golden-e/hard/development": {
+    "full": "1f6c3e5851fb595ce60fd813759a01d5df05ba9638e89a365824f7731d188edf",
+    "numbers": "15bcef7a362fdd6e6dbf1c5648b8c3032581c2f2859a56a87660c21b651a6a2d",
+    "picks": "7bc5983bb17d597acad793391bdc79396a453cb73747703634e6f33bf71435cd"
+  },
+  "game:nc/false/golden-f/easy/immediate": {
+    "full": "b1b3951518e2296f0cf584276fc49fbb5676f4f2669ead5a7c250ab77e1496f8",
+    "numbers": "e6ed1f5f0dd1b7a2244f242ac7b88898e21c40b8b50ccd8158b43a125ca0964b",
+    "picks": "1b52280342f0ebafda7d77b3169606e5e6bf803590132016e3bf4e51bf26637a"
+  }
+}
