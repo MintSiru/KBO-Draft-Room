@@ -1,13 +1,14 @@
 /* Seeded fictional prospects. Public scouting estimates are separate from hidden ability. */
 (function (root) {
   'use strict';
-  const ROLES = { SP: '선발투수', RP: '불펜투수', C: '포수', IF: '내야수', OF: '외야수' };
   const Cat = root.DraftCatalog || (typeof require !== 'undefined' ? require('./catalog.js') : null);
   const Bio = root.DraftBio || (typeof require !== 'undefined' ? require('./biography.js') : null);
   const Names = root.DraftNames || (typeof require !== 'undefined' ? require('./names.js') : null);
   const Ko = root.DraftKo || (typeof require !== 'undefined' ? require('./ko.js') : null);
   const G = root.DraftGrades || (typeof require !== 'undefined' ? require('./grades.js') : null);
-  const REGIONS = Bio.REGIONS;
+  const W = root.DraftWriter || (typeof require !== 'undefined' ? require('./writer.js') : null);
+  const REGIONS = Bio.REGIONS,
+    ROLES = G.ROLES;
   function hash(s) {
     let h = 2166136261;
     for (const c of String(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
@@ -274,8 +275,6 @@
         role,
         type,
         archetype: a[0],
-        strength: Ko.formal(a[1]),
-        weakness: Ko.formal(a[2]),
         focus: a[3],
         age,
         height,
@@ -301,6 +300,8 @@
         confidence: record.games >= 25 ? '보통' : '관찰 표본 적음',
       });
     }
+    // Scouting notes come from the public grades on a text-only stream, after all players are generated.
+    for (const p of players) Object.assign(p, W.scoutNotes(p, rng(seed + '-notes-' + p.id)));
     players.sort((a, b) => b.publicScore - a.publicScore || a.id.localeCompare(b.id));
     players.forEach((p, i) => (p.rank = i + 1));
     return { players, byId: Object.fromEntries(players.map((p) => [p.id, p])), seed: String(seed) };

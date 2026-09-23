@@ -14,7 +14,7 @@
   const Voices = root.DraftVoices || (typeof require !== 'undefined' ? require('./voices.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '0.6.3',
+  const RELEASE = '0.6.4',
     VERSION = 6,
     ROUNDS = 7,
     POOL_SIZE = 200;

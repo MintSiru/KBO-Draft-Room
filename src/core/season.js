@@ -265,18 +265,23 @@
   function routeLabel(route, core, pitcher) {
     return route === 'regular' ? (core ? (pitcher ? '핵심 투수' : '핵심 주전') : '1군 안착') : ROUTE_LABELS[route];
   }
-  function reasonText(reason, daysLost, investment) {
-    return {
-      'development-first': '시즌 시작 기량으로는 1군 경쟁 문턱을 넘지 못해 퓨처스 실전을 우선했습니다.',
-      'long-rehab': `장기 건강 문제로 ${daysLost}일의 출전 공백이 생겨 재활에 집중했습니다.`,
-      'role-retained': '전년도 1군 보직과 축적된 경험을 바탕으로 자리를 이어갔습니다.',
-      'poor-form-and-ability': '전년도 큰 부진과 낮아진 시즌 시작 기량을 함께 반영해 퓨처스에서 재정비했습니다.',
-      'poor-form': '전년도 성적 부진을 반영해 백업으로 역할을 줄이고 다시 평가했습니다.',
-      'role-competition': '기존 1군 자리는 유지하되 올해 보직 경쟁에서 출전 비중이 줄었습니다.',
-      'cohort-competition': '동기 내 같은 포지션의 보직 정원이 차 백업부터 경쟁했습니다.',
-      'earned-role': '시즌 시작 기량과 적응, 포지션 기회를 바탕으로 1군 보직을 확보했습니다.',
-      'trial-opportunity': `현재 기량과 ${investment > 0 ? '상위 지명에 대한 시험 기회, ' : ''}포지션 수요를 반영해 제한적인 1군 기회를 받았습니다.`,
-    }[reason];
+  const REASONS = {
+    'development-first': ['시즌 시작 기량으로는 1군 문턱을 넘지 못했다. 퓨처스에서 실전을 쌓았다.', '올해는 퓨처스에서 경기 수를 채우는 데 집중했다.', '1군보다 2군 실전이 먼저라는 판단이었다.'],
+    'long-rehab': ['부상으로 {days}일을 쉬었다. 시즌 대부분을 재활로 보냈다.', '{days}일 공백. 올해는 재활이 전부였다.'],
+    'role-retained': ['지난해 자리를 그대로 지켰다.', '작년에 따낸 1군 자리를 올해도 놓치지 않았다.', '보직 경쟁 없이 자리를 이어 갔다.'],
+    'poor-form-and-ability': ['지난해 부진이 길었고 기량도 떨어졌다. 퓨처스로 내려가 다시 만들었다.', '부진과 기량 하락이 겹쳤다. 2군에서 재정비했다.'],
+    'poor-form': ['지난해 부진으로 역할이 줄었다. 백업에서 다시 시작했다.', '성적이 떨어지면서 출전 기회도 줄었다.'],
+    'role-competition': ['1군에는 남았지만 경쟁에서 밀려 출전이 줄었다.', '자리는 지켰지만 경쟁자와 기회를 나눠 가졌다.'],
+    'cohort-competition': ['같은 포지션 동기들이 먼저 자리를 차지했다. 백업부터 시작했다.', '동기들과의 자리 싸움에서 한발 늦었다.'],
+    'earned-role': ['캠프에서 경쟁을 이겨 1군 자리를 따냈다.', '시즌 초반부터 1군에 자리를 잡았다.', '기회를 받자마자 자리를 굳혔다.'],
+    'trial-opportunity': ['1군에서 몇 차례 시험 기회를 받았다.', '1군과 2군을 오가며 기회를 받았다.'],
+    'trial-investment': ['상위 지명 선수답게 1군 맛을 봤다.', '구단이 기대를 걸고 1군 기회를 줬다.'],
+  };
+  /** Why the player had this role. Text only, from its own stream. */
+  function reasonText(reason, daysLost, investment, r) {
+    const key = reason === 'trial-opportunity' && investment > 0 ? 'trial-investment' : reason;
+    const line = REASONS[key][Math.floor(r() * REASONS[key].length)].replace('{days}', daysLost);
+    return line + (daysLost && reason !== 'long-rehab' ? ` 부상으로 ${daysLost}일 결장했다.` : '');
   }
   /** Top velocity for the season (pitchers). Draws from its own stream, so it never affects results. */
   function seasonVelocity(p, after, r) {
@@ -328,7 +333,7 @@
     const planScore = planScoreOf(p, { startGrade, growth, yearIndex, games, route, daysLost });
     const roleTier = core ? 'core' : route;
     const bestTool = Object.keys(after).sort((a, b) => after[b] - tools[b] - (after[a] - tools[a]))[0];
-    const note = reasonText(reason, daysLost, investment) + (limited && route !== 'rehab' ? ` 건강 문제로 ${daysLost}일의 출전 공백이 있었습니다.` : '');
+    const note = reasonText(reason, daysLost, investment, rng(tag('text')));
 
     return {
       playerId: p.id,

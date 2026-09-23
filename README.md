@@ -37,7 +37,8 @@ src/
   core/               게임 로직(브라우저·Node 공용, DOM 없음)
     clubs catalog names ko biography   정적 데이터와 한국어 조사
     grades prospects                   20–80 등급, 선수 풀 생성
-    scouting draft-ai press voices     팀장·CPU·언론·대사
+    scouting draft-ai press            팀장·CPU·언론
+    writer voices                      스카우트 노트·기사·댓글·인터뷰 문장(시뮬레이션과 분리된 난수)
     tuning                             밸런스 숫자(시즌·경력·평가) 모음
     season career engine               시즌·5년 경력·진행과 저장 복원
   ui/                 화면(순수 함수로 HTML 생성) + app.js(상태·이벤트)

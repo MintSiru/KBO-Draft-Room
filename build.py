@@ -8,7 +8,7 @@ STYLES = ['styles/main.css']
 # Load order matters: each module reads the globals registered by the ones before it.
 SCRIPTS = [
     'core/clubs.js', 'core/catalog.js', 'core/ko.js', 'core/names.js', 'core/biography.js',
-    'core/grades.js', 'core/prospects.js', 'core/scouting.js', 'core/tuning.js', 'core/season.js', 'core/draft-ai.js',
+    'core/grades.js', 'core/writer.js', 'core/prospects.js', 'core/scouting.js', 'core/tuning.js', 'core/season.js', 'core/draft-ai.js',
     'core/press.js', 'core/career.js', 'core/voices.js', 'core/engine.js',
     'ui/format.js', 'ui/setup.js', 'ui/pregame.js', 'ui/draft.js', 'ui/postdraft.js', 'ui/career.js',
     'ui/dialogs.js', 'ui/app.js',

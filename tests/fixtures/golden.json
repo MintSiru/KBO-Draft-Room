@@ -3,39 +3,39 @@
   "hashes": {
     "pool:pool-a": {
       "sim": "bc38d8eba00a3f8731db94e8d36f2a60b02d94315ab145939f7808a328b66f10",
-      "full": "20a021e13cb9f9de4deef2c8aca7dc413b5c760519641c7e97a08710105d1bb5"
+      "full": "d1d627fb44f7a0f82b93519008403c1e9ce63fed3c67f7b06c84431866f9569f"
     },
     "pool:pool-b": {
       "sim": "ec2bba094fbee710b2cf01e8f4f0591f059a609fabf6f0f0f3b37f3c80192cbb",
-      "full": "adf1e0f02fef3131754e9fa5d4b75249907a04964b501ac6069109130dbd5034"
+      "full": "3071c8f2742b800b2d2ddcbf6231b585747ce1d6de70f0631898cfc7d4f2ae20"
     },
     "pool:pool-c": {
       "sim": "ca316196c5079b5f5bcf195c26138f3ec1a57eb35ce8e628ae5385bf2ca7b355",
-      "full": "9701f03ca69b70e3b462aafd4734c80471ca4515a16c8ab5ab5421cda7dc8a07"
+      "full": "a3ad09e39c1196261faad33bb353bfcb0eb2b1e8f389c42efb966c4f41bcae2d"
     },
     "game:lg/true/golden-a/normal/development": {
       "sim": "7072e89eb9f39569ac61f776dcfa4338feb614257d7bd429895453c1c2aab886",
-      "full": "ae6580439c8020f62754147b640f9440fb2d67b088d2f93f5fc36d5fb45ea736"
+      "full": "3f944de859c3d88b399bd9fb680357e29dc96664df74cdbf8d5ef649f1ae37d0"
     },
     "game:kiwoom/false/golden-b/hard/immediate": {
       "sim": "a8d7aef024a4e66f493a5d59228d865ca79554abdeb0a884732999f83a9f2ae7",
-      "full": "991fb01fdc0e4f573f104cd1a4317a124f3a46cc3cf7916e055aa56318303f6a"
+      "full": "a6d6cd284676b0369faa5f352cd91d2d59861c4c576c7d54099d90e9b0399ced"
     },
     "game:samsung/true/golden-c/easy/needs": {
       "sim": "6acb03bdcc3c9421991503d1a5e4c578f1d90786d8e0591cfd9bf560ce8aea70",
-      "full": "50e9d295544fc2bf5dc1d92f3250f919e1e5a9e59fd3e92b3fb1436744e28298"
+      "full": "c308b90d447e1498707966ad1196b643b47b09fa2614bd7466c7d037fbea6887"
     },
     "game:kia/false/golden-d/normal/needs": {
       "sim": "91595b6748154fd1d12a931264ddfb3e9f3a371ea1a639ad9d88f9d3ecab23fc",
-      "full": "ccfee63ce7bc3a8ecdf7199b87b6d6f0d60b22599134828759a084d2143d6775"
+      "full": "a7a0a956b796c3b39390b3cb7289c6e3cd5981e915347d10048e7f01d9f61ba1"
     },
     "game:hanwha/true/golden-e/hard/development": {
       "sim": "da98fb025eacad1c3fe9a1573f6b369ea3065dbee77cb1de9c9d1462bfb03c97",
-      "full": "4c0e6f9810aa1d1fbc9098a058c9fdb556621e44b715d80ae9b2b00cd5ff0b2d"
+      "full": "70f2f62cbef3ffeb72e05971bbdd3d2339c5cc4eaede2648156d77f935f9c0e6"
     },
     "game:nc/false/golden-f/easy/immediate": {
       "sim": "627a3b55d4d45f272a22d15c7e49174b615a2dea0f2a864ec3ca3523f0eea5f0",
-      "full": "e68119a10f3930c5ba41a61f21ceded76d36809134a71969c34654b732eea347"
+      "full": "ed22fd2fb76e562a867347f0a267bfc77cec28ad77c975cf2e66f3f26a560a8c"
     }
   }
 }

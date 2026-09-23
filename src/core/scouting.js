@@ -85,13 +85,18 @@
           : 0;
     return base + fit(p, t) * 0.065 + bonus;
   }
+  function needLine(p, need) {
+    const label = D.grades.LABELS[need.key] || { ready: '현재 기량', scoutCeiling: '미래 가치', floorGrade: '플로어' }[need.key],
+      v = value(p, need.key);
+    return v >= need.target
+      ? `찾던 '${need.label}' 유형. ${label} ${D.ko.p(String(v), '으로/로')} 기준(${need.target})을 ${v > need.target ? '넘는다' : '맞춘다'}.`
+      : `'${need.label}'로 보기엔 ${label}${D.ko.particle(label, '이/가')} ${need.target - v}점 모자란다.`;
+  }
   function explanation(p, t) {
     const need = t.detailedNeeds?.find((x) => x.role === p.role);
     return [
       `현재 ${p.ready} / 미래 가치 ${p.scoutCeiling} · ${p.pickTags.join(' + ')}.`,
-      need
-        ? `${need.label}: ${D.grades.LABELS[need.key] || { ready: '현재 기량', scoutCeiling: '미래 가치', floorGrade: '플로어' }[need.key]} ${value(p, need.key)} (관찰 목표 ${need.target}). ${need.reason}`
-        : '우선 보강 포지션보다 선수의 개별 가치를 보는 선택입니다.',
+      need ? needLine(p, need) : '보강 포지션은 아니다. 재능만 보고 고른 선수.',
       `플로어 ${p.floorGrade} / 실링 ${p.ceilingGrade} · 불확실성 ${p.uncertainty}.`,
     ];
   }

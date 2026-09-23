@@ -1,6 +1,7 @@
 /* Fictional media and fans. Inputs are allowlisted public projections, never hidden ability or future results. */
 (function (root) {
   'use strict';
+  const W = root.DraftWriter || (typeof require !== 'undefined' ? require('./writer.js') : null);
   const D = root.DraftData || (typeof require !== 'undefined' ? require('./prospects.js') : null),
     R = root.DraftRules || (typeof require !== 'undefined' ? require('./draft-ai.js') : null),
     K = D.ko;
@@ -11,6 +12,7 @@
   function forecast(players, teams, local, seed) {
     return OUTLETS.map((outlet) => {
       const r = D.rng(seed + '-mock-' + outlet.id),
+        text = D.rng(seed + '-mock-text-' + outlet.id), // wording only; `r` drives the picks
         used = new Set(),
         picks = [];
       for (const round of local ? [0, 1] : [1])
@@ -38,7 +40,7 @@
             teamId: t.id,
             round,
             playerId: p.id,
-            reason: `${D.ROLES[p.role]} 자원으로 ${outlet.id === 'diamond' ? '현재 기량과 보강 필요' : '미래 가치와 장기 활용성'}에 주목합니다.`,
+            reason: W.mockReason(p, outlet.id, text),
           });
         }
       return { id: outlet.id, name: outlet.name, style: outlet.style, picks };
@@ -68,52 +70,14 @@
     const label = selection.round === 0 ? '지역 1차' : '전국 1라운드',
       r = D.rng(seed + '-news-' + selection.overall),
       role = D.ROLES[p.role];
-    const headline = `${t.short}, ${label}에서 ${p.name} 지명…${reach ? '예상 밖의 선택' : matched.length ? '언론 예상과 맞닿은 선택' : fit >= 80 ? '보강 과제에 초점' : '다른 가능성에 주목'}`;
-    const facts = [
-      `${p.school}의 ${K.p(p.name, '을/를')} 선택했습니다.`,
-      `${role} · ${p.pathway} · 공개 스카우트 순위 ${p.rank}위입니다.`,
-    ];
-    const analysis = matched.length
-      ? `${matched.join('·')}의 해당 순번 예측과 일치합니다.`
-      : '두 매체의 해당 순번 예측과는 다른 선택입니다.';
-    const context = reach
-      ? `선택 당시 남은 ${selection.round === 0 ? '지역' : '전국'} 후보의 공개 순위로는 ${remainingRank}번째입니다. 우선순위의 근거를 지켜볼 필요가 있습니다.`
-      : value
-        ? '더 앞 순번 평가를 받던 선수를 이 순번에서 잡았습니다.'
-        : fit >= 60
-          ? `구단의 ${t.needs.indexOf(p.role) + 1}순위 보강 과제와 연결됩니다.`
-          : '우선 보강 자리보다는 선수의 개별 재능을 택했습니다.';
-    const comments = [
-      {
-        handle: '보강노트',
-        tone: fit >= 60 ? '기대' : '우려',
-        text:
-          fit >= 60
-            ? `${role} 보강이 필요한 상황이었습니다. 경쟁이 생기는 점은 반갑습니다.`
-            : `우선 보강 자리와는 다릅니다. 남은 지명에서 빈자리를 채워야 합니다.`,
-      },
-      {
-        handle: '팜을지켜봅니다',
-        tone: '육성',
-        text:
-          p.ready >= 45
-            ? '현재 기량은 1군 경쟁 후보 수준입니다. 바로 주전이라고 기대하지는 않겠습니다.'
-            : `${K.p(p.name, '은/는')} 첫해 퓨처스에서 차근차근 준비해도 괜찮습니다. 육성 과정을 보겠습니다.`,
-      },
-      {
-        handle: '한번더확인',
-        tone: '신중',
-        text: owned
-          ? `이미 같은 포지션을 지명했습니다. 서로 다른 활용 계획을 설명해 주었으면 합니다.`
-          : reach
-            ? '예상보다 이른 선택입니다. 스카우트가 본 장점은 무엇인지 궁금합니다.'
-            : p.pathway === '독립구단'
-              ? '다시 도전한 시간이 눈에 들어옵니다. 응원하되 프로에서의 적응은 차분히 보겠습니다.'
-              : selection.round === 0
-                ? '연고 지역 선수를 응원합니다. 출생지가 아니라 현재 소속으로 자격을 판단했다는 점도 확인했습니다.'
-                : '예측과 성적은 별개입니다. 선수 이름보다 실제 성장 과정을 지켜보겠습니다.',
-      },
-    ];
+    // Wording draws from its own stream; `r` below only moves fan mood.
+    const written = W.draftNews(
+      p,
+      t,
+      selection,
+      { reach, value, matched, fit, owned, local: selection.round === 0, remainingRank, nationalPick: selection.overall - prior.filter((s) => s.round === 0).length },
+      D.rng(seed + '-news-text-' + selection.overall),
+    );
     const delta = D.clamp(
       (fit >= 80 ? 2 : fit >= 60 ? 1 : -1) +
         (matched.length ? 2 : 0) +
@@ -132,9 +96,7 @@
       playerId: p.id,
       round: selection.round,
       label,
-      headline,
-      body: [...facts, analysis, context].join(' '),
-      comments,
+      ...written,
       delta,
       reason: `${label} 반응 · ${matched.length ? '예측 일치' : '예측과 다른 선택'} · ${fit >= 60 ? '보강 연계' : '재능 우선'}${reach ? ' · 이른 선택에 대한 우려' : ''}`,
     };

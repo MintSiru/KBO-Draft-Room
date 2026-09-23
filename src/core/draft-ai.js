@@ -30,6 +30,14 @@
       pickTags: [...p.pickTags],
       uncertainty: p.uncertainty,
       regionalEligible: !!D.bio.eligible(p, { region: p.highSchoolRegion }),
+      // Public facts used by the media and scouting text.
+      age: p.age,
+      velocity: p.velocity,
+      throwHand: p.throwHand,
+      type: p.type,
+      record: { ...p.record },
+      awards: [...p.awards],
+      proExperience: p.proExperience ? { level: p.proExperience.level } : null,
     };
   }
   function fit(p, t) {

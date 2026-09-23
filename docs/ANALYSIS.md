@@ -1,4 +1,4 @@
-# 드래프트 룸 분석 노트 (v0.6 → v0.6.2)
+# 드래프트 룸 분석 노트 (v0.6 → v0.6.4)
 
 v0.6 코드를 처음부터 끝까지 읽고 정리한 문서입니다. 1부는 게임이 어떻게 돌아가는지, 2부는 코드에서 발견한 문제와 이번에 고친 내용, 3부는 UI 개편 기준입니다.
 
@@ -18,7 +18,8 @@ core/                          ui/
  clubs ─ catalog ─ names ─ ko   format → setup / pregame / draft / postdraft / career / dialogs
  biography ─ grades             app (상태·이벤트·저장)
  prospects (풀 생성)
- scouting ─ season ─ draft-ai ─ press ─ career ─ voices
+ scouting ─ season ─ draft-ai ─ press ─ career
+ writer ─ voices (문장, 시뮬레이션과 분리된 난수)
  engine (진행·지명·저장 복원)  ← UI는 engine(DraftCore)만 봅니다
 ```
 
@@ -187,6 +188,17 @@ core/                          ui/
 - **호환**: 저장 키·파일 형식·테스트가 쓰는 DOM 훅(`data-action`, `.player-row`, `.record-table` …)을 유지해 기존 저장과 테스트가 그대로 동작합니다.
 
 ---
+
+### 3.3 문장 작성 원칙 (v0.6.4)
+
+- **근거는 공개 정보만**: 스카우트 노트, 기사, 댓글, 인터뷰는 공개 등급·구속·아마추어 기록·지명 상황만 봅니다. 숨은 능력치는 쓰지 않습니다.
+- **난수 분리**: 문장은 `-notes-`, `-news-text-`, `-mock-text-`, `-voice-`, `-coach-`, `-advice-`, `-text-` 같은 문장 전용 난수로 고릅니다. 문장을 고쳐도 시뮬레이션 결과와 기존 저장이 바뀌지 않습니다. golden의 `sim` 지문과 600회 밸런스 실험 결과로 확인했습니다.
+- **말투를 화자에 맞춤**
+  - 스카우트 노트와 기사: `~다` 단문
+  - 팀장·감독: 단정적인 존댓말
+  - 신인: 구어체
+  - 팬 댓글: 커뮤니티 말투(욕설 없음)
+- 해설조 완충 문장("~지켜볼 필요가 있습니다", "보장하지 않습니다")은 쓰지 않습니다.
 
 ## 남은 과제 (제안)
 

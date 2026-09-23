@@ -1,13 +1,64 @@
-/* Voices: draft-day interview lines, the manager's comment and the scout director's advice.
-   Pure text built from public information; nothing here affects the simulation. */
+/* Voices: the rookie's first words, the manager's comment and the scout director's advice.
+   Text only, built from public information. Each voice draws from its own text stream, so wording never
+   changes a result. Players talk like players, the manager like a manager, the scout like a scout. */
 (function (root) {
   'use strict';
-  const D = root.DraftData || (typeof require !== 'undefined' ? require('./prospects.js') : null);
-  const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
-  const R = root.DraftRules || (typeof require !== 'undefined' ? require('./draft-ai.js') : null);
-  const TEAMS = root.DraftClubs || (typeof require !== 'undefined' ? require('./clubs.js') : null);
-  const { ROLES, rng, pick } = D;
-  const K = D.ko;
+  const need = (name, file) => root[name] || (typeof require !== 'undefined' ? require(file) : null);
+  const D = need('DraftData', './prospects.js');
+  const TEAMS = need('DraftClubs', './clubs.js');
+  const W = need('DraftWriter', './writer.js');
+  const { ROLES, rng } = D;
+  const K = D.ko,
+    G = D.grades;
+  const { one, fill } = W;
+  const isPitcher = (p) => p.role === 'SP' || p.role === 'RP';
+  const bestTool = (p) => Object.entries(p.tools).filter(([k]) => k !== 'eye').sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+
+  // ------------------------------------------------------------ rookie interview
+
+  const OPENERS = {
+    local: ['어릴 때부터 {team} 경기를 보면서 컸습니다. 연고 팀이라 더 기쁩니다.', '계속 {region}에서 야구를 했는데, 고향 팀 유니폼을 입게 됐습니다.', '{school} 선배들이 뛰던 팀이라 꼭 오고 싶었어요.'],
+    early: ['이렇게 일찍 불릴 줄은 솔직히 몰랐습니다.', '이름이 불리는 순간 머리가 하얘졌어요.', '예상보다 훨씬 빨리 불렸어요. 그만큼 기대하신다는 뜻이니까 책임감이 큽니다.'],
+    late: ['생각보다 늦게 불려서 마음 졸였습니다. 그래도 불러 주신 팀에서 보여 드리겠습니다.', '기다리는 동안 솔직히 불안했어요. 이제 순번은 신경 안 쓰고 야구만 하겠습니다.', '순번은 늦었지만 출발선은 같다고 생각합니다.'],
+    independent: ['{prev|을/를} 거쳐 독립리그에서 다시 준비했습니다. 포기 안 하길 잘했어요.', '한 번 떨어지고 나서 매일 새벽에 훈련했습니다. 그 시간이 오늘을 만든 것 같습니다.', '다시 불릴 수 있다고 믿고 버텼습니다. 기다려 준 가족한테 제일 고맙습니다.'],
+    early_college: ['2학년인데 얼리로 나왔습니다. 빨리 프로에서 부딪혀 보고 싶었어요.', '대학 감독님이 도전해 보라고 등을 밀어 주셨습니다.'],
+    college: ['고등학교 때 지명을 못 받고 대학에 갔습니다. 4년 동안 준비한 게 헛되지 않았네요.', '{school}에서 4년 동안 많이 배웠습니다. 그때 지명 못 받은 게 오히려 약이 됐어요.'],
+    overseas: ['해외에서 혼자 야구하면서 한국 무대가 계속 그리웠습니다.', '밖에서 배운 걸 한국에서 보여 드리고 싶어요.', '돌아오는 결정이 쉽지 않았는데, 불러 주셔서 감사합니다.'],
+    plain: ['{team}에 오게 돼서 정말 기쁩니다.', '부모님이 제일 먼저 생각났어요.', '{school} 감독님이랑 동료들한테 고맙다는 말부터 하고 싶습니다.', '어릴 때부터 꿈꾸던 순간입니다.'],
+  };
+  const TRAITS = {
+    '차분한 노력파': ['말보다는 훈련량으로 보여 드리겠습니다.', '매일 똑같이 준비하는 게 제 장점입니다.'],
+    '승부욕 강한 도전자': ['같은 포지션 선배님들하고도 당당하게 경쟁하겠습니다.', '지는 걸 정말 싫어합니다.'],
+    '밝은 분위기 메이커': ['더그아웃 분위기는 제가 책임지겠습니다.', '먼저 인사하고 많이 물어보는 신인이 되겠습니다.'],
+    '분석을 즐기는 연구형': ['제 영상은 거의 매일 돌려 봅니다.', '데이터 보는 걸 좋아해서 프로 전력분석이 기대돼요.'],
+    '책임감 강한 리더': ['고등학교 때 주장을 했습니다. 팀을 먼저 생각하겠습니다.', '동기들이랑 같이 크고 싶습니다.'],
+    '말보다 행동하는 실천형': ['말보다 결과로 보여 드리겠습니다.', '정해 둔 훈련은 무조건 지킵니다.'],
+    '꾸준함을 믿는 성실형': ['하루하루 쌓이는 게 제일 무섭다고 믿습니다.', '다치지 않고 꾸준히 뛰는 게 목표입니다.'],
+    '큰 무대를 즐기는 대담형': ['관중 많은 경기에서 더 잘하는 편이에요.', '만원 관중 앞에서 뛰어 보고 싶습니다.'],
+  };
+  const GOALS = {
+    readyPitcher: ['올해 1군 마운드에 서는 게 첫 목표입니다.', '캠프에서 제 자리를 만들겠습니다.', '신인왕 욕심도 조금은 있습니다.'],
+    readyHitter: ['1군 타석에 빨리 서고 싶습니다.', '캠프에서 제 자리를 만들겠습니다.', '신인왕 욕심도 조금은 있습니다.'],
+    later: ['서두르지 않겠습니다. 2군에서 몸부터 만들겠습니다.', '퓨처스에서 제대로 준비해서 올라가겠습니다.', '1~2년 안에 1군에서 인사드리겠습니다.', '프로에서는 {focus}부터 신경 쓰겠습니다.'],
+  };
+
+  // ------------------------------------------------------------ manager
+
+  const COACH_TOOL = {
+    stuff: '직구 힘은 이미 프로 수준입니다.', command: '제구가 되는 투수라 계산이 섭니다.', breaking: '변화구는 바로 1군에서 통할 공입니다.',
+    stamina: '선발로 길게 쓸 수 있는 체력이 있습니다.', contact: '방망이에 맞히는 재주가 있습니다.', power: '한 방이 있는 타자입니다.',
+    speed: '발은 지금 당장 1군에서도 쓸 수 있습니다.', defense: '수비는 바로 써도 됩니다.',
+  };
+
+  // ------------------------------------------------------------ scout director
+
+  const VERDICT = {
+    즉전감: ['바로 쓸 선수입니다. 1군 캠프 명단에 넣어도 됩니다.', '완성도로는 이 순번에서 가장 앞섭니다.'],
+    실링: ['3년을 보고 뽑는 선수입니다. 실링은 이번 클래스에서도 손꼽힙니다.', '지금보다 3년 뒤가 궁금한 선수입니다. 기다릴 각오가 있다면 추천합니다.'],
+    플로어: ['크게 실패할 선수는 아닙니다. 대신 스타가 될지는 물음표입니다.', '안전한 선택입니다. 1군 백업까지는 계산이 섭니다.'],
+    육성형: ['당장은 아닙니다. 2군에서 2년은 키워야 합니다.', '몸이 덜 됐습니다. 육성 계획이 먼저 서야 하는 선수입니다.'],
+    역할형: ['역할이 분명한 선수입니다. 주전보다는 쓰임새를 보고 뽑는 겁니다.', '한 자리를 메우는 데는 충분합니다.'],
+  };
 
   /** Adds interview/coach/scoutAdvice to the engine API `C` (avoids a require cycle). */
   function install(C) {
@@ -17,188 +68,87 @@
       const t = teamFor(g, s.teamId || g.teamId),
         r = rng(g.seed + '-voice-' + p.id + '-' + context),
         fav = g.difficulty === 'easy' && TEAMS[p.favoriteTeam].id === t.id;
-      // Overall pick number; compared with the public rank to spot early or late calls.
-      const actual = s.overall ?? (s.round - 1) * 10 + TEAMS.findIndex((x) => x.id === t.id) + 1;
-      let openings;
-      if (s.round === 0)
-        openings = [
-          `${p.region}에서 야구를 배운 선수로서 이 선택이 더 뜻깊습니다.`,
-          `${p.school}에서 함께 땀 흘린 친구들이 먼저 떠오릅니다.`,
-          `연고 지역을 대표한다는 책임감을 느낍니다.`,
-        ];
-      else if (p.pathway === '독립구단')
-        openings = [
-          `${K.p(p.history.at(-2).name, '을/를')} 거쳐 ${p.school}에서 다시 기회를 준비했습니다.`,
-          '다시 불릴 수 있다고 믿고 버텼습니다. 기다려 준 가족들에게 고맙습니다.',
-          '훈련을 마치고 혼자 돌아가던 날들이 생각납니다. 이제 새로운 출발입니다.',
-        ];
-      else if (p.pathway === '대학 얼리')
-        openings = [
-          `${p.school} 2학년으로 조기 도전에 나섰습니다. 배움의 자세로 시작하겠습니다.`,
-          '졸업 전에 선택한 도전인 만큼 책임감을 가지고 준비하겠습니다.',
-          '대학에서 배운 것을 바탕으로 프로의 긴 시즌에 적응하겠습니다.',
-        ];
-      else if (p.pathway === '대졸')
-        openings = [
-          `${K.p(p.highSchoolName, '을/를')} 거쳐 ${p.school}에서 준비한 시간이 떠오릅니다.`,
-          `대학 무대에서 제 부족한 점을 배우고 보완했습니다.`,
-          `고교 졸업 후 ${K.p(p.school, '을/를')} 선택한 것은 제 야구를 다지는 기회였습니다.`,
-        ];
-      else if (p.pathway === '해외파' || p.proExperience)
-        openings = [
-          '멀리서 쌓은 경험을 이제 이 무대에서 보여드리고 싶습니다.',
-          `${p.school}에서 익힌 것을 한국 야구에 맞게 다듬겠습니다.`,
-          '새로운 환경에 적응하는 데 주저하지 않겠습니다.',
-        ];
-      else if (p.rank < actual - 12)
-        openings = [
-          '이름이 불릴 때까지 긴장을 많이 했습니다. 이제 출발선은 같다고 생각합니다.',
-          '기다린 시간이 길었지만 유니폼을 입는 순간만 생각하고 있었습니다.',
-          '예상보다 늦게 불렸지만, 앞으로 보여드릴 것이 더 중요합니다.',
-        ];
-      else if (p.rank > actual + 12)
-        openings = [
-          '생각보다 일찍 불러 주셔서 놀랐습니다. 믿어 주신 만큼 더 준비하겠습니다.',
-          '제 가능성을 높게 봐주신 것 같아 책임감이 큽니다.',
-          '기대 이상의 순서로 불렸습니다. 제 장점을 확실히 살리겠습니다.',
-        ];
-      else
-        openings = [
-          `${t.short}의 선택을 받아 정말 기쁩니다.`,
-          `${p.school}에서 함께 준비한 동료들과 이 기쁨을 나누고 싶습니다.`,
-          '야구를 시작했을 때부터 기다려 온 순간입니다.',
-          '끝까지 응원해 주신 가족과 지도자분들께 감사드립니다.',
-        ];
-      const ends =
-        p.ready >= 45
-          ? [
-              '1군 경쟁부터 부딪쳐 보겠습니다. 맡겨 주시는 역할을 해내겠습니다.',
-              '바로 통할 것이라고 단정하지는 않겠습니다. 캠프에서 하나씩 증명하겠습니다.',
-              '첫 시즌부터 팀에 보탬이 되도록 준비하겠습니다.',
-            ]
-          : [
-              '첫해를 서두르지 않겠습니다. 퓨처스에서 기본기를 다지겠습니다.',
-              `${p.focus}에 먼저 집중하겠습니다. 매달 달라지는 모습을 보여드리겠습니다.`,
-              '조급해하지 않고 몸과 기술을 프로 수준으로 끌어올리겠습니다.',
-              '경기에 나서지 못하는 날에도 배울 것을 찾겠습니다.',
-            ];
-      const personality = {
-        '차분한 노력파': '말보다 훈련으로 보여드리고 싶습니다.',
-        '승부욕 강한 도전자': '같은 포지션 선배들에게도 당당하게 도전하겠습니다.',
-        '밝은 분위기 메이커': '먼저 인사하고 많이 묻는 신인이 되겠습니다.',
-        '분석을 즐기는 연구형': '제 경기 영상을 보면서 개선점을 찾고 있습니다.',
-        '책임감 강한 리더': '함께 성장하는 동료가 되겠습니다.',
-        '말보다 행동하는 실천형': '매일 정해 둔 훈련부터 지키겠습니다.',
-        '꾸준함을 믿는 성실형': '하루의 작은 차이가 쌓인다고 믿습니다.',
-        '큰 무대를 즐기는 대담형': '관중 앞에서 제 야구를 보여드릴 날이 기다려집니다.',
-      };
-      return [
-        pick(openings, r),
-        fav ? `응원하던 ${t.short}의 유니폼이라 더 특별합니다.` : personality[p.personality],
-        pick(ends, r),
-      ].join(' ');
+      // National pick number, compared with the public rank to spot early or late calls.
+      const regional = g.schedule.filter((x) => x.round === 0).length;
+      const pickNo = s.round === 0 ? null : (s.overall ?? 0) - regional;
+      const key =
+        s.round === 0 ? 'local'
+        : p.pathway === '독립구단' ? 'independent'
+        : p.pathway === '대학 얼리' ? 'early_college'
+        : p.pathway === '대졸' ? 'college'
+        : p.pathway === '해외파' || p.proExperience ? 'overseas'
+        : pickNo && p.rank < pickNo - 12 ? 'late'
+        : pickNo && p.rank > pickNo + 12 ? 'early'
+        : 'plain';
+      const vars = { team: t.short, region: p.region, school: p.school, prev: p.history.at(-2)?.name ?? p.highSchoolName, focus: p.focus };
+      const middle = fav ? `사실 어릴 때부터 ${t.short} 팬이었어요.` : one(TRAITS[p.personality] || TRAITS['차분한 노력파'], r);
+      const goal = one(p.ready >= 45 ? GOALS[isPitcher(p) ? 'readyPitcher' : 'readyHitter'] : GOALS.later, r);
+      return [fill(one(OPENERS[key], r), vars), middle, fill(goal, vars)].join(' ');
     }
+
     function coach(p, g) {
       const t = teamFor(g),
-        r = rng(g.seed + '-coach-' + p.id);
-      const start =
+        r = rng(g.seed + '-coach-' + p.id),
+        role = ROLES[p.role];
+      const start = one(
         fit(p, t) >= 60
-          ? pick(
-              [
-                `${ROLES[p.role]} 자원을 넓히려는 방향에 맞는 선택입니다.`,
-                `우리 팀이 준비해 온 ${ROLES[p.role]} 보강 계획에 들어맞습니다.`,
-                `필요했던 ${ROLES[p.role]} 자리에서 경쟁을 만들어 줄 선수입니다.`,
-              ],
-              r,
-            )
-          : pick(
-              [
-                '당장의 빈자리보다 이 선수만의 장점을 먼저 봤습니다.',
-                '포지션이 겹치더라도 경쟁력 있는 재능은 확보할 가치가 있습니다.',
-                '지금 전력에 없는 유형을 더해 보고 싶었습니다.',
-              ],
-              r,
-            );
-      const end =
+          ? [`${K.p(role, '은/는')} 우리가 가장 필요했던 자리입니다.`, `${role} 보강이 이번 드래프트 첫 번째 과제였습니다.`, `${role} 쪽은 몇 년째 고민이었습니다.`]
+          : ['포지션보다 선수를 봤습니다.', '당장 필요한 자리는 아니지만 이 재능은 놓칠 수 없었습니다.', '우리 팀에 없는 유형이라 욕심이 났습니다.'],
+        r,
+      );
+      const [tool, grade] = bestTool(p);
+      const remark = grade >= 50 ? COACH_TOOL[tool] : '아직 다듬을 게 많지만 몸이 좋습니다.';
+      const plan = one(
         p.ready >= 45
-          ? pick(
-              [
-                '캠프에서 경쟁할 기회를 주겠습니다. 첫해의 자리는 스스로 만들어야 합니다.',
-                '당장 기여할 가능성을 봤지만, 프로 적응 과정을 면밀하게 지켜보겠습니다.',
-                '보직을 미리 약속하지는 않겠습니다. 준비한 만큼 기회를 주겠습니다.',
-              ],
-              r,
-            )
-          : pick(
-              [
-                `${K.p(p.focus, '을/를')} 중심으로 육성 계획을 세우겠습니다. 첫해 1군 성적을 서두르지 않겠습니다.`,
-                '퓨처스 코치진과 차근차근 준비시키겠습니다. 빠른 데뷔보다 좋은 습관이 먼저입니다.',
-                '프로의 훈련량과 긴 시즌에 적응하는 것이 우선입니다. 기다려 줄 가치가 있다고 봅니다.',
-                '첫해에는 결과보다 몸과 기술이 어떻게 달라지는지 보겠습니다.',
-              ],
-              r,
-            );
-      return start + ' ' + p.strength + ' ' + end;
+          ? ['캠프에서 직접 보고 기회를 주겠습니다.', '자리는 스스로 만들어야 합니다. 기회는 주겠습니다.', '보직은 캠프가 끝나고 정하겠습니다.']
+          : [`첫해는 2군에서 ${p.focus}에 집중합니다.`, '급하게 올리지 않겠습니다. 1~2년 뒤를 보고 키웁니다.', '퓨처스 코치들한테 맡겨 두겠습니다. 좋은 습관이 먼저입니다.'],
+        r,
+      );
+      return [start, remark, plan].join(' ');
     }
+
     function scoutAdvice(p, g) {
       const t = teamFor(g),
         mine = myPicks(g),
         byId = poolFor(g).byId,
-        owned = mine.filter((s) => byId[s.playerId].role === p.role).length;
+        role = ROLES[p.role],
+        r = rng(`${g.seed}-advice-${p.id}-${g.cursor}`);
+      const owned = mine.filter((s) => byId[s.playerId].role === p.role).length;
       const candidates = available(g),
-        similar = candidates.filter((q) => q.role === p.role && q.rank <= p.rank + 15).length;
-      const missing = t.needs.filter((role) => !mine.some((s) => byId[s.playerId].role === role));
+        similar = candidates.filter((q) => q.id !== p.id && q.role === p.role && q.rank <= p.rank + 15).length;
+      const missing = t.needs.filter((x) => !mine.some((s) => byId[s.playerId].role === x));
       const lines = [];
-      lines.push(
-        p.ready >= 45
-          ? '캠프에서 1군 경쟁에 도전할 만한 준비도입니다. 자리가 보장될 수준은 아닙니다.'
-          : p.ready >= 35
-            ? '기본기는 있지만 프로 공에 적응할 시간이 필요합니다. 짧은 콜업보다 꾸준한 육성도 괜찮은 첫해입니다.'
-            : '첫해는 퓨처스 중심으로 보는 편이 안전합니다. 지금 성적보다 육성 과제를 감당할 수 있는지 판단해야 합니다.',
-      );
+
+      lines.push(one(VERDICT[p.pickTags[0]] || VERDICT.역할형, r));
       if (owned > 0)
-        lines.push(
-          `이미 ${ROLES[p.role]} ${owned}명을 지명했습니다. ${missing.length ? '아직 채우지 못한 ' + ROLES[missing[0]] + ' 자리도 함께 살펴볼 필요가 있습니다.' : '중복 지명을 해도 보강 점수가 더 올라가지는 않습니다.'}`,
-        );
-      else
-        lines.push(
-          fit(p, t) >= 60
-            ? `${K.p(ROLES[p.role], '은/는')} 우리 팀의 ${t.needs.indexOf(p.role) + 1}순위 보강 과제입니다. 이 선수의 장점을 쓸 자리는 있습니다.`
-            : '우선 보강 포지션은 아닙니다. 다른 자리를 포기하고도 이 재능을 택할지 판단해야 합니다.',
-        );
+        lines.push(missing.length ? `${K.p(role, '은/는')} 이미 ${owned}명 뽑았습니다. ${ROLES[missing[0]]} 자리가 비어 있는 걸 잊지 마세요.` : `보강 자리는 다 채웠습니다. 이제는 재능 순서대로 가도 됩니다.`);
+      else if (fit(p, t) >= 60) lines.push(`${K.p(role, '은/는')} 우리 보강 ${t.needs.indexOf(p.role) + 1}순위 자리입니다. 뽑으면 바로 채워집니다.`);
+      else lines.push('보강 자리는 아닙니다. 재능을 보고 가는 선택입니다.');
+      if (g.difficulty === 'hard') return { title: `${p.name} · 팀장 의견`, lines: [...lines, `걸리는 점: ${p.weakness}`] };
+
       lines.push(
-        `현재 지명 가능한 ${ROLES[p.role]} 중 이 선수 순위 +15위 이내 후보는 ${similar}명입니다. ${similar <= 2 ? '비슷한 유형이 곧 사라질 수 있습니다.' : '비슷한 후보의 강점과 준비도를 비교할 필요가 있습니다.'}`,
+        similar === 0 ? `이 급의 ${K.p(role, '은/는')} 이 선수가 마지막입니다.`
+        : similar <= 2 ? `비슷한 급의 ${K.p(role, '은/는')} ${similar}명밖에 안 남았습니다. 다음 차례엔 없을 수 있습니다.`
+        : `비슷한 급의 ${K.p(role, '이/가')} ${similar}명 더 남아 있습니다. 급할 건 없습니다.`,
       );
-      if (p.awards.length) lines.push('대표팀·대회 경력이 있어 큰 경기 경험은 충분합니다.');
-      else if (p.record.kind === 'pitcher' && p.record.outs < 90)
-        lines.push('시즌 투구 표본이 작은 편입니다. 좋은 평균자책점만으로 안정성을 확신하기는 어렵습니다.');
-      else lines.push(`${K.p(p.focus, '이/가')} 육성의 주요 과제입니다.`);
-      if (p.schoolTier)
-        lines.push(
-          p.schoolTier === '명문'
-            ? '명문 야구부 출신이라 기본기 훈련은 충분히 받았습니다.'
-            : p.schoolTier === '약소'
-              ? '약소 야구부 출신입니다. 팀 성적보다 개인 기록을 보고 판단해야 합니다.'
-              : `현재 소속 야구부 평판은 ${p.schoolTier}입니다.`,
-        );
-      lines.unshift(...S.explanation(R.project(p), t));
-      if (g.difficulty === 'hard')
-        return {
-          title: p.name + '에 대한 스카우트 팀장의 조언',
-          lines: [...S.explanation(R.project(p), t), p.weakness],
-        };
+      const need = t.detailedNeeds?.find((x) => x.role === p.role);
+      if (need) {
+        const label = G.LABELS[need.key] || { ready: '현재 기량', scoutCeiling: '미래 가치', floorGrade: '플로어' }[need.key];
+        const value = p.tools?.[need.key] ?? p[need.key];
+        lines.push(value >= need.target ? `우리가 찾던 '${need.label}'에 맞습니다. ${label} ${value}.` : `'${need.label}'로 보기엔 ${label}(${value})${K.particle(label, '이/가')} 아직 기준(${need.target})에 못 미칩니다.`);
+      }
+      if (p.proExperience) lines.push('해외 리그 기록이라 수준 차이를 감안해서 보세요.');
+      else if (p.record.kind === 'pitcher' && p.record.outs < 90) lines.push('던진 이닝이 적습니다. 평균자책점은 크게 믿지 마세요.');
+      else if (p.uncertainty === '높음') lines.push('고졸이라 평가 오차가 큽니다. 몸이 크면서 달라질 수 있습니다.');
+      else if (p.awards.length) lines.push(`${p.awards[0]} 경험이 있습니다. 큰 경기 경험은 됐습니다.`);
       if (g.difficulty === 'easy') {
         const alternatives = candidates
           .filter((q) => q.id !== p.id)
           .sort((a, b) => b.publicScore + fit(b, t) * 0.12 - (a.publicScore + fit(a, t) * 0.12))
           .slice(0, 2);
-        lines.push(
-          '비교 후보는 ' +
-            alternatives.map((q) => q.name + ' · ' + ROLES[q.role] + ' · 공개 ' + q.rank + '위').join(', ') +
-            '입니다.',
-        );
+        lines.push('대안으로는 ' + alternatives.map((q) => `${q.name}(${ROLES[q.role]}, ${q.rank}위)`).join(', ') + '도 볼 만합니다.');
       }
-      return { title: p.name + '에 대한 스카우트 팀장의 조언', lines };
+      return { title: `${p.name} · 팀장 의견`, lines };
     }
 
     Object.assign(C, { interview, coach, scoutAdvice });

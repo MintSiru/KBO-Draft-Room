@@ -5,6 +5,7 @@
   'use strict';
   const clamp = (n, a = 20, b = 80) => Math.max(a, Math.min(b, n));
   const grade = (n) => clamp(Math.round(n / 5) * 5);
+  const ROLES = { SP: '선발투수', RP: '불펜투수', C: '포수', IF: '내야수', OF: '외야수' };
   const LABELS = {
     stuff: '구위',
     command: '커맨드',
@@ -153,7 +154,7 @@
       );
     return { tools, ready: grade(overall(tools, role)) };
   }
-  const api = { grade, clamp, keys, LABELS, WEIGHTS, overall, make, observe };
+  const api = { grade, clamp, keys, ROLES, LABELS, WEIGHTS, overall, make, observe };
   root.DraftGrades = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
