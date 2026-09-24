@@ -282,7 +282,7 @@
     },
     start: () => {
       const { selectedTeam, local, seed, difficulty, rounds } = state.setup;
-      Object.assign(state, { recordsOpen: false, yearIndex: 0, selected: null, view: defaultView(), stars: new Set() });
+      Object.assign(state, { recordsOpen: false, yearIndex: 0, selected: null, view: defaultView(), stars: new Set(), service: {} });
       lastAdvance = 0;
       state.game = C.createGame(selectedTeam, local, seed, difficulty, rounds);
       state.dev = { chosen: new Set(), role: 'ALL' };
@@ -359,7 +359,7 @@
     reset: () => showModal('reset'),
     'confirm-reset': () => {
       closeModal();
-      Object.assign(state, { game: null, recordsOpen: false, yearIndex: 0, selected: null, view: defaultView(), stars: new Set() });
+      Object.assign(state, { game: null, recordsOpen: false, yearIndex: 0, selected: null, view: defaultView(), stars: new Set(), service: {} });
       state.setup.seed = newSeed();
       render();
       toTop();
