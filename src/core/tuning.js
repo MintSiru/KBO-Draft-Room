@@ -23,6 +23,31 @@
     // Development ("육성") contracts after the draft. They cannot hold a regular role in their first season.
     devContracts: { max: 5, cpuMin: 3, cpuMax: 5 },
 
+    // Signing bonuses and club budgets. Amounts are in 백만 원 (100 = 1억).
+    contracts: {
+      budget: { base: 1350, spread: 300, local: 300 }, // base + (roll - 0.5) × spread, + local when the regional round is on
+      // Slot value by pick: the regional round, then first round from the 1st to the 10th pick, and so on.
+      slot: { regional: 300, first: [450, 25], second: [150, 3], third: [110, 2], later: [85, 75, 65, 55, 50, 45, 40, 35] },
+      rankWeight: 0.6, // demand blends the slot of the pick with the slot a player of his public rank would get
+      intentMult: { none: 1, college: 1.35, abroad: 2.2 },
+      favouriteMult: 0.85, // asks less from the club he grew up supporting
+      step: 5, // amounts are rounded to 500만 원
+      // Chance to sign at the first offer: base by intent + (offer / demand - 1) × perRatio (+ favourite, difficulty).
+      accept: { base: { none: 0.82, college: 0.5, abroad: 0.2 }, perRatio: 2.5, favourite: 0.15, lowball: 0.7, lowballPenalty: 0.3, max: 0.98 },
+      difficulty: { easy: 0.05, normal: 0, hard: -0.05 },
+      // Otherwise the player counters (asking `raise` × the larger of demand and offer) or walks away.
+      counter: { none: 1, college: 0.65, abroad: 0.35, raise: 1.1 },
+      cpuOffer: 1, // CPU clubs offer the demand when the budget allows
+      cpuReserve: 0.85, // share of later picks' slot values a CPU club keeps in hand
+      devCost: 30, // a development contract (first-year salary and a small bonus)
+      // Leftover budget becomes development support: growth rate × (1 + boost) for three seasons.
+      growthBoost: { perShare: 0.5, max: 0.15, seasons: 3 },
+      // Public intentions announced before the draft.
+      intent: { collegeShare: 0.12, collegeMinFV: 50, abroadMaxRank: 15, abroadMinFV: 60, abroadChance: 0.25, abroadMax: 2 },
+      aiIntentPenalty: { easy: { college: 0, abroad: 0 }, normal: { college: 2, abroad: 6 }, hard: { college: 3, abroad: 9 } },
+      refusalFan: -3,
+    },
+
     health: {
       longInjuryShare: 0.22, // share of injuries that are long
       longDays: [65, 66],

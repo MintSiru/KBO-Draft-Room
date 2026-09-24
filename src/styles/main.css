@@ -214,7 +214,16 @@ details[open] > summary { margin-bottom: 6px; }
 .log-list div { break-inside: avoid; padding: 3px 0; border-bottom: 1px dotted var(--rule); }
 
 /* ---------- After the draft ---------- */
-.gm-section .options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.gm-section .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 12px; }
+.gm-section .options > div.chosen { border-color: var(--club); box-shadow: inset 3px 0 0 var(--club); }
+.budget-box dl { margin: 8px 0; }
+.updates { margin-top: 14px; }
+.updates ul { margin: 8px 0 10px; padding-left: 18px; font-size: 14px; }
+.changelog details { border-bottom: 1px solid var(--rule); padding: 8px 0; }
+.changelog summary { font-weight: 700; cursor: pointer; }
+.changelog h3, .changelog h4 { margin: 12px 0 4px; font-size: 15px; }
+.changelog ul { padding-left: 18px; margin: 4px 0; }
+.changelog li, .changelog p { font-size: 14px; margin: 3px 0; }
 .gm-section .options > div { border: 1px solid var(--rule); padding: 14px; display: flex; flex-direction: column; gap: 8px; background: var(--surface); }
 .gm-section .options .btn { margin-top: auto; }
 .gm-section blockquote, .quote blockquote { font-size: 15px; border-left: 3px solid var(--rule); padding-left: 12px; color: var(--ink-2); }

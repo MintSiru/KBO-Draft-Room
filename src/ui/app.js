@@ -6,7 +6,7 @@
   const $ = (s) => document.querySelector(s);
   const STORE = 'draft-room-kbo-v6-scouting'; // unchanged since V0.6 so existing saves keep loading
   const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', `${C.Career.SEASONS}시즌`, '평가'];
-  const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, signing: 4, interviews: 4, season: 5, owner: 6 };
+  const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, negotiation: 4, signing: 4, interviews: 4, season: 5, owner: 6 };
 
   const newSeed = () => Date.now() + '-' + Math.random();
   const defaultView = () => ({ query: '', sort: 'rank', sortDir: 'asc', role: 'ALL', pathway: 'ALL', tier: 'ALL', pickType: 'ALL', onlyStars: false });
@@ -15,6 +15,9 @@
     game: null,
     setup: { selectedTeam: 'kiwoom', difficulty: 'normal', local: false, rounds: C.ROUNDS, seed: newSeed() },
     dev: { chosen: new Set(), role: 'ALL' }, // development-contract picks before they are confirmed
+    offers: {}, // first offers being edited: playerId → amount (the ask when missing)
+    counters: new Set(), // counter-offers the user will accept
+    gm: {}, // press-conference answers before they are confirmed: question id → option id
     view: defaultView(), // draft-board filters
     selected: null, // player shown in the draft profile
     stars: new Set(),
@@ -35,7 +38,7 @@
     state.game = game;
     Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty, rounds: game.rounds });
     state.dev = { chosen: new Set(), role: 'ALL' };
-    state.service = {};
+    Object.assign(state, { service: {}, offers: {}, counters: new Set(), gm: {} });
     state.stars = new Set(stars.filter((id) => typeof id === 'string' && C.getPlayer(game, id)));
     state.yearIndex = (game.career?.years.length || 1) - 1;
     if (game.phase === 'draft') C.advanceToUser(game);
@@ -90,8 +93,9 @@
       case 'preview': return UI.forecasts(game);
       case 'scouting': return UI.briefing(game);
       case 'draft': return UI.board(game, state.view, state.stars, state.selected);
+      case 'negotiation': return UI.negotiation(game, state.offers, state.counters);
       case 'signing': return UI.signing(game, state.dev.chosen, state.dev.role);
-      case 'interviews': return UI.interviews(game);
+      case 'interviews': return UI.interviews(game, state.gm);
       case 'season': return UI.season(game, state.yearIndex, state.service);
       default: return UI.review(game);
     }
@@ -298,10 +302,27 @@
     'dev-toggle': (id) => {
       const c = state.dev.chosen;
       if (c.has(id)) c.delete(id);
-      else if (c.size < C.tuning.devContracts.max) c.add(id);
+      else if (c.size < UI.devLimit(g())) c.add(id);
       render();
     },
     'dev-role': (id) => ((state.dev.role = id), render()),
+    'offer-confirm': () => {
+      const defaults = C.defaultOffers(g()),
+        offers = Object.fromEntries(Object.entries(defaults).map(([id, v]) => [id, state.offers[id] ?? v]));
+      C.negotiate(g(), offers);
+      state.offers = {};
+      state.counters = new Set();
+      render();
+      toTop();
+    },
+    'counter-toggle': (id) => (state.counters.has(id) ? state.counters.delete(id) : state.counters.add(id), render()),
+    'counter-confirm': () => {
+      C.settleCounters(g(), [...state.counters]);
+      state.counters = new Set();
+      render();
+      toTop();
+    },
+    'gm-answer': (id, btn) => ((state.gm[btn.dataset.q] = id), render(), document.querySelector('.gm-section')?.scrollIntoView({ block: 'start' })),
     'dev-confirm': () => {
       C.signDevelopment(g(), [...state.dev.chosen]);
       state.dev = { chosen: new Set(), role: 'ALL' };
@@ -314,8 +335,10 @@
     'mock-archive': () => showModal('mock'),
     'news-room': () => showModal('news'),
     'fan-history': () => showModal('fans'),
-    'gm-choice': (id) => {
-      C.chooseGM(g(), id);
+    'gm-confirm': () => {
+      const { pledge, ...answers } = state.gm;
+      C.chooseGM(g(), pledge, answers);
+      state.gm = {};
       render();
       document.querySelector('.gm-section')?.scrollIntoView({ block: 'start' });
     },
@@ -355,6 +378,7 @@
     season: () => ((g().phase = 'season'), (state.recordsOpen = false), render(), toTop()),
     interviews: () => ((g().phase = 'interviews'), render(), toTop()),
     rules: () => showModal('rules'),
+    changelog: () => showModal('changelog'),
     catalog: () => showModal('catalog'),
     reset: () => showModal('reset'),
     'confirm-reset': () => {
@@ -390,6 +414,10 @@
   document.addEventListener('change', (e) => {
     const id = e.target.id;
     if (id === 'import-file') return importSave(e.target.files[0]);
+    if (e.target.dataset.offer) {
+      state.offers[e.target.dataset.offer] = Number(e.target.value);
+      return render();
+    }
     if (e.target.dataset.service) {
       state.service[e.target.dataset.service] = e.target.value;
       return;

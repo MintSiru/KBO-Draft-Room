@@ -304,9 +304,11 @@
   function pledge(g) {
     const o = g.owner,
       c = C.press.GM_CHOICES.find((x) => x.id === g.gmChoice);
+    const later = C.pledgeOutcomes(g);
     return `<section class="box pledge-review">
       <h3>기자회견 약속: ${esc(c.title)} — ${esc(o.pledge.status)} (${UI.signed(o.pledge.bonus)}점)</h3>
       <p>${esc(o.pledge.detail)}. 첫해 평가 ${o.baseScore}점 ${UI.signed(o.pledge.bonus)} = ${o.score}점 (${o.grade}).</p>
+      ${later.length ? `<ul class="event-list">${later.map((x) => `<li>${C.ENTRY_YEAR + x.yearIndex} · ${esc(x.label)} — ${x.kept ? '지킴' : '못 지킴'} (팬심 ${UI.signed(x.delta)})</li>`).join('')}</ul>` : ''}
     </section>`;
   }
 
@@ -328,13 +330,13 @@
         <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
           <div class="grade-card"><div class="letter">${mine.grade}</div><div class="score">${mine.score} / 100</div></div>
           <div class="score-bars" style="flex:1;min-width:220px">
-            ${bar('1군에 데뷔한 비율', (mine.debut / mine.count) * 100)}
-            ${bar('주전급으로 자리 잡은 비율', (mine.established / mine.count) * 100)}
+            ${bar('1군에 데뷔한 비율', mine.count ? (mine.debut / mine.count) * 100 : 0)}
+            ${bar('주전급으로 자리 잡은 비율', mine.count ? (mine.established / mine.count) * 100 : 0)}
             ${bar('WAR 중 우리 팀에서 낸 비율', mine.total > 0 ? (Math.max(0, mine.atHome) / mine.total) * 100 : 0)}
           </div>
         </div>
         <dl class="facts" style="margin-top:14px">
-          <dt>1군 출전</dt><dd>${mine.debut}/${mine.count}명 · 주전급 경험 ${mine.established}명</dd>
+          <dt>1군 출전</dt><dd>${mine.debut}/${mine.count}명 · 주전급 경험 ${mine.established}명${mine.refused ? ` · 지명 거부 ${mine.refused}명(평가 인원에 포함)` : ''}</dd>
           <dt>WAR 합계</dt><dd>${num(mine.total, 1)} (우리 팀에서 ${num(mine.atHome, 1)})</dd>
           <dt>기량 변화</dt><dd>지명 당시 대비 평균 ${UI.signed(mine.development)}</dd>
           <dt>기타</dt><dd>동기 개인상 ${mine.awards}회 · 국가대표 ${mine.national}명 · 방출 ${mine.released}명 · 은퇴 ${mine.retired}명 · 성장 중 ${mine.pending}명</dd>

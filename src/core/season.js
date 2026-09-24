@@ -210,7 +210,7 @@
   }
 
   /** Tool growth toward each tool's hidden ceiling, minus injury and aging. */
-  function developTools(p, tools, yearIndex, age, daysLost, r) {
+  function developTools(p, tools, yearIndex, age, daysLost, r, boost = 0) {
     const Gr = T.growth,
       C = Gr.rateByCurve,
       H = T.health;
@@ -229,7 +229,7 @@
       const gap = p.potentialTools[key] - v,
         aging = Math.max(0, age - Gr.agingFrom[speed]) * Gr.agingPerYear[speed];
       const gain =
-        gap * rate * taper * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
+        gap * rate * taper * (1 + boost) * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
         normal(r) * Gr.noise -
         aging -
         (daysLost > H.heavyInjuryDays ? H.heavyInjuryGrowthPenalty : 0);
@@ -448,7 +448,7 @@
     });
 
     const age = D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
-    const after = developTools(p, tools, yearIndex, age, missed, growR);
+    const after = developTools(p, tools, yearIndex, age, missed, growR, context.growthBoost || 0);
     const abilityAfter = G.overall(after, p.role),
       growth = round(abilityAfter - abilityBefore, 2),
       observed = G.observe(after, p.role, p, yearIndex + 1, rng(tag('report')));

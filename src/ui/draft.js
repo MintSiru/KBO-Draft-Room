@@ -59,7 +59,7 @@
         return `<button class="player-row" data-action="player" data-id="${p.id}" aria-pressed="${selected === p.id}">
           <span class="rk">${p.rank}</span>
           <span><span class="nm">${stars.has(p.id) ? '★ ' : ''}${esc(p.name)}<small>${hand(p)}</small></span>
-            <span class="meta">${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)}</span></span>
+            <span class="meta">${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)}${p.intent ? ` · <b class="warn">${C.contracts.INTENT_LABELS[p.intent]}</b>` : ''}</span></span>
           <span class="val">${sortValue(p, v.sort, team)}<small>${esc(label)}</small></span>
           <span class="fit ${fit >= 80 ? 'core' : ''}">${C.fitLabel(p, team)}</span>
         </button>`;
@@ -92,6 +92,7 @@
         </div>
         <button class="btn quiet small" data-action="star" data-id="${p.id}" aria-pressed="${stars.has(p.id)}">${stars.has(p.id) ? '★ 관심' : '☆ 관심'}</button>
       </div>
+      ${p.intent ? `<p class="callout">${p.intent === 'abroad' ? '<b>해외 구단 관심</b> · 미국 구단의 제안을 받았다고 알려졌습니다. 계약금을 크게 요구하고, 조건이 맞지 않으면 해외로 갈 수 있습니다.' : '<b>진학 희망</b> · 대학 진학도 생각하고 있다고 밝혔습니다. 계약금을 더 요구하고, 협상이 틀어지면 대학에 갈 수 있습니다.'}</p>` : ''}
       ${g.difficulty === 'easy' ? `<p class="favorite-note note">어릴 때 응원한 구단: ${C.TEAMS[p.favoriteTeam].short} (쉬움 난이도에서만 공개)</p>` : ''}
       <section>${UI.toolTable(p)}</section>
       <section>
@@ -138,7 +139,7 @@
         ? `<ul class="mine-list">${mine
             .map((s) => {
               const p = player(g, s.playerId);
-              return `<li><span>${esc(s.label)}</span><b>${esc(p.name)}</b><span>${C.ROLES[p.role]}</span></li>`;
+              return `<li><span>${esc(s.label)}</span><b>${esc(p.name)}${p.intent ? ` <small class="warn">${C.contracts.INTENT_LABELS[p.intent]}</small>` : ''}</b><span>${C.ROLES[p.role]}</span></li>`;
             })
             .join('')}</ul>`
         : '<p class="note">아직 지명한 선수가 없습니다.</p>'}
@@ -151,7 +152,7 @@
         ? `<div class="log-list">${g.picks
             .map((s) => {
               const p = player(g, s.playerId);
-              return `<div${s.teamId === g.teamId ? ' class="good"' : ''}>${s.overall}. ${UI.teamName(s.teamId)} ${esc(s.label)} · ${esc(p.name)} <span class="muted">${C.ROLES[p.role]}</span></div>`;
+              return `<div${s.teamId === g.teamId ? ' class="good"' : ''}>${s.overall}. ${UI.teamName(s.teamId)} ${esc(s.label)} · ${esc(p.name)} <span class="muted">${C.ROLES[p.role]}</span>${s.refused ? ' <span class="warn">계약 거부</span>' : ''}</div>`;
             })
             .join('')}</div>`
         : '<p class="note">아직 지명이 없습니다.</p>'}

@@ -5,8 +5,11 @@
     UI = root.DraftUI;
   const { esc, tag, hand } = UI;
 
+  /** How many development contracts the club can still afford (at most the league limit). */
+  const devLimit = (g) => Math.min(C.tuning.devContracts.max, Math.floor(C.budgetLeft(g) / C.tuning.contracts.devCost));
+
   function signing(g, chosen, role) {
-    const max = C.tuning.devContracts.max,
+    const max = devLimit(g),
       t = C.teamFor(g);
     const list = C.undrafted(g).filter((p) => role === 'ALL' || p.role === role).slice(0, 80);
     const chip = (id, name) => `<button class="chip" data-action="dev-role" data-id="${id}" aria-pressed="${role === id}">${name}</button>`;
@@ -27,8 +30,9 @@
     return `
     <div class="page-head">
       <h1>육성선수 계약</h1>
-      <p>드래프트에서 지명되지 않은 선수 중 최대 ${max}명과 육성선수 계약을 맺을 수 있습니다. 육성선수는 첫 시즌에는 1군 주전이 될 수 없고, 이후에는 지명 선수와 똑같이 경쟁합니다. 우리가 먼저 고르고, 이어서 다른 구단들이 계약합니다.</p>
+      <p>드래프트에서 지명되지 않은 선수와 육성선수 계약을 맺습니다. 1명에 ${UI.won(C.tuning.contracts.devCost)}이고, 지금 예산으로 ${max}명까지 가능합니다(리그 한도 ${C.tuning.devContracts.max}명). 육성선수는 첫 시즌에는 1군 주전이 될 수 없고, 이후에는 지명 선수와 똑같이 경쟁합니다. 우리가 먼저 고르고, 이어서 다른 구단들이 계약합니다.</p>
     </div>
+    ${UI.contractResults(g)}
     <div class="cols">
       <section>
         <div class="chips" style="margin-bottom:8px">${[['ALL', '전체'], ...Object.entries(C.ROLES)].map(([id, name]) => chip(id, name)).join('')}</div>
@@ -41,6 +45,7 @@
       <aside class="box">
         <h3>${esc(t.short)} 육성선수 <small class="muted">${chosen.size}/${max}</small></h3>
         ${picked.length ? `<ul class="mine-list">${picked.map((p) => `<li><span>육성</span><b>${esc(p.name)}</b><span>${C.ROLES[p.role]}</span></li>`).join('')}</ul>` : '<p class="note">아직 고른 선수가 없습니다.</p>'}
+        ${UI.budgetBox(g, C.spent(g) + chosen.size * C.tuning.contracts.devCost, '계약금 + 육성선수')}
         <div class="actions">
           <button class="btn primary wide" data-action="dev-confirm">${chosen.size ? `${chosen.size}명과 계약` : '계약 없이 넘어가기'}</button>
         </div>
@@ -49,5 +54,5 @@
     ${UI.pickLog(g)}`;
   }
 
-  Object.assign(UI, { signing });
+  Object.assign(UI, { signing, devLimit });
 })(typeof window !== 'undefined' ? window : globalThis);

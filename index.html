@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f4f2ec">
 <meta name="description" content="가상의 KBO 신인 드래프트를 진행하고 지명한 선수들의 10년 경력을 시뮬레이션합니다.">
-<title>드래프트 룸 v0.8.0 — KBO 신인 드래프트</title>
+<title>드래프트 룸 v0.9.0 — KBO 신인 드래프트</title>
 <style>
 /* Draft Room — one stylesheet. Scorebook look: paper, ink rules, tables; the club colour is the only accent. */
 :root {
@@ -223,7 +223,16 @@ details[open] > summary { margin-bottom: 6px; }
 .log-list div { break-inside: avoid; padding: 3px 0; border-bottom: 1px dotted var(--rule); }
 
 /* ---------- After the draft ---------- */
-.gm-section .options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.gm-section .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 12px; }
+.gm-section .options > div.chosen { border-color: var(--club); box-shadow: inset 3px 0 0 var(--club); }
+.budget-box dl { margin: 8px 0; }
+.updates { margin-top: 14px; }
+.updates ul { margin: 8px 0 10px; padding-left: 18px; font-size: 14px; }
+.changelog details { border-bottom: 1px solid var(--rule); padding: 8px 0; }
+.changelog summary { font-weight: 700; cursor: pointer; }
+.changelog h3, .changelog h4 { margin: 12px 0 4px; font-size: 15px; }
+.changelog ul { padding-left: 18px; margin: 4px 0; }
+.changelog li, .changelog p { font-size: 14px; margin: 3px 0; }
 .gm-section .options > div { border: 1px solid var(--rule); padding: 14px; display: flex; flex-direction: column; gap: 8px; background: var(--surface); }
 .gm-section .options .btn { margin-top: auto; }
 .gm-section blockquote, .quote blockquote { font-size: 15px; border-left: 3px solid var(--rule); padding-left: 12px; color: var(--ink-2); }
@@ -347,6 +356,9 @@ details[open] > summary { margin-bottom: 6px; }
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <noscript><p style="padding:24px">이 게임을 실행하려면 JavaScript를 허용해 주세요.</p></noscript>
 <script>
+window.DraftChangelog = "# 변경 이력\n\n## 0.9.0 — 계약 협상·지명 거부·기자회견 (D단계)\n\n협상 규칙이 추가되어 `SIM_VERSION`을 0.9로 올렸습니다. 0.8 이전 저장은 이어 할 수 없습니다(자동 저장은 따로 보관합니다).\n\n- **구단 예산**: 구단마다 신인 예산이 정해집니다(약 12–15억 원, 지역 1차를 켜면 3억 원 추가). 계약금과 육성선수 계약이 모두 이 예산에서 나갑니다.\n- **계약 협상**\n  - 드래프트가 끝나면 지명한 선수마다 계약금을 한 번 제시합니다. 선수는 받아들이거나, 금액을 올려 다시 요구하거나, 거부합니다.\n  - 요구액은 지명 순번의 관례 금액과 선수의 공개 순위로 정해집니다.\n  - 어릴 때 응원한 팀에는 요구액이 낮고 협상도 잘 풀립니다(쉬움 난이도에서만 응원 팀이 보입니다). 난이도가 높을수록 협상이 조금 더 어렵습니다.\n  - CPU 구단도 예산 안에서 협상합니다. 리그 전체에서 드래프트마다 2–3명이 계약을 거부합니다.\n- **진학 희망·해외 구단 관심**\n  - 고졸 후보 일부는 대학 진학을 생각한다고 밝히고, 드물게 최상위 후보는 해외 구단의 관심을 받습니다.\n  - 이런 선수는 요구액이 높고 거부할 가능성도 큽니다. 드래프트 보드와 선수 정보에 표시됩니다.\n- **지명 거부**\n  - 계약을 거부한 선수는 대학에 진학하거나 해외 구단과 계약합니다. 지명권은 돌아오지 않습니다.\n  - 거부한 선수는 최종 평가 인원에 포함되고, 팬심도 1명마다 3점 떨어집니다.\n- **육성선수 계약 비용**: 1명에 3000만 원입니다. 예산이 모자라면 5명을 다 채울 수 없습니다.\n- **육성 지원금**: 계약금과 육성선수 계약 뒤 남은 예산은 첫 3시즌 동안 그 구단 선수들의 성장 속도를 최대 15% 높입니다.\n- **단장 기자회견 개편**: 기자 질문 세 개에 답합니다.\n  - 첫 지명 선수를 뽑은 이유: 즉시 전력이라고 답하면 첫해 1군 출전을, 길게 키운다고 답하면 4시즌 안에 주전을 약속하게 됩니다.\n  - 계약 결과: 지명 거부, 과한 지출, 남은 예산 가운데 상황에 맞는 질문이 나옵니다.\n  - 약속: 기존 세 가지에 '5년 안에 주전 셋'을 추가했습니다.\n  - 약속은 정해진 시즌이 끝나면 평가되어 팬심에 반영됩니다.\n- **업데이트 기록**: 시작 화면에서 최신 변경 내용을 보고, 전체 업데이트 기록을 열 수 있습니다.\n\n## 0.8.0 — 10시즌·병역·은퇴 (C단계)\n\n시즌 규칙이 바뀌어 `SIM_VERSION`을 0.8로 올렸습니다. 0.7 이전 저장은 이어 할 수 없습니다(자동 저장은 따로 보관합니다).\n\n- **10시즌**: 2027–2036년까지 진행합니다. 중간 평가는 언제든 볼 수 있습니다.\n- **데뷔율 조정**\n  - 이전 규칙은 콜업 기준이 낮아, 10년이면 11라운드 지명자의 98%가 1군에 데뷔하고 한 드래프트에서 구단당 주전이 9명씩 나왔습니다.\n  - 콜업·주전 기준을 1군 기존 선수 수준으로 올리고, 같은 포지션 동기 주전 정원을 줄였습니다.\n  - 나이가 들수록 성장 폭이 줄도록 해서, 나이 많은 지명자는 상한까지 다 크지 못합니다.\n  - 결과(600회, 10년 누적): 1군 데뷔는 1라운드 99%, 3라운드 87%, 5라운드 66%, 8라운드 41%, 11라운드 27%, 육성선수 23%. 한 드래프트에서 나오는 주전은 구단당 한 해 최대 2.7명 안팎입니다.\n- **병역**\n  - 현역(18개월), 사회복무요원(21개월), 상무(퓨처스에서 뛰며 복무), 예술체육요원(특례).\n  - 2년 차부터 비시즌마다 우리 선수의 입대를 정합니다(구단 판단, 상무 지원, 현역 입대, 미루기). 만 28세가 되는 해에는 입대해야 합니다.\n  - 상무는 지원해도 떨어질 수 있습니다. 현역·사회복무요원은 기량이 조금 떨어지고, 전역한 해에는 시즌 중반에 돌아옵니다.\n- **국가대표**\n  - 2028 LA 올림픽: 동메달 이상이면 특례.\n  - 2030 도하·2034 리야드 아시안게임: 25세 이하와 와일드카드를 뽑고, 금메달이면 특례.\n- **은퇴와 재입단**\n  - 방출된 선수는 다른 구단에 입단하거나, 1년 뒤 은퇴합니다.\n  - 1군 기회가 없거나 재활이 이어지거나 기량이 떨어진 선수는 스스로 은퇴하기도 합니다.\n  - 10년 뒤 선수로 남는 비율은 약 52%입니다.\n- **기록**\n  - 타자는 출루율·장타율을, 투수는 9이닝당 삼진·볼넷을 보여 줍니다.\n  - 게임 내 추정 WAR을 기록실·선수 경력·최종 평가에 씁니다. 최종 평가의 기여 항목도 WAR 기준입니다.\n- **성적 분포 조정**: 규정 수준 타자의 중앙값이 .273/.340/.427, 선발투수 ERA 중앙값이 3.94, 9이닝당 삼진 7.3·볼넷 3.3입니다. 선발 승수와 이닝을 줄였고, 불펜 삼진은 늘렸습니다. 마무리 기준을 올리고 시즌 홈런 상한도 조금 낮췄습니다.\n- **FV 재평가**: 스카우트가 매 시즌 나이와 발전을 보고 미래 가치를 다시 매깁니다. 트레이드 가치에도 반영됩니다.\n- **팬심**: 시즌마다 순위, 우승, 동기 주전 수, 국가대표 메달에 따라 움직입니다. 오래된 감정은 해마다 조금씩 옅어집니다.\n- **다른 팀에서 온 동기**: 시즌 화면에서 트레이드나 재입단으로 우리 팀에 온 선수의 기록을 따로 보여 줍니다. 비시즌 이동은 우리 팀 것을 먼저 보여 주고, 다른 구단 것은 접어 둡니다.\n- **이름**: 2005–2010년생에 흔한 이름, 외자 이름, 드문 성(남궁·황보·제갈·선우·독고 포함)을 추가했습니다. 성 비율은 실제 인구 비율에 가깝게 맞췄습니다.\n- **난이도 이름**: 이지·노말·하드를 쉬움·보통·어려움으로 바꿨습니다.\n- 예제 저장을 `examples/demo-ten-seasons.json`(10시즌, 상무 지원 포함)으로 바꿨습니다.\n\n## 0.7.0 — 선수 풀 400명·라운드 선택·육성선수 (B단계)\n\n선수 생성 규칙이 바뀌어 `SIM_VERSION`을 0.7로 올렸습니다. 0.6.x 저장은 이어 할 수 없습니다(자동 저장은 지우지 않고 따로 보관합니다).\n\n- **선수 풀 400명**: 8개 지역 × 50칸(고졸 264, 대졸 56, 대학 얼리 24, 2년제 24, 독립 12, 해외 대학 6, 마이너·해외독립 복귀 13, 특수 1).\n  - **2년제 대학**: 8개교와 전용 리그, '퓨처 베이스볼배 전문대학 야구대회'를 추가했습니다. 4년제 얼리와 같은 나이지만 조금 더 완성된 상태로 나오고, 대졸 의무 지명 대상입니다.\n  - **드문 경력**: 야구 유학파(일본·미국 고교, 풀당 약 20%), MLB 경험 복귀(약 12%), NPB 2군·CPBL·LMB·ABL 복귀(약 15%).\n  - 학교·구단 83곳을 추가해 소속 명단이 243곳이 됐습니다.\n  - 연고 지역 선수는 45% 확률로 연고 구단을 좋아하는 구단으로 꼽습니다.\n- **구속 분포 개편**: 투수마다 어깨 힘을 뽑아 구속에 크게, 구위에 조금 반영합니다. 공개 순위 1–10위 중앙값 151km/h, 61–110위 145km/h입니다. 공은 빠르지만 제구가 낮아 60위 밖으로 밀린 148km/h 이상 투수가 풀마다 20명 남짓 나옵니다.\n- **라운드 선택**: 5·8·11라운드 중에서 고릅니다(기본 11).\n- **육성선수 계약**: 드래프트 직후 미지명 선수 중 최대 5명과 계약합니다. CPU 구단도 3–5명씩 계약하고, 육성선수는 첫 시즌 1군 주전이 될 수 없습니다. 기록실과 5년 추적에 함께 나옵니다.\n- **팬심 버그 수정**: 지역 1차를 켜면 1라운드 상위 지명을 꿀픽으로 잘못 판정하던 문제를 고쳤습니다.\n- 스카우트 노트·댓글·인터뷰에 2년제·유학파 문장과 \"구속에 비해 공이 가볍다\" 유형을 추가했습니다.\n\n## 0.6.4 — 문장·이름·대회 다듬기 (A단계)\n\n게임 결과는 그대로입니다. 시뮬레이션 지문이 일치하고, 600회 밸런스 실험 결과도 바이트 단위로 같습니다. 기존 저장도 그대로 열립니다.\n\n- **연도별 구속**: 투수의 최고 구속이 해마다 실제 구위 변화를 따라 오르내립니다. 보직·성장 카드, 선수 경력(전년 대비), 기록실 투수 표에 표시됩니다.\n- **학교·구단 이름 89곳 수정**: AI·반도체·해양·항공 같은 특수학교와 달빛·솔바람·누리 같은 작명을 지명 기반의 현실적인 가상 이름으로 바꿨습니다. 바뀐 목록은 `audit/renames-v063.csv`에 있고, 전체 명단을 NEIS와 대조하는 `audit/check-catalog-neis.py`를 추가했습니다.\n- **전국대회**\n  - 고교: 권역 주말리그 4강 32개교가 '다이아몬드 데일리배 전국고교야구대회'에 나갑니다.\n  - 대학: 3개 권역 리그 4강 12개교가 '퓨처 베이스볼배 대학야구 왕중왕전'에 나갑니다.\n  - 선수 프로필에 권역·전국 성적이 나오고, 결승 진출은 수상 경력에 들어갑니다.\n- **문장 전면 개편** (`core/writer.js`, `core/voices.js`)\n  - 스카우트 노트: 공개 능력치·구속·성장 여지로 짧게 씁니다. 같은 유형이어도 선수마다 다릅니다.\n  - 기사: 날짜·순번·출신교·나이·아마추어 기록·구속·관계자 멘트로 구성합니다.\n  - 댓글: 닉네임 23개 + 구단 팬 닉네임 중에서 상황(보강, 이른 지명, 꿀픽, 연고, 구속, 포지션 중복…)에 맞춰 3개가 달립니다.\n  - 입단 소감·감독 코멘트·팀장 조언·시즌 보직 설명도 여러 표현 중에서 고릅니다.\n- 문장 선택은 모두 시뮬레이션과 분리된 난수로 합니다. 문장을 얼마나 고쳐도 결과와 기존 저장이 바뀌지 않습니다.\n- golden 테스트는 새로 붙는 설명용 필드에 흔들리지 않도록, 시뮬레이션 값만 골라 비교하는 `sim` 지문으로 바꿨습니다.\n\n### 알려진 문제 (B단계에서 수정)\n- 지역 1차를 켜면, 팬심 계산이 1라운드 상위 지명을 \"앞 순번 선수를 늦게 잡은 꿀픽\"으로 잘못 판정합니다. 지명 번호에 지역 1차 10명이 포함되기 때문입니다. 기사 문장은 이번에 바로잡았지만, 팬심 숫자는 시뮬레이션 값이라 B단계에서 `SIM_VERSION`을 올릴 때 함께 고칩니다.\n- 하위 라운드 투수의 구속이 130대 후반–140대 초반에 몰려 있습니다. 선수 생성 규칙을 바꿔야 해서 B단계에서 고칩니다.\n\n## 0.6.3 — 시즌 시뮬레이션 분리와 튜닝 파일\n\n게임 결과는 0.6.2와 같습니다. golden 테스트가 일치하고, 600회 밸런스 실험 결과가 바이트 단위로 같습니다. 저장 호환에도 변화가 없습니다(`SIM_VERSION` 0.6 유지).\n\n- 시즌·경력·평가의 밸런스 숫자 282개(연차별·구간 배열 값 포함)를 `src/core/tuning.js` 한 곳에 이름과 설명을 붙여 모았습니다. 실수로 바뀌지 않게 잠가 두었습니다.\n- 약 250줄이던 `simulatePlayer`를 단계별 함수로 나눴습니다. 부상 `rollHealth`, 보직 `decideRole`, 출전 경기 `firstTeamGames`/`futuresGames`, 기록 `hitterStats`/`pitcherStats`, 성장 `developTools`, 점수 `performanceOf`/`contributionOf`/`planScoreOf`입니다.\n- `career.js`의 리그 승률, 개인상, 방출·트레이드, 5년 평가 숫자도 옮겼습니다. 소수 상수가 하나도 남지 않았습니다.\n- 튜닝 값 검사와 보직 규칙·성장 상한·계획 점수 범위 단위 테스트를 추가했습니다.\n\n## 0.6.2 — 저장 형식 정리\n\n게임 규칙과 결과는 0.6.1과 같습니다(골든 마스터 일치).\n\n- 저장이 게임의 입력(설정·시드·내 지명·기자회견 답·진행 시즌 수)만 담습니다. 5년 진행 파일이 1.3MB에서 약 360바이트로 줄었고, 화면을 그릴 때마다 560KB를 직렬화하던 자동 저장도 가벼워졌습니다.\n- 저장에 시뮬레이션 버전(`sim`)을 기록합니다. 버전이 다른 저장은 다른 결과로 다시 만들지 않고 거부합니다. 자동 저장은 따로 보관하고 안내합니다.\n- `tests/golden.cjs`가 시뮬레이션 결과가 바뀌면 `SIM_VERSION`을 올리도록 강제합니다.\n- v0.6.0 저장은 계속 불러오고, 새 형식으로 바꿔 저장합니다. 1.3MB 데모는 호환성 테스트용 `tests/fixtures/legacy-v060-save.json`으로 옮기고, `examples/demo-five-seasons.json`을 새 형식으로 넣었습니다.\n- `release.py`가 zip에 `tests/fixtures/`를 포함합니다.\n\n## 0.6.1 — 코드 정리와 화면 개편\n\n게임 규칙과 밸런스는 0.6.0과 같습니다. 모든 선수 생성·지명·시즌 결과가 0.6.0과 똑같은지 골든 마스터와 600회 밸런스 실험으로 확인했습니다. 0.6.0 저장 파일도 그대로 열립니다.\n\n### 화면\n- 스타일시트 6개를 하나로 합치고 화면을 새로 만들었습니다. 종이·잉크 톤의 표 중심 화면에, 고른 구단 색 하나만 강조색으로 씁니다.\n- 영어 장식 라벨, 광고 카피체 제목, 히어로 배너, 게임 속 변경 이력 배너, 반복 면책 문구를 걷어 냈습니다.\n- 기본 글씨를 15px로 키우고, 8–10px 글씨를 없앴습니다.\n- 드래프트 보드 기본 정렬에서 선수의 현재/미래 등급을 바로 보여 줍니다.\n- 시즌 화면의 `1/5` 줄바꿈 깨짐을 고쳤습니다.\n\n### 코드\n- 저장소를 `src/core`, `src/ui`, `src/styles` 구조로 정리했습니다. 루트에 흩어져 있던 파일과 남아 있던 V0.5 소스·테스트를 치웠습니다.\n- 한 줄에 수천 자이던 코드를 읽을 수 있게 펼쳤습니다. 버전 번호 파일명(`view05`, `rules04`, `grades06` …)을 역할 이름으로 바꿨습니다.\n- 인터뷰·코멘트·조언 문장을 `core/voices.js`로 분리했습니다.\n- 저장 복원을 “입력만 읽고 전부 다시 계산”하는 방식으로 바꿨습니다. 문구 수정이 기존 저장을 무효로 만들지 않고, CPU 지명 변조를 잡아냅니다.\n- 숨은 전역 상태(`activePool`)를 없애고, 중복된 보강 점수 공식을 합쳤습니다. 공개 선수 투영은 캐시합니다.\n- 조사 오류(“현재 기량와/는/가”), 구단 마크 충돌(롯데 `LG`, KIA `KT` 등), 인터뷰의 지명 순번 계산을 고쳤습니다.\n- 쓰이지 않던 파일·함수·필드를 삭제했습니다.\n- `release.py`가 저장소 밖이 아니라 `dist/`에 결과를 만듭니다.\n\n## 0.6.0 — Read the Player\n\nV0.5 테스트 피드백에 대응한 독립 빌드입니다.\n\n### 수정\n- 매년 다시 추첨되던 안착 비중을 줄이고 기존 보직의 유지·축소·재활을 구분했습니다.\n- 루키 출전량을 모든 연차에 적용하던 제한을 없앴습니다.\n- 선발 5승 상한과 지나치게 낮은 홈런 산식을 교체했습니다.\n- 세부 툴별 성장과 완성 시기를 도입하고 공개 전망·실제 상한의 의미를 분리했습니다.\n- 최대어급 전망의 생성 빈도를 낮췄습니다. 실제 지명 라운드로 잠재력을 깎지 않습니다.\n- 공개 기량을 시즌 시작/종료로 구분하여 콜업과 성장 시점의 혼동을 줄였습니다.\n- 20–80 전환 중 발견한 아마추어 도루의 음수 경계값을 보정했습니다.\n- 작은 화면의 진행 단계 일부 가림을 2행 배치로 수정했습니다.\n\n### 추가\n- 20–80 현재 기량·미래 가치·플로어·실링과 투수/야수 세부 툴.\n- 즉전감·플로어·실링 중복 태그와 후보 필터.\n- 모의 지명 뒤 스카우트 팀장 추천 1명·대안 2명, 성향과 세부 보강.\n- 시즌별 보직 이유·공개 기량 변화 카드, 세부 툴 경력 조회.\n- 해외 복귀 8개 후보 슬롯, 희귀한 짧은 MLB 경력, 가상 소속 28개.\n- 이지 전용 선호 구단 공개. 노말·하드에서는 숨깁니다.\n- 투수 선발·QS 기록과 승수 정렬.\n\n### 유지 및 제외\n전국 7라운드·대졸 의무·대학 얼리·5시즌·수상·자동 이적·기록실·뉴스·팬심을 유지합니다. 계약 협상·지명 거부는 다음 버전 후보이며 구현하지 않았습니다. V0.5 저장과 호환되지 않습니다.\n";
+</script>
+<script>
 /* Balance knobs for seasons, careers and evaluations, in one place.
    These are fictional tuning values, not an empirical KBO model.
 
@@ -371,6 +383,31 @@ details[open] > summary { margin-bottom: 6px; }
 
     // Development ("육성") contracts after the draft. They cannot hold a regular role in their first season.
     devContracts: { max: 5, cpuMin: 3, cpuMax: 5 },
+
+    // Signing bonuses and club budgets. Amounts are in 백만 원 (100 = 1억).
+    contracts: {
+      budget: { base: 1350, spread: 300, local: 300 }, // base + (roll - 0.5) × spread, + local when the regional round is on
+      // Slot value by pick: the regional round, then first round from the 1st to the 10th pick, and so on.
+      slot: { regional: 300, first: [450, 25], second: [150, 3], third: [110, 2], later: [85, 75, 65, 55, 50, 45, 40, 35] },
+      rankWeight: 0.6, // demand blends the slot of the pick with the slot a player of his public rank would get
+      intentMult: { none: 1, college: 1.35, abroad: 2.2 },
+      favouriteMult: 0.85, // asks less from the club he grew up supporting
+      step: 5, // amounts are rounded to 500만 원
+      // Chance to sign at the first offer: base by intent + (offer / demand - 1) × perRatio (+ favourite, difficulty).
+      accept: { base: { none: 0.82, college: 0.5, abroad: 0.2 }, perRatio: 2.5, favourite: 0.15, lowball: 0.7, lowballPenalty: 0.3, max: 0.98 },
+      difficulty: { easy: 0.05, normal: 0, hard: -0.05 },
+      // Otherwise the player counters (asking `raise` × the larger of demand and offer) or walks away.
+      counter: { none: 1, college: 0.65, abroad: 0.35, raise: 1.1 },
+      cpuOffer: 1, // CPU clubs offer the demand when the budget allows
+      cpuReserve: 0.85, // share of later picks' slot values a CPU club keeps in hand
+      devCost: 30, // a development contract (first-year salary and a small bonus)
+      // Leftover budget becomes development support: growth rate × (1 + boost) for three seasons.
+      growthBoost: { perShare: 0.5, max: 0.15, seasons: 3 },
+      // Public intentions announced before the draft.
+      intent: { collegeShare: 0.12, collegeMinFV: 50, abroadMaxRank: 15, abroadMinFV: 60, abroadChance: 0.25, abroadMax: 2 },
+      aiIntentPenalty: { easy: { college: 0, abroad: 0 }, normal: { college: 2, abroad: 6 }, hard: { college: 3, abroad: 9 } },
+      refusalFan: -3,
+    },
 
     health: {
       longInjuryShare: 0.22, // share of injuries that are long
@@ -1965,6 +2002,19 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     for (const p of players) Object.assign(p, W.scoutNotes(p, rng(seed + '-notes-' + p.id)));
     players.sort((a, b) => b.publicScore - a.publicScore || a.id.localeCompare(b.id));
     players.forEach((p, i) => (p.rank = i + 1));
+    // Announced intentions (public): a few high-school players would rather go to college, and a rare
+    // top prospect has interest from abroad. Own stream, so talent and ranks are unaffected.
+    const I = TUNING.contracts.intent,
+      ir = rng(seed + '-intent');
+    let abroadCount = 0;
+    for (const p of players) {
+      p.intent = null;
+      if (p.pathway !== '고졸' && p.pathway !== '야구 유학') continue;
+      if (p.rank <= I.abroadMaxRank && p.scoutCeiling >= I.abroadMinFV && abroadCount < I.abroadMax && ir() < I.abroadChance) {
+        p.intent = 'abroad';
+        abroadCount++;
+      } else if (p.scoutCeiling >= I.collegeMinFV && ir() < I.collegeShare) p.intent = 'college';
+    }
     return { players, byId: Object.fromEntries(players.map((p) => [p.id, p])), seed: String(seed) };
   }
   /** Replaces the amateur line with a last overseas season (or a short MLB sample). */
@@ -2408,7 +2458,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
 
   /** Tool growth toward each tool's hidden ceiling, minus injury and aging. */
-  function developTools(p, tools, yearIndex, age, daysLost, r) {
+  function developTools(p, tools, yearIndex, age, daysLost, r, boost = 0) {
     const Gr = T.growth,
       C = Gr.rateByCurve,
       H = T.health;
@@ -2427,7 +2477,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       const gap = p.potentialTools[key] - v,
         aging = Math.max(0, age - Gr.agingFrom[speed]) * Gr.agingPerYear[speed];
       const gain =
-        gap * rate * taper * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
+        gap * rate * taper * (1 + boost) * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
         normal(r) * Gr.noise -
         aging -
         (daysLost > H.heavyInjuryDays ? H.heavyInjuryGrowthPenalty : 0);
@@ -2646,7 +2696,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     });
 
     const age = D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
-    const after = developTools(p, tools, yearIndex, age, missed, growR);
+    const after = developTools(p, tools, yearIndex, age, missed, growR, context.growthBoost || 0);
     const abilityAfter = G.overall(after, p.role),
       growth = round(abilityAfter - abilityBefore, 2),
       observed = G.observe(after, p.role, p, yearIndex + 1, rng(tag('report')));
@@ -2744,6 +2794,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   'use strict';
   const D = root.DraftData || (typeof require !== 'undefined' ? require('./prospects.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
+  const { TUNING: T } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const DIFFICULTIES = {
     easy: { name: '쉬움', hint: '상세 조언과 비교 후보 · 단순한 AI', noise: 12 },
     normal: { name: '보통', hint: '추천 근거 제공 · 구단 성향별 AI', noise: 5 },
@@ -2779,6 +2830,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       record: { ...p.record },
       awards: [...p.awards],
       proExperience: p.proExperience ? { level: p.proExperience.level } : null,
+      intent: p.intent ?? null,
     };
   }
   function fit(p, t) {
@@ -2800,6 +2852,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
             : S.score(p, team) -
               owned * (difficulty === 'hard' ? 3.5 : 2) +
               (difficulty === 'hard' && owned === 0 && f >= 60 ? scarcity * 0.65 : 0);
+        // Clubs are wary of players who announced they may not sign.
+        if (p.intent) score -= T.contracts.aiIntentPenalty[difficulty][p.intent];
         return { id: p.id, score: score + (r() - 0.5) * cfg.noise };
       })
       .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
@@ -2859,6 +2913,96 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
   const api = { DIFFICULTIES, SORTS, project, fit, aiScores, sortValue, sortPlayers };
   root.DraftRules = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* Signing bonuses, club budgets and draft refusals. Amounts are in 백만 원 (100 = 1억).
+
+   The user makes one offer per pick; the player signs, counters or walks away. CPU clubs offer the
+   demand when their budget allows. Each response draws from the player's own stream, so a save that
+   stores the offers replays the same answers. */
+(function (root) {
+  'use strict';
+  const D = root.DraftData || (typeof require !== 'undefined' ? require('./prospects.js') : null);
+  const { TUNING } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
+  const K = TUNING.contracts;
+  const { rng, clamp } = D;
+  const INTENT_LABELS = { college: '진학 희망', abroad: '해외 구단 관심' };
+
+  const roundTo = (n) => Math.max(K.step, Math.round(n / K.step) * K.step);
+  /** Slot value for a pick: `round` (0 = regional) and its position in the round (0-based). */
+  function slot(round, index) {
+    const S = K.slot;
+    if (round === 0) return S.regional;
+    if (round === 1) return S.first[0] - index * S.first[1];
+    if (round === 2) return S.second[0] - index * S.second[1];
+    if (round === 3) return S.third[0] - index * S.third[1];
+    return S.later[Math.min(round - 4, S.later.length - 1)];
+  }
+  /** The slot a player of this public rank would normally get (rank 1 = first pick). */
+  const slotForRank = (rank) => slot(Math.ceil(rank / 10), (rank - 1) % 10);
+
+  /** Club budgets for one game, from the seed. */
+  function budgets(seed, teams, local) {
+    const B = K.budget;
+    return Object.fromEntries(teams.map((t) => [t.id, roundTo(B.base + (rng(seed + '-budget-' + t.id)() - 0.5) * B.spread + (local ? B.local : 0))]));
+  }
+
+  /** What the player asks from this club. The favourite-club discount is folded in and not shown separately. */
+  function demand(p, pick, favourite) {
+    const base = Math.max(pick.slot, pick.slot * (1 - K.rankWeight) + slotForRank(p.rank) * K.rankWeight);
+    return roundTo(base * K.intentMult[p.intent || 'none'] * (favourite ? K.favouriteMult : 1));
+  }
+
+  /** First-offer acceptance chance from public information only (no favourite club), for the UI. */
+  function publicChance(p, offer, ask, difficulty) {
+    return firstChance(p, offer, ask, difficulty, false);
+  }
+  function firstChance(p, offer, ask, difficulty, favourite) {
+    const A = K.accept,
+      ratio = offer / ask;
+    return clamp(
+      A.base[p.intent || 'none'] + (ratio - 1) * A.perRatio + (favourite ? A.favourite : 0) + K.difficulty[difficulty] - (ratio < A.lowball ? A.lowballPenalty : 0),
+      0,
+      A.max,
+    );
+  }
+
+  /**
+   * The player's answer to one offer: { result: 'signed' | 'counter' | 'refused', counter? }.
+   * `favourite`: this club is the one he grew up supporting (hidden from the user outside easy mode).
+   */
+  function respond(p, offer, ask, difficulty, favourite, seed) {
+    const r = rng(seed + '-negotiation-' + p.id),
+      accept = r(),
+      stay = r();
+    if (accept < firstChance(p, offer, ask, difficulty, favourite)) return { result: 'signed' };
+    if (stay < K.counter[p.intent || 'none']) return { result: 'counter', counter: roundTo(Math.max(ask, offer) * K.counter.raise) };
+    return { result: 'refused' };
+  }
+
+  /** Where a player who refused goes next (text only, from its own stream). */
+  function refusalPath(p, catalog, seed) {
+    const r = rng(seed + '-refusal-' + p.id);
+    if (p.intent === 'abroad') {
+      const clubs = catalog.filter((x) => x.kind === 'overseas-pro' && ['A', 'AA'].includes(x.level));
+      const c = clubs[Math.floor(r() * clubs.length)];
+      return c ? `${c.name}(${c.level})와 계약하고 미국으로 건너갔다.` : '해외 구단과 계약했다.';
+    }
+    if (p.pathway === '고졸' || p.pathway === '야구 유학') {
+      const colleges = catalog.filter((x) => x.kind === 'college' && x.region === p.highSchoolRegion);
+      const list = colleges.length ? colleges : catalog.filter((x) => x.kind === 'college');
+      return `${list[Math.floor(r() * list.length)].name}에 진학해 4년 뒤를 노린다.`;
+    }
+    return '독립리그에서 뛰며 다음 기회를 기다린다.';
+  }
+
+  /** Growth boost for a club's signings from the budget it did not spend. */
+  const growthBoost = (left, budget) => clamp((left / budget) * K.growthBoost.perShare, 0, K.growthBoost.max);
+
+  const api = { INTENT_LABELS, slot, slotForRank, budgets, demand, publicChance, respond, refusalPath, growthBoost, K };
+  root.DraftContracts = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -2993,8 +3137,16 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       promise: '3개 보강 포지션 확보 + 해당 신인 2명 이상 계획 이행 70점',
       risk: '지명한 자리의 수만큼 실제 육성 이행도 살펴봅니다.',
     },
+    {
+      id: 'core5',
+      title: '5년 안에 주전 셋을 약속합니다',
+      answer: '첫해 성적으로 평가받을 생각은 없습니다. 5년 안에 이번 신인 중 세 명을 주전으로 만들겠습니다.',
+      promise: '5시즌 안에 이번 지명 선수 3명 이상 우리 팀 주전 경험',
+      risk: '첫해 평가에는 반영되지 않고, 5년 차가 끝난 뒤 팬들이 평가합니다.',
+    },
   ];
   function gmOptions(players, team) {
+    const prospects = players.filter((p) => p.ready >= 45 || p.scoutCeiling >= 55).length;
     const ready = players.filter((p) => p.ready >= 45).length,
       development = players.length - ready,
       covered = team.needs.filter((role) => players.some((p) => p.role === role)).length;
@@ -3009,7 +3161,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
             ? development >= Math.ceil(players.length / 2)
               ? 3
               : -1
-            : covered === 3
+            : c.id === 'core5'
+              ? prospects >= 3
+                ? 2
+                : -1
+              : covered === 3
               ? 4
               : covered === 2
                 ? 1
@@ -3019,6 +3175,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           ? `공개 현재 기량상 1군 경쟁 후보는 ${ready}명입니다. 기대와 부담이 함께 커집니다.`
           : c.id === 'development'
             ? `퓨처스 육성 우선 후보는 ${development}명입니다. 기다림을 설명하되 발전을 보여야 합니다.`
+            : c.id === 'core5'
+              ? `주전감으로 꼽히는 신인은 ${prospects}명입니다. 5년 뒤 성적표가 나옵니다.`
             : `우선 보강 포지션 ${covered}/3개를 확보했습니다. 활용 계획도 함께 평가합니다.`,
     }));
   }
@@ -3032,6 +3190,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     ).length;
     let bonus = 0,
       detail = '';
+    if (choice === 'core5') return { bonus: 0, detail: '5년 차 시즌이 끝난 뒤 평가합니다', status: '평가 대기' };
     if (choice === 'immediate') {
       bonus = major >= 2 ? 4 : major === 1 ? 0 : -4;
       detail = `1군 경험 ${major}/2명`;
@@ -3046,7 +3205,56 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     }
     return { bonus, detail, status: bonus > 0 ? '약속 이행' : bonus < 0 ? '약속 미달' : '부분 이행' };
   }
-  const api = { OUTLETS, GM_CHOICES, forecast, news, gmOptions, accountability };
+  /**
+   * The press conference's first two questions. `first`: our first signed pick (public projection) or null;
+   * `refused`: names of our picks who refused to sign; `spentShare`: share of the budget committed.
+   */
+  function gmQuestions({ first, firstLabel, refused, spentShare, boost, team }) {
+    const out = [];
+    if (first) {
+      const f = R.fit(first, team);
+      out.push({
+        id: 'first',
+        question: `${firstLabel} ${first.name}${K.particle(first.name, '을/를')} 먼저 뽑은 이유는 무엇입니까?`,
+        options: [
+          { id: 'now', title: '바로 쓸 선수입니다', answer: '캠프부터 1군에서 경쟁시킵니다. 올해 1군에서 보실 겁니다.', delta: first.ready >= 45 ? 2 : -1, pledge: `첫해 ${first.name} 1군 출전` },
+          { id: 'project', title: '길게 보고 키웁니다', answer: '당장보다 3–4년 뒤가 기대되는 선수입니다. 그때 주전으로 세우겠습니다.', delta: first.scoutCeiling >= 55 ? 2 : 0, pledge: `4시즌 안에 ${first.name} 주전` },
+          { id: 'fit', title: '가장 필요한 자리였습니다', answer: '우리 팀에 제일 급한 포지션을 채웠습니다.', delta: f >= 80 ? 3 : -2, pledge: null },
+        ],
+      });
+    }
+    if (refused.length)
+      out.push({
+        id: 'issue',
+        question: `${refused.join(', ')} 선수가 계약을 거부했습니다. 협상에 문제는 없었습니까?`,
+        options: [
+          { id: 'apologize', title: '제 책임입니다', answer: '협상을 매끄럽게 풀지 못했습니다. 팬들께 죄송합니다.', delta: 1, pledge: null },
+          { id: 'respect', title: '선수 선택을 존중합니다', answer: '선수가 더 나은 길이라고 판단했다면 존중해야 합니다.', delta: -1, pledge: null },
+          { id: 'principle', title: '원칙을 지켰습니다', answer: '한 선수에게 예산을 몰아줄 수는 없었습니다. 남은 돈은 육성에 씁니다.', delta: boost >= 0.05 ? 1 : -2, pledge: null },
+        ],
+      });
+    else if (spentShare >= 0.95)
+      out.push({
+        id: 'issue',
+        question: '계약금으로 예산을 거의 다 썼습니다. 지나친 지출 아닙니까?',
+        options: [
+          { id: 'worth', title: '그만한 선수들입니다', answer: '몇 년 뒤 성적으로 증명하겠습니다.', delta: 1, pledge: null },
+          { id: 'sorry', title: '부담이 큰 건 맞습니다', answer: '다음 해에는 더 신중하게 쓰겠습니다.', delta: 0, pledge: null },
+        ],
+      });
+    else
+      out.push({
+        id: 'issue',
+        question: '남은 예산은 어디에 쓰십니까?',
+        options: [
+          { id: 'develop', title: '신인 육성에 씁니다', answer: '코치와 훈련 시설에 투자해 신인들이 빨리 크도록 돕겠습니다.', delta: 2, pledge: null },
+          { id: 'save', title: '아껴 두겠습니다', answer: '구단 살림도 생각해야 합니다.', delta: -1, pledge: null },
+        ],
+      });
+    return out;
+  }
+
+  const api = { OUTLETS, GM_CHOICES, forecast, news, gmOptions, gmQuestions, accountability };
   root.DraftPress = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -3064,9 +3272,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   const SEASONS = 10;
   const fit = (p, t) => S.fit(p, t);
-  function create(picks, byId, seed = '') {
+  function create(picks, byId, seed = '', boosts = {}) {
     return {
       seed,
+      boosts, // teamId → growth-rate bonus for its own signings in their first seasons (unspent budget)
       years: [],
       players: Object.fromEntries(
         picks.map((s) => {
@@ -3557,6 +3766,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
           closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
           absentDays: state.absentDays || 0,
+          growthBoost: state.currentTeamId === sel.teamId && yearIndex < T.contracts.growthBoost.seasons ? career.boosts?.[sel.teamId] || 0 : 0,
         });
       }
       Object.assign(state, rec.endState);
@@ -3582,9 +3792,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   function history(career, id) {
     return career.years.map((y) => y.records.find((s) => s.playerId === id)).filter(Boolean);
   }
-  function review(career, picks, byId) {
+  function review(career, picks, byId, lost = {}) {
     return TEAMS.map((t) => {
       const own = picks.filter((s) => s.teamId === t.id),
+        size = own.length + (lost[t.id] || 0),
         ids = new Set(own.map((s) => s.playerId)),
         records = career.years.flatMap((y) => y.records.filter((r) => ids.has(r.playerId)));
       const total = records.reduce((n, r) => n + (r.war || 0), 0),
@@ -3605,12 +3816,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         club,
       );
       const Rv = T.review;
-      const production = clamp((Math.max(0, total) / (own.length * Math.max(1, career.years.length) * Rv.warPerSeason)) * 100, 0, 100);
+      const production = clamp((Math.max(0, total) / (Math.max(1, size) * Math.max(1, career.years.length) * Rv.warPerSeason)) * 100, 0, 100);
       const growth = clamp(development * Rv.growth.perPoint + Rv.growth.base, 0, 100);
       const score = round(needs * Rv.weights.need + production * Rv.weights.production + growth * Rv.weights.growth);
       return {
         teamId: t.id,
         count: own.length,
+        refused: lost[t.id] || 0,
         total: round(total, 1),
         atHome: round(atHome, 1),
         debut,
@@ -3818,8 +4030,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const { TUNING } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const Voices = root.DraftVoices || (typeof require !== 'undefined' ? require('./voices.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
+  const Deal = root.DraftContracts || (typeof require !== 'undefined' ? require('./contracts.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '0.8.0',
+  const RELEASE = '0.9.0',
     VERSION = 6,
     ROUND_OPTIONS = [5, 8, 11], // national rounds the player can choose; 11 is the current KBO format
     ROUNDS = 11,
@@ -3897,6 +4110,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       cursor: 0,
       picks: [],
       devSigns: [],
+      budgets: Deal.budgets(String(seed), TEAMS, !!local),
+      offers: null, // the user's first offers, [[playerId, amount]] in pick order
+      counterIds: null, // counter-offers the user accepted
+      talks: [], // every club's negotiation with every pick
       news: [],
       gmChoice: null,
       season: null,
@@ -3952,7 +4169,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     if (!slot || !available(g, slot).some((p) => p.id === id))
       throw Error('현재 순서에서 지명할 수 없는 선수입니다.');
     const p = getPlayer(g, id);
-    const s = { ...slot, playerId: id, overall: g.cursor + 1, fit: fit(p, teamFor(g, slot.teamId)) };
+    const roundStart = g.schedule.findIndex((x) => x.round === slot.round);
+    const s = { ...slot, playerId: id, overall: g.cursor + 1, fit: fit(p, teamFor(g, slot.teamId)), slot: Deal.slot(slot.round, g.cursor - roundStart) };
     if (s.round <= 1)
       g.news.push(
         Press.news(
@@ -3966,7 +4184,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       );
     g.picks.push(s);
     g.cursor++;
-    if (g.cursor === g.schedule.length) g.phase = 'signing';
+    if (g.cursor === g.schedule.length) g.phase = 'negotiation';
     return s;
   }
   function aiChoice(g) {
@@ -4004,18 +4222,128 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
   function gmOptions(g) {
     return Press.gmOptions(
-      myPicks(g).map((s) => R.project(getPlayer(g, s.playerId))),
+      mySignedPicks(g).map((s) => R.project(getPlayer(g, s.playerId))),
       teamFor(g),
     );
   }
   // ---------------------------------------------------------------- development contracts
 
-  /** Every player tied to a club this class: draft picks, then development contracts. */
-  const signed = (g) => [...g.picks, ...(g.devSigns || [])];
+  // ---------------------------------------------------------------- contracts
+
+  /** Draft picks who signed (all picks until negotiations are done). */
+  const signedPicks = (g) => g.picks.filter((s) => !s.refused);
+  const mySignedPicks = (g) => signedPicks(g).filter((s) => s.teamId === g.teamId);
+  const isFavourite = (p, teamId) => TEAMS[p.favoriteTeam]?.id === teamId;
+  /** What each of a club's picks asks for. */
+  function asks(g, teamId = g.teamId) {
+    return g.picks.filter((s) => s.teamId === teamId).map((s) => {
+      const p = getPlayer(g, s.playerId);
+      return { playerId: s.playerId, round: s.round, label: s.label, slot: s.slot, ask: Deal.demand(p, s, isFavourite(p, teamId)), intent: p.intent };
+    });
+  }
+  /** Money a club has committed: signed bonuses plus development contracts. */
+  function spent(g, teamId = g.teamId) {
+    const bonuses = g.talks.filter((t) => t.teamId === teamId && t.result === 'signed').reduce((n, t) => n + t.bonus, 0);
+    return bonuses + (g.devSigns || []).filter((s) => s.teamId === teamId).length * TUNING.contracts.devCost;
+  }
+  const budgetLeft = (g, teamId = g.teamId) => g.budgets[teamId] - spent(g, teamId);
+
+  /**
+   * The user's first offers (playerId → amount, 0 = no offer), then every CPU club's negotiations in pick order.
+   * Counter-offers to the user wait for settleCounters(); otherwise the negotiations close at once.
+   */
+  function negotiate(g, offers) {
+    if (g.phase !== 'negotiation' || g.offers) throw Error('계약 협상은 드래프트가 끝난 뒤 한 번만 합니다.');
+    const K = TUNING.contracts,
+      mine = asks(g);
+    const ok =
+      offers && typeof offers === 'object' &&
+      Object.keys(offers).length === mine.length &&
+      mine.every((a) => Number.isInteger(offers[a.playerId]) && offers[a.playerId] >= 0 && offers[a.playerId] % K.step === 0) &&
+      mine.reduce((n, a) => n + offers[a.playerId], 0) <= g.budgets[g.teamId];
+    if (!ok) throw Error('제시액을 확인해야 합니다.');
+    g.offers = mine.map((a) => [a.playerId, offers[a.playerId]]);
+    const committed = Object.fromEntries(TEAMS.map((t) => [t.id, 0]));
+    for (const s of g.picks) {
+      const p = getPlayer(g, s.playerId),
+        fav = isFavourite(p, s.teamId),
+        ask = Deal.demand(p, s, fav);
+      let offer, res;
+      if (s.teamId === g.teamId) {
+        offer = offers[s.playerId];
+        res = offer > 0 ? Deal.respond(p, offer, ask, g.difficulty, fav, g.seed) : { result: 'refused' };
+      } else {
+        // Keep enough for the club's later picks at their slot value and its minimum development contracts.
+        const later = g.picks.filter((x) => x.teamId === s.teamId && x.overall > s.overall).reduce((n, x) => n + x.slot, 0) * K.cpuReserve;
+        const room = g.budgets[s.teamId] - committed[s.teamId] - later - TUNING.devContracts.cpuMin * K.devCost;
+        offer = Math.max(K.step, Math.min(Math.round((ask * K.cpuOffer) / K.step) * K.step, Math.floor(room / K.step) * K.step));
+        res = Deal.respond(p, offer, ask, g.difficulty, fav, g.seed);
+        if (res.result === 'counter') res = res.counter <= room ? { result: 'signed', bonus: res.counter } : { result: 'refused' };
+      }
+      const talk = { teamId: s.teamId, playerId: s.playerId, ask, offer, result: res.result, counter: res.counter ?? null, bonus: res.result === 'signed' ? res.bonus ?? offer : 0 };
+      g.talks.push(talk);
+      committed[s.teamId] += talk.bonus;
+    }
+    if (!g.talks.some((t) => t.teamId === g.teamId && t.result === 'counter')) closeNegotiations(g, []);
+    return g.talks.filter((t) => t.teamId === g.teamId);
+  }
+  /** Default first offers: every ask, scaled down evenly when the total would exceed the budget. */
+  function defaultOffers(g) {
+    const list = asks(g),
+      step = TUNING.contracts.step,
+      k = Math.min(1, g.budgets[g.teamId] / list.reduce((n, a) => n + a.ask, 0));
+    return Object.fromEntries(list.map((a) => [a.playerId, Math.max(step, Math.floor((a.ask * k) / step) * step)]));
+  }
+  /** Counter-offers the club can afford, in pick order. */
+  function affordableCounters(g) {
+    let left = budgetLeft(g);
+    const ids = [];
+    for (const t of g.talks.filter((t) => t.teamId === g.teamId && t.result === 'counter'))
+      if (t.counter <= left) {
+        ids.push(t.playerId);
+        left -= t.counter;
+      }
+    return ids;
+  }
+  /** Negotiates with default offers and accepts every affordable counter (tests, audits, quick play). */
+  function signAll(g) {
+    negotiate(g, defaultOffers(g));
+    if (g.phase === 'negotiation') settleCounters(g, affordableCounters(g));
+  }
+  /** The user accepts some counter-offers; the rest walk away. */
+  function settleCounters(g, ids) {
+    const open = g.talks.filter((t) => t.teamId === g.teamId && t.result === 'counter');
+    if (g.phase !== 'negotiation' || !open.length || !Array.isArray(ids) || new Set(ids).size !== ids.length || !ids.every((id) => open.some((t) => t.playerId === id)))
+      throw Error('재협상 결과를 확인해야 합니다.');
+    const cost = open.filter((t) => ids.includes(t.playerId)).reduce((n, t) => n + t.counter, 0);
+    if (spent(g) + cost > g.budgets[g.teamId]) throw Error('예산을 넘습니다.');
+    closeNegotiations(g, ids);
+  }
+  function closeNegotiations(g, acceptedCounters) {
+    for (const t of g.talks.filter((t) => t.result === 'counter')) {
+      const yes = acceptedCounters.includes(t.playerId);
+      t.result = yes ? 'signed' : 'refused';
+      t.bonus = yes ? t.counter : 0;
+    }
+    for (const s of g.picks) {
+      const t = g.talks.find((x) => x.playerId === s.playerId);
+      s.bonus = t.bonus;
+      if (t.result === 'refused') {
+        s.refused = true;
+        t.path = Deal.refusalPath(getPlayer(g, s.playerId), D.catalog, g.seed);
+      }
+    }
+    g.counterIds = acceptedCounters;
+    g.phase = 'signing';
+  }
+  const refusals = (g, teamId = null) => g.talks.filter((t) => t.result === 'refused' && (!teamId || t.teamId === teamId));
+
+  /** Every player tied to a club this class: signed draft picks, then development contracts. */
+  const signed = (g) => [...signedPicks(g), ...(g.devSigns || [])];
   const mySigned = (g) => signed(g).filter((s) => s.teamId === g.teamId);
   /** Pool players nobody drafted or signed, best public rank first. */
   function undrafted(g) {
-    const taken = new Set(signed(g).map((s) => s.playerId));
+    const taken = new Set([...g.picks, ...(g.devSigns || [])].map((s) => s.playerId));
     return poolFor(g).players.filter((p) => !taken.has(p.id));
   }
   function devEntry(g, teamId, playerId) {
@@ -4032,13 +4360,14 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     if (!Array.isArray(ids) || ids.length > D_.max || new Set(ids).size !== ids.length) throw Error('육성선수는 최대 ' + D_.max + '명입니다.');
     const free = new Set(undrafted(g).map((p) => p.id));
     if (!ids.every((id) => free.has(id))) throw Error('계약할 수 없는 선수입니다.');
+    if (ids.length * TUNING.contracts.devCost > budgetLeft(g)) throw Error('육성선수 계약 예산이 부족합니다.');
     g.devSigns = [];
     for (const id of ids) g.devSigns.push(devEntry(g, g.teamId, id));
     const order = g.schedule.filter((s) => s.round === 1 && s.teamId !== g.teamId).map((s) => s.teamId);
     const quota = Object.fromEntries(order.map((id) => [id, D_.cpuMin + Math.floor(rng(g.seed + '-dev-count-' + id)() * (D_.cpuMax - D_.cpuMin + 1))]));
     for (let turn = 0; turn < D_.cpuMax; turn++)
       for (const teamId of order) {
-        if (turn >= quota[teamId]) continue;
+        if (turn >= quota[teamId] || budgetLeft(g, teamId) < TUNING.contracts.devCost) continue;
         const t = teamFor(g, teamId),
           mine = signed(g).filter((s) => s.teamId === teamId).map((s) => R.project(getPlayer(g, s.playerId)));
         const ranked = R.aiScores(undrafted(g).map(R.project), t, mine, g.difficulty, `${g.seed}-dev-${teamId}-${turn}`);
@@ -4048,17 +4377,58 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     return g.devSigns;
   }
 
-  function chooseGM(g, choice) {
-    if (
-      g.phase !== 'interviews' ||
-      g.cursor !== g.schedule.length ||
-      g.gmChoice ||
-      g.season ||
-      !Press.GM_CHOICES.some((c) => c.id === choice)
-    )
+  /** The press conference: two questions about this draft, then the first-year pledge. */
+  function gmQuestions(g) {
+    const first = mySignedPicks(g)[0];
+    const qs = Press.gmQuestions({
+      first: first ? R.project(getPlayer(g, first.playerId)) : null,
+      firstLabel: first ? (first.round === 0 ? '지역 1차로' : `${first.label}에서`) : '',
+      refused: refusals(g, g.teamId).map((t) => getPlayer(g, t.playerId).name),
+      spentShare: spent(g) / g.budgets[g.teamId],
+      boost: Deal.growthBoost(budgetLeft(g), g.budgets[g.teamId]),
+      team: teamFor(g),
+    });
+    return [...qs, { id: 'pledge', question: '이번 지명으로 무엇을 보여 주실 겁니까?', options: gmOptions(g) }];
+  }
+  /** `choice`: the pledge; `answers`: { first, issue } option ids (the first option when omitted). */
+  function chooseGM(g, choice, answers = {}) {
+    if (g.phase !== 'interviews' || g.cursor !== g.schedule.length || g.gmChoice || g.season || !Press.GM_CHOICES.some((c) => c.id === choice))
       throw Error('인터뷰 답변은 드래프트 종료 후 한 번만 선택할 수 있습니다.');
+    const picked = {};
+    for (const q of gmQuestions(g).filter((q) => q.id !== 'pledge')) {
+      const id = answers[q.id] ?? q.options[0].id;
+      if (!q.options.some((o) => o.id === id)) throw Error('기자회견 답변을 확인해야 합니다.');
+      picked[q.id] = id;
+    }
     g.gmChoice = choice;
+    g.gmAnswers = picked;
     return gmOptions(g).find((c) => c.id === choice);
+  }
+  /**
+   * Pledges judged after later seasons: [{ yearIndex, label, delta, kept }]. Only seasons already played.
+   * - first 'now': our first pick plays in the first team in year one.
+   * - first 'project': he holds a regular job at our club within four seasons.
+   * - pledge 'core5': three of our signed draft picks hold a regular job here within five seasons.
+   */
+  function pledgeOutcomes(g) {
+    const years = g.career?.years || [],
+      out = [],
+      first = mySignedPicks(g)[0],
+      regularHere = (y, id) => y.records.some((r) => r.playerId === id && r.teamId === g.teamId && r.route === 'regular');
+    if (first && g.gmAnswers?.first === 'now' && years[0]) {
+      const kept = years[0].records.some((r) => r.playerId === first.playerId && r.stats.games > 0);
+      out.push({ yearIndex: 0, label: '첫 지명 즉시 전력 약속', delta: kept ? 3 : -3, kept });
+    }
+    if (first && g.gmAnswers?.first === 'project') {
+      const at = years.slice(0, 4).findIndex((y) => regularHere(y, first.playerId));
+      if (at >= 0) out.push({ yearIndex: at, label: '첫 지명 주전 육성 약속', delta: 4, kept: true });
+      else if (years.length >= 4) out.push({ yearIndex: 3, label: '첫 지명 주전 육성 약속', delta: -3, kept: false });
+    }
+    if (g.gmChoice === 'core5' && years.length >= 5) {
+      const n = mySignedPicks(g).filter((s) => years.slice(0, 5).some((y) => regularHere(y, s.playerId))).length;
+      out.push({ yearIndex: 4, label: `5년 주전 셋 약속 (${n}명)`, delta: n >= 3 ? 5 : -5, kept: n >= 3 });
+    }
+    return out;
   }
   function fanState(g) {
     const timeline = [{ label: '시작 전', delta: 0, score: 50 }];
@@ -4068,19 +4438,28 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       timeline.push({ label, delta, score });
     }
     for (const n of g.news.filter((n) => n.teamId === g.teamId)) entry(n.reason, n.delta);
+    if (g.phase !== 'negotiation' && g.offers) {
+      const lost = refusals(g, g.teamId).length;
+      entry(`계약 협상 · ${lost ? `지명 거부 ${lost}명` : '전원 계약'}`, lost ? lost * TUNING.contracts.refusalFan : 0);
+    }
     if (g.gmChoice) {
+      for (const q of gmQuestions(g).filter((q) => q.id !== 'pledge')) {
+        const o = q.options.find((o) => o.id === g.gmAnswers?.[q.id]);
+        if (o) entry('기자회견 · ' + o.title, o.delta);
+      }
       const c = gmOptions(g).find((c) => c.id === g.gmChoice);
-      entry('단장 인터뷰 · ' + c.title, c.delta);
+      entry('기자회견 · ' + c.title, c.delta);
     }
     if (g.season) {
       const a = Press.accountability(
         g.gmChoice,
-        myPicks(g).map((s) => R.project(getPlayer(g, s.playerId))),
+        mySignedPicks(g).map((s) => R.project(getPlayer(g, s.playerId))),
         g.season,
         teamFor(g),
       );
       entry('첫 시즌 약속 · ' + a.status, a.bonus);
     }
+    const pledges = pledgeOutcomes(g);
     // Every season: the club's finish, how many of this class held a regular job here, national medals.
     // Old feelings fade a little each year, so the score drifts back toward 50 before the new season counts.
     const F = TUNING.fans;
@@ -4093,6 +4472,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       score = Math.round(clamp(score + (50 - score) * F.fade, 0, 100));
       const delta = F.byRank[rank - 1] + (champion ? F.champion : 0) + Math.min(F.maxRegulars, regulars) * F.perRegular + Math.min(F.maxMedals, medals);
       entry(`${y.year} 시즌 · ${rank}위${champion ? ' · 우승' : ''} · 동기 주전 ${regulars}명${medals ? ` · 국가대표 메달 ${medals}명` : ''}`, delta);
+      for (const o of pledges.filter((o) => o.yearIndex === y.year - Bio.ENTRY_YEAR)) entry(`${o.label} · ${o.kept ? '지킴' : '못 지킴'}`, o.delta);
     }
     return {
       score,
@@ -4101,7 +4481,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     };
   }
   function evaluate(g, season) {
-    const players = myPicks(g).map((s) => getPlayer(g, s.playerId)),
+    const players = mySignedPicks(g).map((s) => getPlayer(g, s.playerId)),
       base = M.evaluate(g, season, players, teamFor(g));
     const pledge = Press.accountability(g.gmChoice, players.map(R.project), season, teamFor(g));
     const score = clamp(base.score + pledge.bonus, 0, 100);
@@ -4118,10 +4498,12 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       throw Error('드래프트와 단장 인터뷰를 먼저 완료해야 합니다.');
     const { byId } = poolFor(g);
     if (!g.career) {
-      g.career = Career.create(signed(g), byId, g.seed);
+      // Unspent budget becomes development support for each club's own signings.
+      const boosts = Object.fromEntries(TEAMS.map((t) => [t.id, Deal.growthBoost(budgetLeft(g, t.id), g.budgets[t.id])]));
+      g.career = Career.create(signed(g), byId, g.seed, boosts);
       Career.advance(g.career, signed(g), byId, g.seed);
-      // First-year evaluation covers this club's draft picks (development contracts are judged over five years).
-      const drafted = new Set(myPicks(g).map((s) => s.playerId));
+      // First-year evaluation covers this club's signed draft picks (development contracts are judged over the career).
+      const drafted = new Set(mySignedPicks(g).map((s) => s.playerId));
       g.season = g.career.years[0].records.filter((s) => s.teamId === g.teamId && drafted.has(s.playerId));
       g.owner = evaluate(g, g.season);
     }
@@ -4152,9 +4534,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     return result;
   }
   function careerReview(g) {
-    return g.career ? Career.review(g.career, signed(g), poolFor(g).byId) : [];
+    // Picks who refused to sign count against the club: they are in the class size with nothing to show.
+    const lost = Object.fromEntries(TEAMS.map((t) => [t.id, refusals(g, t.id).length]));
+    return g.career ? Career.review(g.career, signed(g), poolFor(g).byId, lost) : [];
   }
-  const PHASES = ['preview', 'scouting', 'draft', 'signing', 'interviews', 'season', 'owner'];
+  const PHASES = ['preview', 'scouting', 'draft', 'negotiation', 'signing', 'interviews', 'season', 'owner'];
 
   /*
    * Saves
@@ -4168,7 +4552,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
    * (tests/golden.cjs fails until you do). A save from another SIM_VERSION is refused, never silently
    * replayed into a different history.
    */
-  const SIM_VERSION = '0.8',
+  const SIM_VERSION = '0.9',
     SAVE_FORMAT = 'draft-room-save',
     SAVE_VERSION = 2;
 
@@ -4185,8 +4569,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       rounds: g.rounds,
       phase: g.phase,
       picks: myPicks(g).map((s) => s.playerId),
+      offers: g.offers,
+      counters: g.counterIds,
       dev: (g.devSigns || []).filter((s) => s.teamId === g.teamId).map((s) => s.playerId),
       gmChoice: g.gmChoice,
+      gm: g.gmAnswers || null,
       seasons: g.career?.years.length ?? 0,
       service: g.serviceOrders || [],
     };
@@ -4218,7 +4605,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       )
         return null;
       const g = createGame(s.teamId, s.local, s.seed, s.difficulty, s.rounds);
-      const pristine = !s.picks.length && s.gmChoice == null && !s.seasons;
+      const pristine = !s.picks.length && s.gmChoice == null && !s.seasons && s.offers == null;
       if (s.phase === 'preview') return pristine ? g : null;
       openScouting(g);
       if (s.phase === 'scouting') return pristine ? g : null;
@@ -4234,9 +4621,23 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       }
       cpuPicks();
       if ((s.phase === 'draft') !== (g.phase === 'draft')) return null;
+      if (g.phase === 'draft') return s.offers == null && s.gmChoice == null && !s.seasons ? g : null;
+      // Negotiations: first offers, then (if anyone countered) which counter-offers were accepted.
+      if (s.offers == null) return s.phase === 'negotiation' && s.gmChoice == null && !s.seasons ? g : null;
+      if (!Array.isArray(s.offers) || !s.offers.every((o) => Array.isArray(o) && o.length === 2)) return null;
+      negotiate(g, Object.fromEntries(s.offers));
+      if (g.phase === 'negotiation') {
+        if (s.counters == null) return s.phase === 'negotiation' && s.gmChoice == null && !s.seasons ? g : null;
+        settleCounters(g, s.counters);
+      } else if (s.counters != null && s.counters.length) return null;
+      if (s.phase === 'negotiation') return null;
       if (s.phase === 'signing') return s.gmChoice == null && !s.seasons && !(s.dev || []).length ? g : null;
       if (g.phase === 'signing') signDevelopment(g, s.dev || []);
-      if (s.gmChoice != null) chooseGM(g, s.gmChoice);
+      if (s.gmChoice != null) {
+        if (s.gm != null && (typeof s.gm !== 'object' || Array.isArray(s.gm))) return null;
+        chooseGM(g, s.gmChoice, s.gm || {});
+        if (s.gm && JSON.stringify(g.gmAnswers) !== JSON.stringify(s.gm)) return null; // unknown or extra answers
+      }
       if (['season', 'owner'].includes(s.phase) && !s.seasons) return null;
       if (s.seasons) {
         runSeason(g); // requires the GM answer
@@ -4267,6 +4668,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         ...g0,
         picks: g0.picks.filter((p) => p.teamId === g0.teamId).map((p) => p.playerId),
         dev: (g0.devSigns || []).filter((p) => p.teamId === g0.teamId).map((p) => p.playerId),
+        counters: g0.counterIds ?? null,
+        gm: g0.gmAnswers ?? null,
         seasons,
       },
       g0.picks.length,
@@ -4346,6 +4749,20 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     validate,
     restore,
     signDevelopment,
+    negotiate,
+    settleCounters,
+    defaultOffers,
+    affordableCounters,
+    signAll,
+    asks,
+    spent,
+    budgetLeft,
+    refusals,
+    signedPicks,
+    mySignedPicks,
+    gmQuestions,
+    pledgeOutcomes,
+    contracts: Deal,
     serviceOptions,
     SERVICE_CHOICES,
     tuning: TUNING,
@@ -4453,7 +4870,46 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     return d ? (d > 0 ? '+' : '') + d : '변화 없음';
   }
 
+  /** Minimal Markdown for the update log: headings, nested lists, bold, inline code and paragraphs. */
+  function markdown(md) {
+    const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+    let html = '',
+      depth = 0;
+    const close = (to) => {
+      while (depth > to) (html += '</ul>'), depth--;
+    };
+    for (const line of md.split('\n')) {
+      const item = line.match(/^(\s*)- (.*)$/);
+      if (item) {
+        const level = Math.floor(item[1].length / 2) + 1;
+        while (depth < level) (html += '<ul>'), depth++;
+        close(level);
+        html += `<li>${inline(item[2])}</li>`;
+        continue;
+      }
+      close(0);
+      const h = line.match(/^(#{1,3}) (.*)$/);
+      if (h) html += `<h${h[1].length + 1}>${inline(h[2])}</h${h[1].length + 1}>`;
+      else if (line.trim()) html += `<p>${inline(line)}</p>`;
+    }
+    close(0);
+    return html;
+  }
+  /** The update log split by version: [{ title, body }], newest first. */
+  function releases() {
+    const md = root.DraftChangelog || '';
+    return md
+      .split(/^## /m)
+      .slice(1)
+      .map((part) => {
+        const [title, ...rest] = part.split('\n');
+        return { title: title.trim(), body: rest.join('\n').trim() };
+      });
+  }
+
   Object.assign(UI, {
+    markdown,
+    releases,
     velocityChange,
     esc, tag, signed, num, rate, teamName, teamDot, player, playerLink, hand, grade, gradeClass,
     statLine, toolTable, toolSnapshot, obp, slg, statusLabel, serviceStatus,
@@ -4477,6 +4933,22 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         .map((n) => `<li><b>${esc(n.label)}</b> <small class="muted">${esc(label(n.key))} ${n.target}+</small><span>${esc(n.reason)}</span></li>`)
         .join('')}</ul>
       <p class="note">팀장 성향과 세부 수요는 게임마다 새로 정해집니다.</p>
+    </section>`;
+  }
+
+  /** Latest release notes: the headline items of the newest version, with a link to the full log. */
+  function updates() {
+    const [latest] = UI.releases();
+    if (!latest) return '';
+    const items = latest.body
+      .split('\n')
+      .filter((l) => /^- /.test(l))
+      .map((l) => l.slice(2).match(/^\*\*(.+?)\*\*/)?.[1] ?? l.slice(2).replace(/\*\*/g, ''))
+      .slice(0, 8);
+    return `<section class="box updates">
+      <h3>업데이트 <small class="muted">${esc(latest.title)}</small></h3>
+      <ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+      <button class="btn quiet small" data-action="changelog">전체 업데이트 기록</button>
     </section>`;
   }
 
@@ -4525,7 +4997,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           <div class="settings-row">
             <b>지명 라운드</b>
             <div class="seg" role="group" aria-label="지명 라운드">${C.ROUND_OPTIONS.map((n) => `<button data-action="rounds" data-id="${n}" aria-pressed="${rounds === n}">${n}라운드</button>`).join('')}</div>
-            <p>구단마다 라운드당 1명씩, 총 ${rounds}명을 지명합니다. 드래프트가 끝나면 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약을 할 수 있습니다.</p>
+            <p>구단마다 라운드당 1명씩, 총 ${rounds}명을 지명합니다. 드래프트가 끝나면 예산 안에서 계약금을 협상하고, 남은 돈으로 육성선수를 최대 ${C.tuning.devContracts.max}명 계약합니다.</p>
           </div>
           <div class="settings-row">
             <label class="check" for="local-toggle"><input type="checkbox" id="local-toggle" ${local ? 'checked' : ''}> <b>지역 1차 지명</b></label>
@@ -4533,6 +5005,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           </div>
           <button class="btn primary wide" data-action="start">${esc(C.ko.p(t.short, "으로/로"))} 시작</button>
         </div>
+        ${updates()}
       </aside>
     </div>`;
   }
@@ -4678,7 +5151,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         return `<button class="player-row" data-action="player" data-id="${p.id}" aria-pressed="${selected === p.id}">
           <span class="rk">${p.rank}</span>
           <span><span class="nm">${stars.has(p.id) ? '★ ' : ''}${esc(p.name)}<small>${hand(p)}</small></span>
-            <span class="meta">${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)}</span></span>
+            <span class="meta">${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)}${p.intent ? ` · <b class="warn">${C.contracts.INTENT_LABELS[p.intent]}</b>` : ''}</span></span>
           <span class="val">${sortValue(p, v.sort, team)}<small>${esc(label)}</small></span>
           <span class="fit ${fit >= 80 ? 'core' : ''}">${C.fitLabel(p, team)}</span>
         </button>`;
@@ -4711,6 +5184,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         </div>
         <button class="btn quiet small" data-action="star" data-id="${p.id}" aria-pressed="${stars.has(p.id)}">${stars.has(p.id) ? '★ 관심' : '☆ 관심'}</button>
       </div>
+      ${p.intent ? `<p class="callout">${p.intent === 'abroad' ? '<b>해외 구단 관심</b> · 미국 구단의 제안을 받았다고 알려졌습니다. 계약금을 크게 요구하고, 조건이 맞지 않으면 해외로 갈 수 있습니다.' : '<b>진학 희망</b> · 대학 진학도 생각하고 있다고 밝혔습니다. 계약금을 더 요구하고, 협상이 틀어지면 대학에 갈 수 있습니다.'}</p>` : ''}
       ${g.difficulty === 'easy' ? `<p class="favorite-note note">어릴 때 응원한 구단: ${C.TEAMS[p.favoriteTeam].short} (쉬움 난이도에서만 공개)</p>` : ''}
       <section>${UI.toolTable(p)}</section>
       <section>
@@ -4757,7 +5231,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         ? `<ul class="mine-list">${mine
             .map((s) => {
               const p = player(g, s.playerId);
-              return `<li><span>${esc(s.label)}</span><b>${esc(p.name)}</b><span>${C.ROLES[p.role]}</span></li>`;
+              return `<li><span>${esc(s.label)}</span><b>${esc(p.name)}${p.intent ? ` <small class="warn">${C.contracts.INTENT_LABELS[p.intent]}</small>` : ''}</b><span>${C.ROLES[p.role]}</span></li>`;
             })
             .join('')}</ul>`
         : '<p class="note">아직 지명한 선수가 없습니다.</p>'}
@@ -4770,7 +5244,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         ? `<div class="log-list">${g.picks
             .map((s) => {
               const p = player(g, s.playerId);
-              return `<div${s.teamId === g.teamId ? ' class="good"' : ''}>${s.overall}. ${UI.teamName(s.teamId)} ${esc(s.label)} · ${esc(p.name)} <span class="muted">${C.ROLES[p.role]}</span></div>`;
+              return `<div${s.teamId === g.teamId ? ' class="good"' : ''}>${s.overall}. ${UI.teamName(s.teamId)} ${esc(s.label)} · ${esc(p.name)} <span class="muted">${C.ROLES[p.role]}</span>${s.refused ? ' <span class="warn">계약 거부</span>' : ''}</div>`;
             })
             .join('')}</div>`
         : '<p class="note">아직 지명이 없습니다.</p>'}
@@ -4838,6 +5312,155 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
+/* Screen 3½: signing-bonus negotiations with our picks, then counter-offers. */
+(function (root) {
+  'use strict';
+  const C = root.DraftCore,
+    UI = root.DraftUI;
+  const { esc, tag, player, playerLink } = UI;
+
+  /** 245 → "2억 4500만 원" (amounts are in 백만 원). */
+  function won(n) {
+    const eok = Math.floor(n / 100),
+      man = (n % 100) * 100;
+    return n <= 0 ? '0원' : `${eok ? `${eok}억` : ''}${eok && man ? ' ' : ''}${man ? `${man.toLocaleString('ko-KR')}만` : ''} 원`;
+  }
+  const RATIOS = [0.8, 0.9, 1, 1.1, 1.25, 1.5];
+  const step = () => C.tuning.contracts.step;
+  const offerOptions = (ask) => [...new Set(RATIOS.map((k) => Math.max(step(), Math.round((ask * k) / step()) * step())))];
+  const chanceLabel = (x) => (x >= 0.85 ? '높음' : x >= 0.6 ? '보통' : x >= 0.3 ? '낮음' : '매우 낮음');
+  const boostPct = (g, left) => Math.round(C.contracts.growthBoost(left, g.budgets[g.teamId]) * 100);
+
+  function budgetBox(g, committed, note) {
+    const budget = g.budgets[g.teamId],
+      left = budget - committed,
+      dev = C.tuning.contracts.devCost;
+    return `<aside class="box budget-box">
+      <h3>${esc(UI.teamName(g.teamId))} 신인 예산</h3>
+      <dl class="facts">
+        <dt>예산</dt><dd>${won(budget)}</dd>
+        <dt>${esc(note)}</dt><dd>${won(committed)}</dd>
+        <dt>남는 돈</dt><dd class="${left < 0 ? 'warn' : ''}">${left < 0 ? '−' + won(-left) : won(left)}</dd>
+      </dl>
+      <p class="note">남는 돈으로 육성선수를 1명에 ${won(dev)}씩 계약합니다. 그러고도 남은 돈은 육성 지원금이 되어, 우리가 뽑은 선수들의 첫 ${C.tuning.contracts.growthBoost.seasons}시즌 성장 속도를 높입니다(지금 기준 +${boostPct(g, Math.max(0, left))}%, 최대 +${Math.round(C.tuning.contracts.growthBoost.max * 100)}%).</p>
+    </aside>`;
+  }
+
+  function firstOffers(g, offers) {
+    const asks = C.asks(g),
+      defaults = C.defaultOffers(g), // every ask, scaled down evenly if they do not fit the budget
+      total = asks.reduce((n, a) => n + (offers[a.playerId] ?? defaults[a.playerId]), 0),
+      over = total > g.budgets[g.teamId];
+    const rows = asks
+      .map((a) => {
+        const p = player(g, a.playerId),
+          offer = offers[a.playerId] ?? defaults[a.playerId],
+          chance = offer ? C.contracts.publicChance(p, offer, a.ask, g.difficulty) : 0;
+        const opts = [...new Set([...offerOptions(a.ask), defaults[a.playerId]])]
+          .sort((x, y) => x - y)
+          .map((v) => `<option value="${v}" ${v === offer ? 'selected' : ''}>${won(v)} (${Math.round((v / a.ask) * 100)}%)</option>`)
+          .join('');
+        return `<tr>
+          <td>${esc(a.label)}</td>
+          <td>${playerLink(p.id, p.name)}<small>${C.ROLES[p.role]} · ${esc(p.pathway)} · FV ${p.scoutCeiling}${p.intent ? ` · <b class="warn">${C.contracts.INTENT_LABELS[p.intent]}</b>` : ''}</small></td>
+          <td class="n">${won(a.ask)}</td>
+          <td><select data-offer="${esc(p.id)}" aria-label="${esc(p.name)} 제시액"><option value="0" ${offer === 0 ? 'selected' : ''}>계약 포기</option>${opts}</select></td>
+          <td>${offer ? esc(chanceLabel(chance)) : '<span class="warn">포기</span>'}</td>
+        </tr>`;
+      })
+      .join('');
+    return `
+    <div class="page-head">
+      <h1>계약 협상</h1>
+      <p>지명한 선수마다 계약금을 한 번 제시합니다. 선수는 받아들이거나, 금액을 올려 다시 요구하거나, 계약을 거부합니다. 거부한 선수는 대학이나 해외로 떠나고, 지명권은 돌려받지 못합니다.</p>
+    </div>
+    <div class="cols">
+      <section>
+        <div class="table-scroll"><table class="t">
+          <thead><tr><th>지명</th><th>선수</th><th class="n">요구액</th><th>제시액</th><th>첫 제시 수락</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        ${asks.reduce((n, a) => n + a.ask, 0) > g.budgets[g.teamId] ? '<p class="callout">요구액을 모두 들어주면 예산을 넘습니다. 기본 제시액은 요구액을 같은 비율로 깎은 금액입니다.</p>' : ''}
+        <p class="note">수락 가능성은 공개된 정보만으로 본 추정입니다. 어릴 때 응원한 팀이면 요구액이 낮고 협상도 잘 풀리지만, 그 정보는 요구액에만 드러납니다. 진학 희망·해외 구단 관심 선수는 요구액이 높고 협상이 틀어지기 쉽습니다.</p>
+      </section>
+      <div>
+        ${budgetBox(g, total, '제시액 합계')}
+        <div class="actions">
+          <button class="btn primary wide" data-action="offer-confirm" ${over ? 'disabled' : ''}>이 금액으로 제시</button>
+          ${over ? '<span class="note warn">제시액 합계가 예산을 넘습니다.</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function counters(g, accepted) {
+    const mine = g.talks.filter((t) => t.teamId === g.teamId),
+      open = mine.filter((t) => t.result === 'counter'),
+      committed = C.spent(g) + open.filter((t) => accepted.has(t.playerId)).reduce((n, t) => n + t.counter, 0),
+      over = committed > g.budgets[g.teamId];
+    const done = mine
+      .filter((t) => t.result !== 'counter')
+      .map((t) => `<li><b>${esc(player(g, t.playerId).name)}</b> ${t.result === 'signed' ? `${won(t.bonus)}에 계약` : '<span class="warn">계약 거부</span>'}</li>`)
+      .join('');
+    const rows = open
+      .map((t) => {
+        const p = player(g, t.playerId),
+          on = accepted.has(t.playerId);
+        return `<tr class="${on ? 'mine' : ''}">
+          <td>${playerLink(p.id, p.name)}<small>${C.ROLES[p.role]} · FV ${p.scoutCeiling}${p.intent ? ` · ${C.contracts.INTENT_LABELS[p.intent]}` : ''}</small></td>
+          <td class="n">${won(t.offer)}</td><td class="n"><b>${won(t.counter)}</b></td>
+          <td><button class="btn small ${on ? 'primary' : 'quiet'}" data-action="counter-toggle" data-id="${esc(p.id)}" aria-pressed="${on}">${on ? '수락' : '거절'}</button></td>
+        </tr>`;
+      })
+      .join('');
+    return `
+    <div class="page-head">
+      <h1>재협상</h1>
+      <p>${open.length}명이 금액을 올려 다시 요구했습니다. 이번에 받아들이면 바로 계약하고, 거절하면 선수는 떠납니다.</p>
+    </div>
+    <div class="cols">
+      <section>
+        <div class="table-scroll"><table class="t">
+          <thead><tr><th>선수</th><th class="n">우리 제시</th><th class="n">선수 요구</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        <h3 style="margin-top:14px">첫 제시 결과</h3>
+        <ul class="event-list">${done}</ul>
+      </section>
+      <div>
+        ${budgetBox(g, committed, '계약금 합계')}
+        <div class="actions">
+          <button class="btn primary wide" data-action="counter-confirm" ${over ? 'disabled' : ''}>결정</button>
+          ${over ? '<span class="note warn">예산을 넘습니다.</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function negotiation(g, offers, accepted) {
+    return (g.offers ? counters(g, accepted) : firstOffers(g, offers)) + UI.pickLog(g);
+  }
+
+  /** Contract results, shown once negotiations close. */
+  function contractResults(g) {
+    const mine = g.talks.filter((t) => t.teamId === g.teamId),
+      others = C.refusals(g).filter((t) => t.teamId !== g.teamId);
+    const line = (t) => {
+      const p = player(g, t.playerId),
+        s = g.picks.find((x) => x.playerId === t.playerId);
+      return t.result === 'signed'
+        ? `<li>${esc(s.label)} <b>${esc(p.name)}</b> ${won(t.bonus)}</li>`
+        : `<li>${esc(s.label)} <b>${esc(p.name)}</b> ${tag('계약 거부', 'warn')} <small>${esc(t.path)}</small></li>`;
+    };
+    return `<h2 class="rule">계약 결과 <small>계약금 합계 ${won(mine.reduce((n, t) => n + t.bonus, 0))}</small></h2>
+      <ul class="event-list">${mine.map(line).join('')}</ul>
+      ${others.length ? `<details><summary>다른 구단 지명 거부 ${others.length}건</summary><ul class="event-list">${others.map((t) => `<li>${esc(UI.teamName(t.teamId))} ${esc(g.picks.find((x) => x.playerId === t.playerId).label)} <b>${esc(player(g, t.playerId).name)}</b> <small>${esc(t.path)}</small></li>`).join('')}</ul></details>` : ''}`;
+  }
+
+  Object.assign(UI, { negotiation, contractResults, won, budgetBox });
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
 /* Screen 3½: development ("육성") contracts with undrafted players, right after the draft. */
 (function (root) {
   'use strict';
@@ -4845,8 +5468,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     UI = root.DraftUI;
   const { esc, tag, hand } = UI;
 
+  /** How many development contracts the club can still afford (at most the league limit). */
+  const devLimit = (g) => Math.min(C.tuning.devContracts.max, Math.floor(C.budgetLeft(g) / C.tuning.contracts.devCost));
+
   function signing(g, chosen, role) {
-    const max = C.tuning.devContracts.max,
+    const max = devLimit(g),
       t = C.teamFor(g);
     const list = C.undrafted(g).filter((p) => role === 'ALL' || p.role === role).slice(0, 80);
     const chip = (id, name) => `<button class="chip" data-action="dev-role" data-id="${id}" aria-pressed="${role === id}">${name}</button>`;
@@ -4867,8 +5493,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     return `
     <div class="page-head">
       <h1>육성선수 계약</h1>
-      <p>드래프트에서 지명되지 않은 선수 중 최대 ${max}명과 육성선수 계약을 맺을 수 있습니다. 육성선수는 첫 시즌에는 1군 주전이 될 수 없고, 이후에는 지명 선수와 똑같이 경쟁합니다. 우리가 먼저 고르고, 이어서 다른 구단들이 계약합니다.</p>
+      <p>드래프트에서 지명되지 않은 선수와 육성선수 계약을 맺습니다. 1명에 ${UI.won(C.tuning.contracts.devCost)}이고, 지금 예산으로 ${max}명까지 가능합니다(리그 한도 ${C.tuning.devContracts.max}명). 육성선수는 첫 시즌에는 1군 주전이 될 수 없고, 이후에는 지명 선수와 똑같이 경쟁합니다. 우리가 먼저 고르고, 이어서 다른 구단들이 계약합니다.</p>
     </div>
+    ${UI.contractResults(g)}
     <div class="cols">
       <section>
         <div class="chips" style="margin-bottom:8px">${[['ALL', '전체'], ...Object.entries(C.ROLES)].map(([id, name]) => chip(id, name)).join('')}</div>
@@ -4881,6 +5508,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       <aside class="box">
         <h3>${esc(t.short)} 육성선수 <small class="muted">${chosen.size}/${max}</small></h3>
         ${picked.length ? `<ul class="mine-list">${picked.map((p) => `<li><span>육성</span><b>${esc(p.name)}</b><span>${C.ROLES[p.role]}</span></li>`).join('')}</ul>` : '<p class="note">아직 고른 선수가 없습니다.</p>'}
+        ${UI.budgetBox(g, C.spent(g) + chosen.size * C.tuning.contracts.devCost, '계약금 + 육성선수')}
         <div class="actions">
           <button class="btn primary wide" data-action="dev-confirm">${chosen.size ? `${chosen.size}명과 계약` : '계약 없이 넘어가기'}</button>
         </div>
@@ -4889,7 +5517,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     ${UI.pickLog(g)}`;
   }
 
-  Object.assign(UI, { signing });
+  Object.assign(UI, { signing, devLimit });
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -4900,31 +5528,43 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     UI = root.DraftUI;
   const { esc, signed, player } = UI;
 
-  function gm(g) {
-    const opts = C.gmOptions(g),
-      chosen = opts.find((c) => c.id === g.gmChoice);
-    if (chosen)
+  /** The press conference: three questions, each answered once, then confirmed together. */
+  function gm(g, answers = {}) {
+    const qs = C.gmQuestions(g);
+    if (g.gmChoice) {
+      const chosen = qs.map((q) => ({ q, o: q.options.find((o) => o.id === (q.id === 'pledge' ? g.gmChoice : g.gmAnswers?.[q.id])) })).filter((x) => x.o);
+      const pledge = chosen.find((x) => x.q.id === 'pledge').o;
       return `<section class="box gm-section">
         <h2>단장 기자회견 <small class="muted">답변 확정</small></h2>
-        <h3 style="margin-top:8px">${esc(chosen.title)}</h3>
-        <blockquote style="margin:8px 0">${esc(chosen.answer)}</blockquote>
-        <p><b>약속</b> ${esc(chosen.promise)} · 팬심 ${signed(chosen.delta)}</p>
-        <p class="note">${esc(chosen.reaction)} 첫 시즌이 끝나면 약속을 지켰는지 평가합니다.</p>
+        ${chosen
+          .map(({ q, o }) => `<div style="margin-top:10px"><p class="note">${esc(q.question)}</p><blockquote style="margin:4px 0">${esc(o.answer)}</blockquote><p class="note">팬심 ${signed(o.delta)}${o.pledge ? ` · 약속: ${esc(o.pledge)}` : ''}</p></div>`)
+          .join('')}
+        <p><b>첫해 약속</b> ${esc(pledge.promise)}</p>
+        <p class="note">${esc(pledge.reaction)} 약속은 정해진 시즌이 끝나면 평가합니다.</p>
       </section>`;
+    }
+    const ready = qs.every((q) => answers[q.id]);
     return `<section class="box gm-section">
       <h2>단장 기자회견</h2>
-      <p>“이번 지명으로 첫해에 무엇을 보여 주실 겁니까?” 답변은 한 번만 고를 수 있고, 팬심과 첫해 평가에 반영됩니다. 선수 성장에는 영향이 없습니다.</p>
-      <div class="options">${opts
+      <p>기자 질문 ${qs.length}개에 답합니다. 답변은 팬심에 반영되고, 약속한 것은 나중에 평가받습니다. 선수 성장에는 영향이 없습니다.</p>
+      ${qs
         .map(
-          (c) => `<div>
-            <h3>${esc(c.title)}</h3>
-            <blockquote>${esc(c.answer)}</blockquote>
-            <p><b>평가 기준</b><br>${esc(c.promise)}</p>
-            <p class="note">${esc(c.reaction)}</p>
-            <button class="btn" data-action="gm-choice" data-id="${c.id}">이 답변 선택 (팬심 ${signed(c.delta)})</button>
-          </div>`,
+          (q, i) => `<h3 style="margin-top:14px">${i + 1}. ${esc(q.question)}</h3>
+          <div class="options">${q.options
+            .map((o) => {
+              const on = answers[q.id] === o.id;
+              return `<div class="${on ? 'chosen' : ''}">
+                <h3>${esc(o.title)}</h3>
+                <blockquote>${esc(o.answer)}</blockquote>
+                ${o.promise ? `<p><b>평가 기준</b><br>${esc(o.promise)}</p>` : o.pledge ? `<p><b>약속</b> ${esc(o.pledge)}</p>` : ''}
+                ${o.reaction ? `<p class="note">${esc(o.reaction)}</p>` : ''}
+                <button class="btn ${on ? 'primary' : ''}" data-action="gm-answer" data-q="${q.id}" data-id="${o.id}" aria-pressed="${on}">${on ? '선택함' : '이 답변'} (팬심 ${signed(o.delta)})</button>
+              </div>`;
+            })
+            .join('')}</div>`,
         )
-        .join('')}</div>
+        .join('')}
+      <div class="actions"><button class="btn primary" data-action="gm-confirm" ${ready ? '' : 'disabled'}>답변 확정</button>${ready ? '' : '<span class="note">모든 질문에 답하면 확정할 수 있습니다.</span>'}</div>
     </section>`;
   }
 
@@ -4940,8 +5580,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         .join('')}</ul>`;
   }
 
-  function interviews(g) {
-    const quotes = C.myPicks(g)
+  function interviews(g, answers) {
+    const quotes = C.mySignedPicks(g)
       .map((s) => {
         const p = player(g, s.playerId);
         return `<article class="box quote">
@@ -4954,15 +5594,15 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       .join('');
     return `
     <div class="page-head"><h1>드래프트 종료</h1>
-      <p>${esc(C.teamFor(g).short)}의 신인 ${C.myPicks(g).length}명이 정해졌습니다. 단장 답변을 고르면 ${C.ENTRY_YEAR} 시즌을 시작할 수 있습니다.</p></div>
-    ${gm(g)}
+      <p>${esc(C.teamFor(g).short)}의 신인 ${C.mySignedPicks(g).length}명이 계약했습니다${C.refusals(g, g.teamId).length ? `(지명 거부 ${C.refusals(g, g.teamId).length}명)` : ''}. 기자회견을 마치면 ${C.ENTRY_YEAR} 시즌을 시작할 수 있습니다.</p></div>
+    ${gm(g, answers)}
     <h2 class="rule">입단 소감</h2>
     <div class="quotes">${quotes}</div>
     ${devList(g)}
     ${UI.pickLog(g)}
     <div class="actions">
       <button class="btn primary" data-action="simulate" ${g.gmChoice ? '' : 'disabled'}>${g.career ? '시즌 화면으로 돌아가기' : `${C.ENTRY_YEAR} 시즌 진행`}</button>
-      ${g.gmChoice ? '' : '<span class="note">먼저 기자회견 답변을 고르세요.</span>'}
+      ${g.gmChoice ? '' : '<span class="note">먼저 기자회견 답변을 확정하세요.</span>'}
     </div>`;
   }
 
@@ -5276,9 +5916,11 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   function pledge(g) {
     const o = g.owner,
       c = C.press.GM_CHOICES.find((x) => x.id === g.gmChoice);
+    const later = C.pledgeOutcomes(g);
     return `<section class="box pledge-review">
       <h3>기자회견 약속: ${esc(c.title)} — ${esc(o.pledge.status)} (${UI.signed(o.pledge.bonus)}점)</h3>
       <p>${esc(o.pledge.detail)}. 첫해 평가 ${o.baseScore}점 ${UI.signed(o.pledge.bonus)} = ${o.score}점 (${o.grade}).</p>
+      ${later.length ? `<ul class="event-list">${later.map((x) => `<li>${C.ENTRY_YEAR + x.yearIndex} · ${esc(x.label)} — ${x.kept ? '지킴' : '못 지킴'} (팬심 ${UI.signed(x.delta)})</li>`).join('')}</ul>` : ''}
     </section>`;
   }
 
@@ -5300,13 +5942,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
           <div class="grade-card"><div class="letter">${mine.grade}</div><div class="score">${mine.score} / 100</div></div>
           <div class="score-bars" style="flex:1;min-width:220px">
-            ${bar('1군에 데뷔한 비율', (mine.debut / mine.count) * 100)}
-            ${bar('주전급으로 자리 잡은 비율', (mine.established / mine.count) * 100)}
+            ${bar('1군에 데뷔한 비율', mine.count ? (mine.debut / mine.count) * 100 : 0)}
+            ${bar('주전급으로 자리 잡은 비율', mine.count ? (mine.established / mine.count) * 100 : 0)}
             ${bar('WAR 중 우리 팀에서 낸 비율', mine.total > 0 ? (Math.max(0, mine.atHome) / mine.total) * 100 : 0)}
           </div>
         </div>
         <dl class="facts" style="margin-top:14px">
-          <dt>1군 출전</dt><dd>${mine.debut}/${mine.count}명 · 주전급 경험 ${mine.established}명</dd>
+          <dt>1군 출전</dt><dd>${mine.debut}/${mine.count}명 · 주전급 경험 ${mine.established}명${mine.refused ? ` · 지명 거부 ${mine.refused}명(평가 인원에 포함)` : ''}</dd>
           <dt>WAR 합계</dt><dd>${num(mine.total, 1)} (우리 팀에서 ${num(mine.atHome, 1)})</dd>
           <dt>기량 변화</dt><dd>지명 당시 대비 평균 ${UI.signed(mine.development)}</dd>
           <dt>기타</dt><dd>동기 개인상 ${mine.awards}회 · 국가대표 ${mine.national}명 · 방출 ${mine.released}명 · 은퇴 ${mine.retired}명 · 성장 중 ${mine.pending}명</dd>
@@ -5440,6 +6082,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     }),
     career: (g, { id }) => ({ title: '선수 경력', body: UI.careerProfile(g, id), wide: true }),
     rules: () => ({ title: '플레이 가이드', body: guide(), wide: true }),
+    changelog: () => ({
+      title: '업데이트 기록',
+      body: `<div class="changelog">${UI.releases()
+        .map((r, i) => `<details ${i === 0 ? 'open' : ''}><summary>${UI.esc(r.title)}</summary>${UI.markdown(r.body)}</details>`)
+        .join('')}</div>`,
+      wide: true,
+    }),
   };
 
   function guide() {
@@ -5449,8 +6098,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         <li>구단·난이도·지역 1차 지명 여부를 고릅니다. 지명 순서는 지난 시즌 성적의 역순이며 매 라운드 같습니다.</li>
         <li>후보 ${C.POOL_SIZE}명: 고졸, 4년제 대졸·얼리, 2년제, 독립구단, 해외 대학, 해외 리그 복귀, 드물게 야구 유학파까지 있습니다. 언론 두 곳의 1라운드 예상과 스카우트 팀장의 추천 3명을 봅니다.</li>
         <li>전국 ${C.ROUND_OPTIONS.join('·')}라운드 중 하나를 골라 지명합니다(지역 1차를 켜면 연고 지역 고졸 1명 추가). 구단마다 국내 4년제·2년제 대학 졸업예정자를 1명 이상 뽑아야 하며, 대학 얼리 참가자는 포함되지 않습니다.</li>
-        <li>드래프트가 끝나면 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약을 할 수 있습니다. 육성선수는 첫 시즌에 1군 주전이 될 수 없습니다. 다른 구단도 3–5명씩 계약합니다.</li>
-        <li>단장 기자회견에서 첫해 목표를 약속하고, 입단 소감을 듣습니다.</li>
+        <li><b>계약 협상</b>: 구단마다 신인 예산이 있습니다. 지명한 선수에게 계약금을 한 번 제시하면, 선수는 받아들이거나 금액을 올려 다시 요구하거나 거부합니다. 진학 희망·해외 구단 관심을 밝힌 선수는 요구액이 높고 거부하기 쉽습니다. 어릴 때 응원한 팀이 지명하면 요구액이 낮고 협상이 잘 풀립니다. 거부한 선수는 대학이나 해외로 떠나고 지명권은 사라집니다.</li>
+        <li>남은 예산으로 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약(1명 ${UI.won(C.tuning.contracts.devCost)})을 합니다. 육성선수는 첫 시즌에 1군 주전이 될 수 없습니다. 그러고도 남은 돈은 육성 지원금이 되어 첫 ${C.tuning.contracts.growthBoost.seasons}시즌 동안 우리 선수의 성장 속도를 최대 ${Math.round(C.tuning.contracts.growthBoost.max * 100)}% 높입니다.</li>
+        <li>단장 기자회견에서 기자 질문 세 개에 답합니다. 첫 지명 선수와 계약 결과에 대한 답, 그리고 약속이 팬심에 반영되고, 약속은 정해진 시즌이 끝난 뒤 평가받습니다.</li>
         <li>${C.ENTRY_YEAR}–${C.ENTRY_YEAR + C.Career.SEASONS - 1} ${C.Career.SEASONS}시즌을 한 해씩 진행합니다. 보직·기록·성장·건강이 다음 해로 이어지고, 2년 차가 끝난 뒤부터 트레이드, 3년 차가 끝난 뒤부터 방출이 생길 수 있습니다. 방출된 선수는 다른 팀에 입단하거나 은퇴합니다. 1군 기회가 오지 않거나 기량이 떨어진 선수는 스스로 은퇴하기도 합니다.</li>
         <li><b>병역</b>: 2년 차부터 비시즌마다 병역을 마치지 않은 우리 선수의 입대를 정할 수 있습니다(구단 판단·상무 지원·현역 입대·미루기). 상무는 퓨처스리그에서 뛰며 성장하고, 현역·사회복무요원은 야구를 쉬어 기량이 조금 떨어집니다. 만 ${C.tuning.service.mustAge}세가 되는 해에는 입대해야 합니다.</li>
         <li><b>국가대표</b>: ${C.tuning.international.map((e) => `${e.year} ${e.name}`).join(', ')}. 선발되어 아시안게임 금메달이나 올림픽 메달을 따면 병역 특례(예술체육요원)를 받습니다.</li>
@@ -5486,7 +6136,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const $ = (s) => document.querySelector(s);
   const STORE = 'draft-room-kbo-v6-scouting'; // unchanged since V0.6 so existing saves keep loading
   const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', `${C.Career.SEASONS}시즌`, '평가'];
-  const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, signing: 4, interviews: 4, season: 5, owner: 6 };
+  const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, negotiation: 4, signing: 4, interviews: 4, season: 5, owner: 6 };
 
   const newSeed = () => Date.now() + '-' + Math.random();
   const defaultView = () => ({ query: '', sort: 'rank', sortDir: 'asc', role: 'ALL', pathway: 'ALL', tier: 'ALL', pickType: 'ALL', onlyStars: false });
@@ -5495,6 +6145,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     game: null,
     setup: { selectedTeam: 'kiwoom', difficulty: 'normal', local: false, rounds: C.ROUNDS, seed: newSeed() },
     dev: { chosen: new Set(), role: 'ALL' }, // development-contract picks before they are confirmed
+    offers: {}, // first offers being edited: playerId → amount (the ask when missing)
+    counters: new Set(), // counter-offers the user will accept
+    gm: {}, // press-conference answers before they are confirmed: question id → option id
     view: defaultView(), // draft-board filters
     selected: null, // player shown in the draft profile
     stars: new Set(),
@@ -5515,7 +6168,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     state.game = game;
     Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty, rounds: game.rounds });
     state.dev = { chosen: new Set(), role: 'ALL' };
-    state.service = {};
+    Object.assign(state, { service: {}, offers: {}, counters: new Set(), gm: {} });
     state.stars = new Set(stars.filter((id) => typeof id === 'string' && C.getPlayer(game, id)));
     state.yearIndex = (game.career?.years.length || 1) - 1;
     if (game.phase === 'draft') C.advanceToUser(game);
@@ -5570,8 +6223,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       case 'preview': return UI.forecasts(game);
       case 'scouting': return UI.briefing(game);
       case 'draft': return UI.board(game, state.view, state.stars, state.selected);
+      case 'negotiation': return UI.negotiation(game, state.offers, state.counters);
       case 'signing': return UI.signing(game, state.dev.chosen, state.dev.role);
-      case 'interviews': return UI.interviews(game);
+      case 'interviews': return UI.interviews(game, state.gm);
       case 'season': return UI.season(game, state.yearIndex, state.service);
       default: return UI.review(game);
     }
@@ -5778,10 +6432,27 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     'dev-toggle': (id) => {
       const c = state.dev.chosen;
       if (c.has(id)) c.delete(id);
-      else if (c.size < C.tuning.devContracts.max) c.add(id);
+      else if (c.size < UI.devLimit(g())) c.add(id);
       render();
     },
     'dev-role': (id) => ((state.dev.role = id), render()),
+    'offer-confirm': () => {
+      const defaults = C.defaultOffers(g()),
+        offers = Object.fromEntries(Object.entries(defaults).map(([id, v]) => [id, state.offers[id] ?? v]));
+      C.negotiate(g(), offers);
+      state.offers = {};
+      state.counters = new Set();
+      render();
+      toTop();
+    },
+    'counter-toggle': (id) => (state.counters.has(id) ? state.counters.delete(id) : state.counters.add(id), render()),
+    'counter-confirm': () => {
+      C.settleCounters(g(), [...state.counters]);
+      state.counters = new Set();
+      render();
+      toTop();
+    },
+    'gm-answer': (id, btn) => ((state.gm[btn.dataset.q] = id), render(), document.querySelector('.gm-section')?.scrollIntoView({ block: 'start' })),
     'dev-confirm': () => {
       C.signDevelopment(g(), [...state.dev.chosen]);
       state.dev = { chosen: new Set(), role: 'ALL' };
@@ -5794,8 +6465,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     'mock-archive': () => showModal('mock'),
     'news-room': () => showModal('news'),
     'fan-history': () => showModal('fans'),
-    'gm-choice': (id) => {
-      C.chooseGM(g(), id);
+    'gm-confirm': () => {
+      const { pledge, ...answers } = state.gm;
+      C.chooseGM(g(), pledge, answers);
+      state.gm = {};
       render();
       document.querySelector('.gm-section')?.scrollIntoView({ block: 'start' });
     },
@@ -5835,6 +6508,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     season: () => ((g().phase = 'season'), (state.recordsOpen = false), render(), toTop()),
     interviews: () => ((g().phase = 'interviews'), render(), toTop()),
     rules: () => showModal('rules'),
+    changelog: () => showModal('changelog'),
     catalog: () => showModal('catalog'),
     reset: () => showModal('reset'),
     'confirm-reset': () => {
@@ -5870,6 +6544,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   document.addEventListener('change', (e) => {
     const id = e.target.id;
     if (id === 'import-file') return importSave(e.target.files[0]);
+    if (e.target.dataset.offer) {
+      state.offers[e.target.dataset.offer] = Number(e.target.value);
+      return render();
+    }
     if (e.target.dataset.service) {
       state.service[e.target.dataset.service] = e.target.value;
       return;

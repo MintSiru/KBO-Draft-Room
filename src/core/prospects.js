@@ -325,6 +325,19 @@
     for (const p of players) Object.assign(p, W.scoutNotes(p, rng(seed + '-notes-' + p.id)));
     players.sort((a, b) => b.publicScore - a.publicScore || a.id.localeCompare(b.id));
     players.forEach((p, i) => (p.rank = i + 1));
+    // Announced intentions (public): a few high-school players would rather go to college, and a rare
+    // top prospect has interest from abroad. Own stream, so talent and ranks are unaffected.
+    const I = TUNING.contracts.intent,
+      ir = rng(seed + '-intent');
+    let abroadCount = 0;
+    for (const p of players) {
+      p.intent = null;
+      if (p.pathway !== '고졸' && p.pathway !== '야구 유학') continue;
+      if (p.rank <= I.abroadMaxRank && p.scoutCeiling >= I.abroadMinFV && abroadCount < I.abroadMax && ir() < I.abroadChance) {
+        p.intent = 'abroad';
+        abroadCount++;
+      } else if (p.scoutCeiling >= I.collegeMinFV && ir() < I.collegeShare) p.intent = 'college';
+    }
     return { players, byId: Object.fromEntries(players.map((p) => [p.id, p])), seed: String(seed) };
   }
   /** Replaces the amateur line with a last overseas season (or a short MLB sample). */

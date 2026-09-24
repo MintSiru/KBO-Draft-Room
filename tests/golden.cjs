@@ -31,6 +31,9 @@ function simGame({ game: g, review, fans }) {
   return {
     picks: g.picks.map((s) => [s.overall, s.teamId, s.playerId, s.fit]),
     dev: (g.devSigns || []).map((s) => [s.overall, s.teamId, s.playerId]),
+    budgets: g.budgets,
+    talks: g.talks.map((t) => [t.teamId, t.playerId, t.ask, t.offer, t.result, t.counter, t.bonus]),
+    gm: [g.gmChoice, g.gmAnswers],
     news: g.news.map((n) => [n.playerId, n.delta]),
     forecasts: g.forecasts.map((f) => f.picks.map((s) => [s.teamId, s.round, s.playerId])),
     scout: g.scoutReport.candidates.map((c) => c.playerId),
@@ -55,8 +58,9 @@ function play([team, local, seed, difficulty, gm]) {
   const g = C.createGame(team, local, seed, difficulty);
   C.openScouting(g); C.beginDraft(g);
   while (g.phase === 'draft') C.addPick(g, C.aiChoice(g).id);
-  C.signDevelopment(g, C.undrafted(g).slice(2, 5).map((p) => p.id));
-  C.chooseGM(g, gm); C.runSeason(g);
+  C.signAll(g);
+  C.signDevelopment(g, C.undrafted(g).slice(2, 2 + Math.min(3, Math.floor(C.budgetLeft(g) / C.tuning.contracts.devCost))).map((p) => p.id));
+  C.chooseGM(g, gm, { first: ['now', 'project', 'fit'][seed.charCodeAt(seed.length - 1) % 3] }); C.runSeason(g);
   while (g.career.years.length < C.Career.SEASONS) {
     // Every other season, send our first eligible player to Sangmu when he has a chance, else hold him back.
     const o = C.serviceOptions(g)[0];

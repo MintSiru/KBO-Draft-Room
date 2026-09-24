@@ -24,7 +24,8 @@ function playDraft(difficulty, i) {
   C.openScouting(g);
   C.beginDraft(g);
   while (g.phase === 'draft') C.addPick(g, C.aiChoice(g).id);
-  C.signDevelopment(g, C.undrafted(g).slice(0, i % 6).map((p) => p.id));
+  C.signAll(g);
+  C.signDevelopment(g, C.undrafted(g).slice(0, Math.min(i % 6, Math.floor(C.budgetLeft(g) / C.tuning.contracts.devCost))).map((p) => p.id));
   C.chooseGM(g, ['immediate', 'development', 'needs'][i % 3]);
   C.runSeason(g);
   while (g.career.years.length < SEASONS) C.nextSeason(g);
@@ -39,12 +40,22 @@ for (const difficulty of ['easy', 'normal', 'hard']) {
   const hitters = [], starters = [], relievers = [], seasonWar = [], classWar = [], scores = [], enlistAges = [];
   const events = { trade: 0, release: 0, claim: 0, retire: 0, enlist: 0 };
   const service = { sangmu: 0, army: 0, social: 0, exempt: 0, overdue: 0, players: 0 };
+  const deals = { refused: 0, byIntent: { none: 0, college: 0, abroad: 0 }, leftShare: [], boosts: [], overBudget: 0 };
   let near5 = 0, players = 0, maxW = 0, maxHR = 0, tenW = 0, twentyHR = 0, fv60Pools = 0, mlbPools = 0;
 
   for (let i = 0; i < N; i++) {
     const g = playDraft(difficulty, i),
       pool = C.poolFor(g);
     mlbPools += pool.players.some((p) => p.pathway === 'MLB 경험 복귀');
+    for (const t of C.refusals(g)) {
+      deals.refused++;
+      deals.byIntent[C.getPlayer(g, t.playerId).intent || 'none']++;
+    }
+    for (const t of C.TEAMS) {
+      deals.leftShare.push(C.budgetLeft(g, t.id) / g.budgets[t.id]);
+      deals.boosts.push(g.career.boosts[t.id]);
+      deals.overBudget += C.spent(g, t.id) > g.budgets[t.id];
+    }
     fv60Pools += pool.players.filter((p) => p.scoutCeiling >= 60).length;
     for (const s of C.signed(g)) {
       const p = C.getPlayer(g, s.playerId),
@@ -153,6 +164,13 @@ for (const difficulty of ['easy', 'normal', 'hard']) {
       medianEnlistAge: median(enlistAges),
       overdue: service.overdue,
     },
+    contracts: {
+      refusalsPerDraft: D.round(deals.refused / N, 2),
+      refusalsByIntentPerDraft: Object.fromEntries(Object.entries(deals.byIntent).map(([k, v]) => [k, D.round(v / N, 2)])),
+      medianLeftShare: r3(median(deals.leftShare)),
+      medianGrowthBoost: r3(median(deals.boosts)),
+      overBudget: deals.overBudget,
+    },
     movesPerDraft: Object.fromEntries(Object.entries(events).map(([k, v]) => [k, D.round(v / N, 2)])),
     meanFinalScore: D.round(avg(scores), 2),
     mlbPools,
@@ -184,6 +202,8 @@ for (const difficulty of ['easy', 'normal', 'hard']) {
   assert(R(C.ROUNDS).meanFV < R(1).meanFV - 8);
   assert(row.meanFinalScore >= 45 && row.meanFinalScore <= 80);
   assert(events.trade > 0 && events.retire > 0);
+  assert(row.contracts.overBudget === 0, 'no club spends past its budget');
+  assert(row.contracts.refusalsPerDraft >= 0.5 && row.contracts.refusalsPerDraft <= 6, 'a few refusals each draft');
 }
 const report = {
   notice: 'Fictional all-AI balance audit over the full career. Thresholds are game-design targets, not official KBO statistics.',

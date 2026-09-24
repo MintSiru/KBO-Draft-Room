@@ -15,7 +15,7 @@ const KEY = 'draft-room-kbo-v6-scouting';
       errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(pathToFileURL(file).href);
-    assert.match(await page.title(), /v0\.8/);
+    assert.match(await page.title(), /v0\.9/);
     assert.equal(await page.locator('[data-action=start]').count(), 1);
 
     await page.evaluate(([key, g]) => localStorage.setItem(key, JSON.stringify({ game: g, selectedTeam: g.teamId, local: g.local, difficulty: g.difficulty, stars: [] })), [KEY, legacy.game]);
@@ -29,7 +29,7 @@ const KEY = 'draft-room-kbo-v6-scouting';
     assert.match(await page.locator('h1').innerText(), /10시즌 뒤/);
     const signed = await page.evaluate((key) => {
       const { game } = DraftCore.loadSave(JSON.parse(localStorage.getItem(key)).save);
-      return game.picks.length + game.devSigns.length;
+      return game.picks.filter((s) => !s.refused).length + game.devSigns.length;
     }, KEY);
     await page.locator('[data-action=records]').first().click();
     assert.equal(await page.locator('.record-table tbody tr').count(), signed);

@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const C=require('../src/core/engine.js'),D=require('../src/core/prospects.js'),M=require('../src/core/season.js'),S=require('../src/core/scouting.js');
 const clone=x=>JSON.parse(JSON.stringify(x));
-function draft(seed='unit06',team='lg',local=true,difficulty='normal'){const g=C.createGame(team,local,seed,difficulty);C.openScouting(g);C.beginDraft(g);while(g.phase==='draft')C.addPick(g,C.aiChoice(g).id);C.signDevelopment(g,C.undrafted(g).slice(3,5).map(p=>p.id));C.chooseGM(g,'development');return g;}
+function draft(seed='unit06',team='lg',local=true,difficulty='normal'){const g=C.createGame(team,local,seed,difficulty);C.openScouting(g);C.beginDraft(g);while(g.phase==='draft')C.addPick(g,C.aiChoice(g).id);C.signAll(g);C.signDevelopment(g,C.undrafted(g).slice(3,3+Math.min(2,Math.floor(C.budgetLeft(g)/C.tuning.contracts.devCost))).map(p=>p.id));C.chooseGM(g,'development');return g;}
 function finish(g){C.runSeason(g);while(g.career.years.length<C.Career.SEASONS)C.nextSeason(g);return g;}
 function checkStats(s){assert(s.games>=0);if(s.kind==='pitcher'){assert(s.k<=s.outs);assert(s.qs<=s.gs&&s.gs<=s.games);assert(s.wins+s.holds+s.saves<=s.games);assert.equal(s.era,s.outs?D.round(s.er*27/s.outs,2):null);}else{assert(s.hr+s.doubles+s.triples<=s.hits&&s.hits<=s.ab);assert(s.k<=s.ab-s.hits);assert.equal(s.pa,s.ab+s.bb);assert.equal(s.avg,s.ab?D.round(s.hits/s.ab,3):null);assert.equal(s.ops,s.ab?D.round((s.hits+s.bb)/s.pa+(s.hits+s.doubles+2*s.triples+3*s.hr)/s.ab,3):null);}}
 test('V6 namespace, strict phase order, round options and schedule sizes',()=>{const g=C.createGame('lg',true,'phase');assert.equal(C.VERSION,6);assert.equal(g.rounds,11);assert.equal(g.schedule.length,120);assert.equal(C.makeSchedule(false).length,110);assert.equal(C.createGame('lg',false,'r5','normal',5).schedule.length,50);assert.equal(C.createGame('lg',true,'r8','normal',8).schedule.length,90);assert.throws(()=>C.createGame('lg',false,'r7','normal',7));assert.throws(()=>C.beginDraft(g));assert(C.validate(g));C.openScouting(g);assert(C.validate(g));C.beginDraft(g);assert(C.validate(g));assert.throws(()=>C.openScouting(g));});
@@ -14,11 +14,11 @@ test('same seed and player talent are independent of difficulty and chosen club'
 test('quota last-pick and global-supply safeguards survive adversarial selection',()=>{for(const local of [true,false]){const g=C.createGame('lg',local,'adversarial06');C.openScouting(g);C.beginDraft(g);while(g.phase==='draft'){const slot=g.schedule[g.cursor],list=C.available(g);assert(list.length);const q=C.quotaStatus(g,slot.teamId);if(slot.round>0&&q.missing&&q.remaining===1)assert(list.every(p=>p.quotaEligible));const p=slot.teamId==='lg'?(list.find(p=>!p.quotaEligible)||list[0]):(list.find(p=>p.quotaEligible)||list[0]);C.addPick(g,p.id);}for(const t of C.TEAMS)assert(C.quotaStatus(g,t.id).count>=1);}});
 test('regional and recommendation candidates are eligible, unique, and immutable',()=>{const g=C.createGame('lg',true,'local06'),original=clone(g.scoutReport),forecast=clone(g.forecasts);for(const r of g.scoutReport.candidates)assert(C.eligible(C.getPlayer(g,r.playerId),C.teamFor(g)));C.openScouting(g);C.beginDraft(g);while(g.phase==='draft'){const p=C.aiChoice(g),slot=g.schedule[g.cursor];if(slot.round===0)assert(C.eligible(p,C.teamFor(g,slot.teamId)));C.addPick(g,p.id);}assert.deepEqual(g.scoutReport,original);assert.deepEqual(g.forecasts,forecast);});
 test('all 60 club × local × difficulty combinations finish and replay every phase/year',()=>{for(const t of C.TEAMS)for(const local of [false,true])for(const diff of ['easy','normal','hard']){const g=draft('flow06-'+t.id+'-'+local+'-'+diff,t.id,local,diff);assert(C.validate(g));const p=clone(C.poolFor(g).players),news=clone(g.news),forecast=clone(g.forecasts);C.runSeason(g);const first=clone(g.season),owner=clone(g.owner),fans=clone(C.fanState(g).timeline);for(let n=1;n<=C.Career.SEASONS;n++){if(n===1||n===C.Career.SEASONS||(t.id==='lg'&&!local))assert(C.validate(clone(g)));assert.equal(g.career.years.length,n);if(n<C.Career.SEASONS)C.nextSeason(g);}assert.throws(()=>C.nextSeason(g));assert.deepEqual(g.season,first);assert.deepEqual(g.owner,owner);assert.deepEqual(C.fanState(g).timeline.slice(0,fans.length-1),fans.slice(0,-1));assert.equal(C.fanState(g).timeline.length,fans.length+C.Career.SEASONS-1);assert.deepEqual(g.news,news);assert.deepEqual(g.forecasts,forecast);assert.deepEqual(C.poolFor(g).players,p);for(const club of C.TEAMS)assert(C.quotaStatus(g,club.id).count>=1);assert.equal(C.careerReview(g).length,10);}});
-test('counting stats, cumulative rates, team schedules and season affiliations reconcile',()=>{const g=finish(draft('records06'));for(const y of g.career.years){assert.equal(y.records.length,C.signed(g).length);assert.equal(y.league.table.reduce((n,x)=>n+x.wins,0),720);for(const t of y.league.table)assert.equal(t.wins+t.losses,144);for(const r of y.records){checkStats(r.stats);checkStats(r.futures);if(r.stats.kind==='hitter')assert(r.stats.games+r.futures.games<=144);}for(const a of y.awards){const rec=y.records.find(r=>r.playerId===a.playerId);assert.equal(a.teamId,rec.teamId);if(a.scope!=='national')assert(rec.stats.games>0);}}for(const s of g.picks){const h=C.Career.history(g.career,s.playerId);for(const key of ['stats','futures']){const total=C.Career.totalStats(h,key);checkStats(total);assert.equal(total.games,h.reduce((n,r)=>n+r[key].games,0));}const out=r=>['released','retired'].includes(r.route);for(let i=1;i<h.length;i++)if(!out(h[i])&&!out(h[i-1]))assert.equal(h[i].startGrade,h[i-1].scoutReady);}});
+test('counting stats, cumulative rates, team schedules and season affiliations reconcile',()=>{const g=finish(draft('records06'));for(const y of g.career.years){assert.equal(y.records.length,C.signed(g).length);assert.equal(y.league.table.reduce((n,x)=>n+x.wins,0),720);for(const t of y.league.table)assert.equal(t.wins+t.losses,144);for(const r of y.records){checkStats(r.stats);checkStats(r.futures);if(r.stats.kind==='hitter')assert(r.stats.games+r.futures.games<=144);}for(const a of y.awards){const rec=y.records.find(r=>r.playerId===a.playerId);assert.equal(a.teamId,rec.teamId);if(a.scope!=='national')assert(rec.stats.games>0);}}for(const s of C.signedPicks(g)){const h=C.Career.history(g.career,s.playerId);for(const key of ['stats','futures']){const total=C.Career.totalStats(h,key);checkStats(total);assert.equal(total.games,h.reduce((n,r)=>n+r[key].games,0));}const out=r=>['released','retired'].includes(r.route);for(let i=1;i<h.length;i++)if(!out(h[i])&&!out(h[i-1]))assert.equal(h[i].startGrade,h[i-1].scoutReady);}});
 test('healthy established players do not randomly disappear into the futures',()=>{const g=C.createGame('lg',false,'retention06'),p=C.poolFor(g).players.find(p=>p.role==='SP'),sel={label:'1R',round:1},tools=Object.fromEntries(Object.keys(p.trueTools).map(k=>[k,52]));let healthy=0,retained=0;for(let i=0;i<1000;i++){const rec=M.simulatePlayer({...p,trueTools:tools,potentialTools:Object.fromEntries(Object.keys(tools).map(k=>[k,60]))},sel,{seed:'retention-'+i},C.teamFor(g),90,{tools,route:'regular',scoutReady:50,publicTools:tools,performance:.3},2);if(!rec.limited){healthy++;retained+=rec.route==='regular';assert(rec.stats.games>0);assert.notEqual(rec.route,'futures');}}assert(retained/healthy>.8&&retained/healthy<.99);});
 test('tool interventions affect relevant statistics without using overall-point shortcuts',()=>{const r=seed=>D.rng(seed),p={role:'OF'},base={contact:50,power:50,speed:50,defense:50,eye:50};const sum=(kind,key,delta,stat)=>{let s=0;for(let i=0;i<400;i++){const tools={...kind};tools[key]+=delta;s+=M.statsFor(p,130,tools,'regular',r('tool-'+i))[stat];}return s;};assert(sum(base,'power',15,'hr')>sum(base,'power',-10,'hr')*2);assert(sum(base,'contact',15,'hits')>sum(base,'contact',-10,'hits'));assert(sum(base,'speed',15,'sb')>sum(base,'speed',-10,'sb'));assert(sum(base,'eye',15,'bb')>sum(base,'eye',-10,'bb'));const sp={role:'SP'},tb={stuff:50,command:50,breaking:50,stamina:50};let lowBB=0,highBB=0,lowIP=0,highIP=0,lowK=0,highK=0;for(let i=0;i<400;i++){lowBB+=M.statsFor(sp,28,{...tb,command:35},'regular',r('sp-'+i)).bb;highBB+=M.statsFor(sp,28,{...tb,command:65},'regular',r('sp-'+i)).bb;lowIP+=M.statsFor(sp,28,{...tb,stamina:35},'regular',r('ip-'+i)).outs;highIP+=M.statsFor(sp,28,{...tb,stamina:65},'regular',r('ip-'+i)).outs;lowK+=M.statsFor(sp,28,{...tb,stuff:35},'regular',r('k-'+i)).k;highK+=M.statsFor(sp,28,{...tb,stuff:65},'regular',r('k-'+i)).k;}assert(highBB<lowBB);assert(highIP>lowIP);assert(highK>lowK);});
 test('mature starter wins and slugger home runs have no V5 artificial caps',()=>{let maxW=0,maxHR=0,maxIP=0;for(let i=0;i<300;i++){const a=M.statsFor({role:'SP'},30,{stuff:65,command:65,breaking:60,stamina:60},'regular',D.rng('starP-'+i));const b=M.statsFor({role:'OF'},135,{contact:55,power:65,speed:45,defense:45,eye:50},'regular',D.rng('starH-'+i));maxW=Math.max(maxW,a.wins);maxIP=Math.max(maxIP,a.outs/3);maxHR=Math.max(maxHR,b.hr);checkStats(a);checkStats(b);}assert(maxW>=15);assert(maxIP>=160);assert(maxHR>=30);});
-test('trait-specific development carries tools forward and is not four identical boosts',()=>{const g=finish(draft('growth06'));assert(g.career.years.flatMap(y=>y.records).some(r=>r.growth>2));const p=C.getPlayer(g,g.picks[0].playerId),s=g.career.players[p.id];const changes=Object.keys(p.trueTools).map(k=>D.round(s.tools[k]-p.trueTools[k],1));assert(new Set(changes).size>1);for(const sel of g.picks){const p=C.getPlayer(g,sel.playerId),s=g.career.players[p.id];for(const k of Object.keys(s.tools))assert(s.tools[k]<=p.potentialTools[k]+.001);}});
+test('trait-specific development carries tools forward and is not four identical boosts',()=>{const g=finish(draft('growth06'));assert(g.career.years.flatMap(y=>y.records).some(r=>r.growth>2));const p=C.getPlayer(g,C.signedPicks(g)[0].playerId),s=g.career.players[p.id];const changes=Object.keys(p.trueTools).map(k=>D.round(s.tools[k]-p.trueTools[k],1));assert(new Set(changes).size>1);for(const sel of C.signedPicks(g)){const p=C.getPlayer(g,sel.playerId),s=g.career.players[p.id];for(const k of Object.keys(s.tools))assert(s.tools[k]<=p.potentialTools[k]+.001);}});
 test('restore rebuilds derived data from inputs and rejects edited inputs',()=>{const g=finish(draft('tamper06'));const honest=JSON.stringify(g);
  // Derived data is never trusted: edits are discarded and the honest game is rebuilt.
  for(const change of [x=>x.scoutReport.candidates[0].playerId='p999',x=>x.clubPlans.lg.staff.style='other',x=>x.forecasts[0].picks[0].playerId='p999',x=>x.career.years[0].records[0].stats.games++,x=>x.career.players[x.picks[0].playerId].tools={},x=>x.owner.score++,x=>x.news[0].headline='edited']){const bad=clone(g);change(bad);assert.equal(JSON.stringify(C.restore(bad)),honest);}
@@ -31,7 +31,7 @@ test('every new sort handles mixed positions and nulls in both directions',()=>{
 test('compact saves replay identically in every phase and stay tiny', () => {
   const roundTrip = (g) => {
     const save = JSON.parse(JSON.stringify(C.toSave(g)));
-    assert(JSON.stringify(save).length < 600, 'compact save');
+    assert(JSON.stringify(save).length < 1400, 'compact save');
     assert.equal(save.sim, C.SIM_VERSION);
     const back = C.loadSave(save).game;
     assert.deepEqual(clone(back), clone(g));
@@ -48,7 +48,22 @@ test('compact saves replay identically in every phase and stay tiny', () => {
     C.advanceToUser(g);
     roundTrip(g);
   }
+  assert.equal(g.phase, 'negotiation');
+  // Lowball the first two picks so counter-offers are likely, and give up on the last one.
+  const offers = C.defaultOffers(g),
+    ids = Object.keys(offers);
+  offers[ids[0]] = Math.max(5, Math.round((offers[ids[0]] * 0.8) / 5) * 5);
+  offers[ids[1]] = Math.max(5, Math.round((offers[ids[1]] * 0.8) / 5) * 5);
+  offers[ids.at(-1)] = 0;
+  C.negotiate(g, offers);
+  roundTrip(g);
+  if (g.phase === 'negotiation') {
+    C.settleCounters(g, C.affordableCounters(g).slice(0, 1));
+    roundTrip(g);
+  }
   assert.equal(g.phase, 'signing');
+  assert(g.picks.find((s) => s.playerId === ids.at(-1)).refused, 'no offer means no contract');
+  assert(!C.signed(g).some((s) => s.playerId === ids.at(-1)));
   C.signDevelopment(g, C.undrafted(g).slice(0, 3).map((p) => p.id));
   assert.equal(g.devSigns.filter((s) => s.teamId === 'doosan').length, 3);
   roundTrip(g);
@@ -163,4 +178,59 @@ test('season steps: role rules, growth ceiling and plan score bounds', () => {
       const s = M.planScoreOf(p, { startGrade: 40, growth, yearIndex: 0, games: route === 'regular' ? 100 : 0, route, daysLost: 0 });
       assert(s >= TUNING.scores.plan.min && s <= TUNING.scores.plan.max);
     }
+});
+
+test('contracts: budgets hold, refusals leave the class, bad offers are refused', () => {
+  let refusedTotal = 0,
+    abroadRefused = 0;
+  for (let i = 0; i < 12; i++) {
+    const g = C.createGame(C.TEAMS[i % 10].id, i % 2 === 0, 'deal-' + i, ['easy', 'normal', 'hard'][i % 3]);
+    assert.deepEqual(g.budgets, C.createGame('lg', i % 2 === 0, 'deal-' + i).budgets, 'budgets come from the seed');
+    C.openScouting(g);
+    C.beginDraft(g);
+    while (g.phase === 'draft') C.addPick(g, C.aiChoice(g).id);
+    assert.equal(g.phase, 'negotiation');
+    const offers = C.defaultOffers(g),
+      ids = Object.keys(offers);
+    assert.equal(ids.length, C.myPicks(g).length);
+    assert(Object.values(offers).reduce((n, v) => n + v, 0) <= g.budgets[g.teamId]);
+    assert.throws(() => C.negotiate(g, { ...offers, [ids[0]]: g.budgets[g.teamId] })); // over budget
+    assert.throws(() => C.negotiate(g, { ...offers, [ids[0]]: 7 })); // not a 500만 step
+    assert.throws(() => C.negotiate(g, Object.fromEntries(ids.slice(1).map((id) => [id, offers[id]])))); // missing a pick
+    C.negotiate(g, offers);
+    assert.throws(() => C.negotiate(g, offers));
+    if (g.phase === 'negotiation') {
+      assert.throws(() => C.settleCounters(g, ['p999']));
+      C.settleCounters(g, C.affordableCounters(g));
+    }
+    C.signDevelopment(g, C.undrafted(g).slice(0, Math.min(2, Math.floor(C.budgetLeft(g) / C.tuning.contracts.devCost))).map((p) => p.id));
+    for (const t of C.TEAMS) assert(C.spent(g, t.id) <= g.budgets[t.id], 'no club goes over budget: ' + t.id);
+    const refused = C.refusals(g);
+    refusedTotal += refused.length;
+    for (const t of refused) {
+      const p = C.getPlayer(g, t.playerId);
+      assert(t.path && !C.signed(g).some((s) => s.playerId === t.playerId));
+      assert(!C.undrafted(g).some((q) => q.id === t.playerId), 'a refused pick cannot be signed as a development player');
+      if (p.intent === 'abroad') abroadRefused++, assert.match(t.path, /미국/);
+    }
+    const lost = C.refusals(g, g.teamId).length,
+      entry = C.fanState(g).timeline.find((x) => x.label.startsWith('계약 협상'));
+    assert.equal(entry.delta, lost * C.tuning.contracts.refusalFan || 0);
+    C.chooseGM(g, 'development');
+    C.runSeason(g);
+    for (const t of C.TEAMS) {
+      const b = g.career.boosts[t.id];
+      assert(b >= 0 && b <= C.tuning.contracts.growthBoost.max);
+    }
+    assert.equal(C.careerReview(g).find((x) => x.teamId === g.teamId).refused, lost);
+  }
+  assert(refusedTotal > 0 && abroadRefused >= 0);
+  // Edited saves: offers over budget, counters that were never made.
+  const g = draft('deal-save');
+  const save = C.toSave(g);
+  assert(C.loadSave(save).game);
+  const big = save.offers.map(([id, v], i) => [id, i ? v : g.budgets.lg]);
+  assert.equal(C.loadSave({ ...save, offers: big }).error, 'invalid');
+  assert.equal(C.loadSave({ ...save, counters: ['p999'] }).error, 'invalid');
+  assert.equal(C.loadSave({ ...save, gm: { first: 'nope' } }).error, 'invalid');
 });

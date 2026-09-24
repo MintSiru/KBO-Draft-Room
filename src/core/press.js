@@ -128,8 +128,16 @@
       promise: '3개 보강 포지션 확보 + 해당 신인 2명 이상 계획 이행 70점',
       risk: '지명한 자리의 수만큼 실제 육성 이행도 살펴봅니다.',
     },
+    {
+      id: 'core5',
+      title: '5년 안에 주전 셋을 약속합니다',
+      answer: '첫해 성적으로 평가받을 생각은 없습니다. 5년 안에 이번 신인 중 세 명을 주전으로 만들겠습니다.',
+      promise: '5시즌 안에 이번 지명 선수 3명 이상 우리 팀 주전 경험',
+      risk: '첫해 평가에는 반영되지 않고, 5년 차가 끝난 뒤 팬들이 평가합니다.',
+    },
   ];
   function gmOptions(players, team) {
+    const prospects = players.filter((p) => p.ready >= 45 || p.scoutCeiling >= 55).length;
     const ready = players.filter((p) => p.ready >= 45).length,
       development = players.length - ready,
       covered = team.needs.filter((role) => players.some((p) => p.role === role)).length;
@@ -144,7 +152,11 @@
             ? development >= Math.ceil(players.length / 2)
               ? 3
               : -1
-            : covered === 3
+            : c.id === 'core5'
+              ? prospects >= 3
+                ? 2
+                : -1
+              : covered === 3
               ? 4
               : covered === 2
                 ? 1
@@ -154,6 +166,8 @@
           ? `공개 현재 기량상 1군 경쟁 후보는 ${ready}명입니다. 기대와 부담이 함께 커집니다.`
           : c.id === 'development'
             ? `퓨처스 육성 우선 후보는 ${development}명입니다. 기다림을 설명하되 발전을 보여야 합니다.`
+            : c.id === 'core5'
+              ? `주전감으로 꼽히는 신인은 ${prospects}명입니다. 5년 뒤 성적표가 나옵니다.`
             : `우선 보강 포지션 ${covered}/3개를 확보했습니다. 활용 계획도 함께 평가합니다.`,
     }));
   }
@@ -167,6 +181,7 @@
     ).length;
     let bonus = 0,
       detail = '';
+    if (choice === 'core5') return { bonus: 0, detail: '5년 차 시즌이 끝난 뒤 평가합니다', status: '평가 대기' };
     if (choice === 'immediate') {
       bonus = major >= 2 ? 4 : major === 1 ? 0 : -4;
       detail = `1군 경험 ${major}/2명`;
@@ -181,7 +196,56 @@
     }
     return { bonus, detail, status: bonus > 0 ? '약속 이행' : bonus < 0 ? '약속 미달' : '부분 이행' };
   }
-  const api = { OUTLETS, GM_CHOICES, forecast, news, gmOptions, accountability };
+  /**
+   * The press conference's first two questions. `first`: our first signed pick (public projection) or null;
+   * `refused`: names of our picks who refused to sign; `spentShare`: share of the budget committed.
+   */
+  function gmQuestions({ first, firstLabel, refused, spentShare, boost, team }) {
+    const out = [];
+    if (first) {
+      const f = R.fit(first, team);
+      out.push({
+        id: 'first',
+        question: `${firstLabel} ${first.name}${K.particle(first.name, '을/를')} 먼저 뽑은 이유는 무엇입니까?`,
+        options: [
+          { id: 'now', title: '바로 쓸 선수입니다', answer: '캠프부터 1군에서 경쟁시킵니다. 올해 1군에서 보실 겁니다.', delta: first.ready >= 45 ? 2 : -1, pledge: `첫해 ${first.name} 1군 출전` },
+          { id: 'project', title: '길게 보고 키웁니다', answer: '당장보다 3–4년 뒤가 기대되는 선수입니다. 그때 주전으로 세우겠습니다.', delta: first.scoutCeiling >= 55 ? 2 : 0, pledge: `4시즌 안에 ${first.name} 주전` },
+          { id: 'fit', title: '가장 필요한 자리였습니다', answer: '우리 팀에 제일 급한 포지션을 채웠습니다.', delta: f >= 80 ? 3 : -2, pledge: null },
+        ],
+      });
+    }
+    if (refused.length)
+      out.push({
+        id: 'issue',
+        question: `${refused.join(', ')} 선수가 계약을 거부했습니다. 협상에 문제는 없었습니까?`,
+        options: [
+          { id: 'apologize', title: '제 책임입니다', answer: '협상을 매끄럽게 풀지 못했습니다. 팬들께 죄송합니다.', delta: 1, pledge: null },
+          { id: 'respect', title: '선수 선택을 존중합니다', answer: '선수가 더 나은 길이라고 판단했다면 존중해야 합니다.', delta: -1, pledge: null },
+          { id: 'principle', title: '원칙을 지켰습니다', answer: '한 선수에게 예산을 몰아줄 수는 없었습니다. 남은 돈은 육성에 씁니다.', delta: boost >= 0.05 ? 1 : -2, pledge: null },
+        ],
+      });
+    else if (spentShare >= 0.95)
+      out.push({
+        id: 'issue',
+        question: '계약금으로 예산을 거의 다 썼습니다. 지나친 지출 아닙니까?',
+        options: [
+          { id: 'worth', title: '그만한 선수들입니다', answer: '몇 년 뒤 성적으로 증명하겠습니다.', delta: 1, pledge: null },
+          { id: 'sorry', title: '부담이 큰 건 맞습니다', answer: '다음 해에는 더 신중하게 쓰겠습니다.', delta: 0, pledge: null },
+        ],
+      });
+    else
+      out.push({
+        id: 'issue',
+        question: '남은 예산은 어디에 쓰십니까?',
+        options: [
+          { id: 'develop', title: '신인 육성에 씁니다', answer: '코치와 훈련 시설에 투자해 신인들이 빨리 크도록 돕겠습니다.', delta: 2, pledge: null },
+          { id: 'save', title: '아껴 두겠습니다', answer: '구단 살림도 생각해야 합니다.', delta: -1, pledge: null },
+        ],
+      });
+    return out;
+  }
+
+  const api = { OUTLETS, GM_CHOICES, forecast, news, gmOptions, gmQuestions, accountability };
   root.DraftPress = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

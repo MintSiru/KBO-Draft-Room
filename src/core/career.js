@@ -10,9 +10,10 @@
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   const SEASONS = 10;
   const fit = (p, t) => S.fit(p, t);
-  function create(picks, byId, seed = '') {
+  function create(picks, byId, seed = '', boosts = {}) {
     return {
       seed,
+      boosts, // teamId → growth-rate bonus for its own signings in their first seasons (unspent budget)
       years: [],
       players: Object.fromEntries(
         picks.map((s) => {
@@ -503,6 +504,7 @@
           blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
           closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
           absentDays: state.absentDays || 0,
+          growthBoost: state.currentTeamId === sel.teamId && yearIndex < T.contracts.growthBoost.seasons ? career.boosts?.[sel.teamId] || 0 : 0,
         });
       }
       Object.assign(state, rec.endState);
@@ -528,9 +530,10 @@
   function history(career, id) {
     return career.years.map((y) => y.records.find((s) => s.playerId === id)).filter(Boolean);
   }
-  function review(career, picks, byId) {
+  function review(career, picks, byId, lost = {}) {
     return TEAMS.map((t) => {
       const own = picks.filter((s) => s.teamId === t.id),
+        size = own.length + (lost[t.id] || 0),
         ids = new Set(own.map((s) => s.playerId)),
         records = career.years.flatMap((y) => y.records.filter((r) => ids.has(r.playerId)));
       const total = records.reduce((n, r) => n + (r.war || 0), 0),
@@ -551,12 +554,13 @@
         club,
       );
       const Rv = T.review;
-      const production = clamp((Math.max(0, total) / (own.length * Math.max(1, career.years.length) * Rv.warPerSeason)) * 100, 0, 100);
+      const production = clamp((Math.max(0, total) / (Math.max(1, size) * Math.max(1, career.years.length) * Rv.warPerSeason)) * 100, 0, 100);
       const growth = clamp(development * Rv.growth.perPoint + Rv.growth.base, 0, 100);
       const score = round(needs * Rv.weights.need + production * Rv.weights.production + growth * Rv.weights.growth);
       return {
         teamId: t.id,
         count: own.length,
+        refused: lost[t.id] || 0,
         total: round(total, 1),
         atHome: round(atHome, 1),
         debut,

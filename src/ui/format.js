@@ -85,7 +85,46 @@
     return d ? (d > 0 ? '+' : '') + d : '변화 없음';
   }
 
+  /** Minimal Markdown for the update log: headings, nested lists, bold, inline code and paragraphs. */
+  function markdown(md) {
+    const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+    let html = '',
+      depth = 0;
+    const close = (to) => {
+      while (depth > to) (html += '</ul>'), depth--;
+    };
+    for (const line of md.split('\n')) {
+      const item = line.match(/^(\s*)- (.*)$/);
+      if (item) {
+        const level = Math.floor(item[1].length / 2) + 1;
+        while (depth < level) (html += '<ul>'), depth++;
+        close(level);
+        html += `<li>${inline(item[2])}</li>`;
+        continue;
+      }
+      close(0);
+      const h = line.match(/^(#{1,3}) (.*)$/);
+      if (h) html += `<h${h[1].length + 1}>${inline(h[2])}</h${h[1].length + 1}>`;
+      else if (line.trim()) html += `<p>${inline(line)}</p>`;
+    }
+    close(0);
+    return html;
+  }
+  /** The update log split by version: [{ title, body }], newest first. */
+  function releases() {
+    const md = root.DraftChangelog || '';
+    return md
+      .split(/^## /m)
+      .slice(1)
+      .map((part) => {
+        const [title, ...rest] = part.split('\n');
+        return { title: title.trim(), body: rest.join('\n').trim() };
+      });
+  }
+
   Object.assign(UI, {
+    markdown,
+    releases,
     velocityChange,
     esc, tag, signed, num, rate, teamName, teamDot, player, playerLink, hand, grade, gradeClass,
     statLine, toolTable, toolSnapshot, obp, slg, statusLabel, serviceStatus,

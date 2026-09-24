@@ -1,1 +1,1 @@
-PASS packaged build: fresh start, older autosave kept aside, example import (161 players in the records), no page errors.
+PASS packaged build: fresh start, older autosave kept aside, example import (157 players in the records), no page errors.

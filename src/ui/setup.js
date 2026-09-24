@@ -17,6 +17,22 @@
     </section>`;
   }
 
+  /** Latest release notes: the headline items of the newest version, with a link to the full log. */
+  function updates() {
+    const [latest] = UI.releases();
+    if (!latest) return '';
+    const items = latest.body
+      .split('\n')
+      .filter((l) => /^- /.test(l))
+      .map((l) => l.slice(2).match(/^\*\*(.+?)\*\*/)?.[1] ?? l.slice(2).replace(/\*\*/g, ''))
+      .slice(0, 8);
+    return `<section class="box updates">
+      <h3>업데이트 <small class="muted">${esc(latest.title)}</small></h3>
+      <ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+      <button class="btn quiet small" data-action="changelog">전체 업데이트 기록</button>
+    </section>`;
+  }
+
   function setup({ selectedTeam, difficulty, local, rounds }, t) {
     const clubs = C.TEAMS.map(
       (club, i) => `<tr aria-selected="${club.id === selectedTeam}">
@@ -62,7 +78,7 @@
           <div class="settings-row">
             <b>지명 라운드</b>
             <div class="seg" role="group" aria-label="지명 라운드">${C.ROUND_OPTIONS.map((n) => `<button data-action="rounds" data-id="${n}" aria-pressed="${rounds === n}">${n}라운드</button>`).join('')}</div>
-            <p>구단마다 라운드당 1명씩, 총 ${rounds}명을 지명합니다. 드래프트가 끝나면 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약을 할 수 있습니다.</p>
+            <p>구단마다 라운드당 1명씩, 총 ${rounds}명을 지명합니다. 드래프트가 끝나면 예산 안에서 계약금을 협상하고, 남은 돈으로 육성선수를 최대 ${C.tuning.devContracts.max}명 계약합니다.</p>
           </div>
           <div class="settings-row">
             <label class="check" for="local-toggle"><input type="checkbox" id="local-toggle" ${local ? 'checked' : ''}> <b>지역 1차 지명</b></label>
@@ -70,6 +86,7 @@
           </div>
           <button class="btn primary wide" data-action="start">${esc(C.ko.p(t.short, "으로/로"))} 시작</button>
         </div>
+        ${updates()}
       </aside>
     </div>`;
   }

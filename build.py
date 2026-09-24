@@ -1,4 +1,5 @@
 """Bundle src/ into one dependency-free index.html that runs offline from file://."""
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -8,9 +9,9 @@ STYLES = ['styles/main.css']
 # Load order matters: each module reads the globals registered by the ones before it.
 SCRIPTS = [
     'core/tuning.js', 'core/clubs.js', 'core/catalog.js', 'core/ko.js', 'core/names.js', 'core/biography.js',
-    'core/grades.js', 'core/writer.js', 'core/prospects.js', 'core/scouting.js', 'core/season.js', 'core/draft-ai.js',
+    'core/grades.js', 'core/writer.js', 'core/prospects.js', 'core/scouting.js', 'core/season.js', 'core/draft-ai.js', 'core/contracts.js',
     'core/press.js', 'core/career.js', 'core/voices.js', 'core/engine.js',
-    'ui/format.js', 'ui/setup.js', 'ui/pregame.js', 'ui/draft.js', 'ui/signing.js', 'ui/postdraft.js', 'ui/career.js',
+    'ui/format.js', 'ui/setup.js', 'ui/pregame.js', 'ui/draft.js', 'ui/negotiation.js', 'ui/signing.js', 'ui/postdraft.js', 'ui/career.js',
     'ui/dialogs.js', 'ui/app.js',
 ]
 
@@ -22,11 +23,17 @@ def read(name):
     return text
 
 
+def changelog_script():
+    """CHANGELOG.md as a JS string, so the start screen can show the update log offline."""
+    text = (ROOT / 'CHANGELOG.md').read_text(encoding='utf-8')
+    return '<script>\nwindow.DraftChangelog = ' + json.dumps(text, ensure_ascii=False).replace('</', '<\\/') + ';\n</script>'
+
+
 def build():
     html = read('template.html')
     for marker, block in [
         ('/* BUILD:STYLES */', '\n'.join(read(n) for n in STYLES)),
-        ('<!-- BUILD:SCRIPTS -->', '\n'.join(f'<script>\n{read(n)}</script>' for n in SCRIPTS)),
+        ('<!-- BUILD:SCRIPTS -->', changelog_script() + '\n' + '\n'.join(f'<script>\n{read(n)}</script>' for n in SCRIPTS)),
     ]:
         assert html.count(marker) == 1, marker
         html = html.replace(marker, block)
