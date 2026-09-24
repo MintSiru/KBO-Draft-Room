@@ -125,3 +125,34 @@ test('DOM: the start screen shows the latest update and the full update log', ()
     dom.window.close();
   }
 });
+
+test('two-way prospects show a scouting card for their second position', () => {
+  const { dom, w, d, errors } = boot();
+  try {
+    const C = w.DraftCore,
+      UI = w.DraftUI;
+    let g = null,
+      p = null;
+    for (let i = 0; i < 60 && !p; i++) {
+      g = C.createGame('lg', false, 'altcard-' + i);
+      p = C.poolFor(g).players.find((x) => x.twoWay);
+    }
+    assert(p, 'a pool with a two-way prospect');
+    const html = UI.profile(g, p, new Set(), C.teamFor(g));
+    d.querySelector('#main').innerHTML = html;
+    const cards = d.querySelectorAll('.tool-estimates');
+    assert.equal(cards.length, 2);
+    assert.match(cards[1].textContent, new RegExp(C.ROLES[p.alt.role]));
+    assert.equal(cards[1].querySelectorAll('tbody tr').length, C.grades.keys(p.alt.role).length);
+    for (const [k, v] of Object.entries(p.alt.scouting.futureTools)) assert(v >= p.alt.tools[k]);
+    assert(p.alt.scouting.floorGrade <= p.alt.scoutCeiling && p.alt.scoutCeiling <= p.alt.scouting.ceilingGrade);
+    assert(!/undefined|NaN/.test(d.querySelector('#main').textContent));
+    // A non-two-way player has one card.
+    const q = C.poolFor(g).players.find((x) => !x.twoWay);
+    d.querySelector('#main').innerHTML = UI.profile(g, q, new Set(), C.teamFor(g));
+    assert.equal(d.querySelectorAll('.tool-estimates').length, 1);
+    assert.deepEqual(errors, []);
+  } finally {
+    dom.window.close();
+  }
+});

@@ -49,7 +49,21 @@
   }
 
   /** Current / future grade table for one player (the scouting card used everywhere). */
-  function toolTable(p) {
+  /** The other side's scouting card, in the same shape as a player's main card. */
+  const altCard = (p) => ({
+    role: p.alt.role,
+    tools: p.alt.tools,
+    futureTools: p.alt.scouting.futureTools,
+    ready: p.alt.ready,
+    scoutCeiling: p.alt.scoutCeiling,
+    floorGrade: p.alt.scouting.floorGrade,
+    ceilingGrade: p.alt.scouting.ceilingGrade,
+    pickTags: [],
+    uncertainty: p.uncertainty,
+  });
+
+  /** Current / future grade table: a player's main card, or another card such as `altCard(p)`. */
+  function toolTable(p, title = '스카우팅 평가 (20–80)') {
     const rows = C.grades
       .keys(p.role)
       .map(
@@ -58,20 +72,20 @@
       )
       .join('');
     return `<section class="tool-estimates">
-      <h4>스카우팅 평가 (20–80)</h4>
+      <h4>${esc(title)}</h4>
       <div class="overall">
         <div><b>${p.ready}</b>현재</div><div><b>${p.scoutCeiling}</b>미래 가치</div>
         <div><b>${p.floorGrade}</b>플로어</div><div><b>${p.ceilingGrade}</b>실링</div>
       </div>
       <table class="tool-grade-table"><thead><tr><th>툴</th><th>현재</th><th>미래</th></tr></thead><tbody>${rows}</tbody></table>
-      <p class="note">${p.tools.eye != null ? `선구안 ${p.tools.eye} · ` : ''}${p.pickTags.join(' · ')} · 불확실성 ${p.uncertainty}</p>
+      <p class="note">${[p.tools.eye != null ? `선구안 ${p.tools.eye}` : '', ...p.pickTags, `불확실성 ${p.uncertainty}`].filter(Boolean).join(' · ')}</p>
     </section>`;
   }
 
   /** Compact public tool grades at one point in time. */
-  function toolSnapshot(p, tools, title) {
+  function toolSnapshot(p, tools, title, role = p.role) {
     return `<section class="tool-snapshot"><h4>${esc(title)}</h4><div>${C.grades
-      .keys(p.role)
+      .keys(role)
       .map((k) => `<span>${C.grades.LABELS[k]}<b>${tools?.[k] ?? '—'}</b></span>`)
       .join('')}</div></section>`;
   }
@@ -130,6 +144,6 @@
     releases,
     velocityChange,
     esc, tag, signed, num, rate, teamName, teamDot, player, playerLink, hand, grade, gradeClass,
-    statLine, toolTable, toolSnapshot, obp, slg, statusLabel, serviceStatus,
+    statLine, toolTable, toolSnapshot, altCard, obp, slg, statusLabel, serviceStatus,
   });
 })(typeof window !== 'undefined' ? window : globalThis);

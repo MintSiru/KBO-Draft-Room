@@ -307,7 +307,9 @@
       ${pending ? '<p class="callout">아직 성장 중인 젊은 선수입니다. 평가를 끝내기 이릅니다.</p>' : ''}
       <h3>지명 당시 평가</h3>
       ${UI.toolTable(p)}
-      ${state ? UI.toolSnapshot(p, state.publicTools, `현재 세부 기량 · 종합 ${state.scoutReady}`) : ''}
+      ${p.twoWay ? UI.toolTable(UI.altCard(p), `지명 당시 보조 포지션 · ${C.ROLES[p.alt.role]}`) : ''}
+      ${state ? UI.toolSnapshot(p, state.publicTools, `현재 세부 기량 · ${C.ROLES[state.role]} · 종합 ${state.scoutReady} · FV ${state.scoutFV}`, state.role) : ''}
+      ${state && (state.twoWay || p.twoWay || state.roleHistory.some((h) => UI.kindOf(h.from) !== UI.kindOf(h.to))) ? UI.toolSnapshot(p, state.other.publicTools, `${state.twoWay ? '보조 포지션' : '반대쪽'} 현재 세부 기량 · ${C.ROLES[state.other.role]} · 종합 ${state.other.scoutReady} · FV ${state.other.scoutFV}`, state.other.role) : ''}
       <p class="note">지명 전 시즌: ${r.kind === 'pitcher' ? `${r.games}경기 ${C.innings(r.outs)}이닝 ERA ${num(r.era, 2)} ${r.k}삼진` : `${r.games}경기 ${r.pa}타석 타율 ${rate(r.avg)} OPS ${rate(r.ops)} ${r.hr}홈런`}</p>
       <h3>연도별 기록</h3>
       ${hist.length
@@ -320,7 +322,8 @@
                 ${y.second ? `<p>${tag('이도류')} ${C.ROLES[y.second.role]} · ${esc(y.second.routeLabel)} — 1군: ${UI.statLine(y.second.stats)}${y.second.stats.games ? ` · WAR ${num(y.second.war, 1)}` : ''}</p>` : ''}
                 <p>${esc(y.note)}</p>
                 ${y.teamId ? `<p class="note">${esc(y.growthLabel)} · 현재 기량 ${y.startGrade ?? y.scoutReady} → ${y.scoutReady} · FV ${y.scoutFV}${y.planScore != null ? ` · 계획 이행 ${y.planScore}` : ''}${y.velocity ? ` · 최고 구속 ${y.velocity}km/h (${UI.velocityChange(g, y)})` : ''}</p>` : ''}
-                ${y.publicTools ? UI.toolSnapshot(p, y.publicTools, '시즌 종료 세부 기량') : ''}
+                ${y.publicTools ? UI.toolSnapshot(p, y.publicTools, '시즌 종료 세부 기량', y.role ?? p.role) : ''}
+                ${y.second ? `<p class="note">${C.ROLES[y.second.role]} 시즌 종료 평가: 종합 ${y.second.scoutReady} · FV ${y.second.scoutFV}</p>` : ''}
               </article>`,
             )
             .join('') +

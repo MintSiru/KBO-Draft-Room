@@ -16,7 +16,7 @@
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   const Deal = root.DraftContracts || (typeof require !== 'undefined' ? require('./contracts.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '1.0.0',
+  const RELEASE = '1.0.1',
     VERSION = 6,
     ROUND_OPTIONS = [5, 8, 11], // national rounds the player can choose; 11 is the current KBO format
     ROUNDS = 11,

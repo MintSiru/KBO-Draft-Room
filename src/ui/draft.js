@@ -96,6 +96,7 @@
       ${p.twoWay ? `<p class="callout ok"><b>투타 겸업 유망주</b> · ${C.ROLES[p.alt.role]}로도 현재 ${p.alt.ready} · 미래 ${p.alt.scoutCeiling}로 평가받습니다. 입단 뒤 겸업을 이어 갈지, 한쪽에 전념할지 정할 수 있습니다.</p>` : p.alt.scoutCeiling >= C.tuning.altTalent.publicMinFV ? `<p class="note">${C.ROLES[p.alt.role]}로도 가능성이 있다는 평가(현재 ${p.alt.ready} · 미래 ${p.alt.scoutCeiling})가 있습니다.</p>` : ''}
       ${g.difficulty === 'easy' ? `<p class="favorite-note note">어릴 때 응원한 구단: ${C.TEAMS[p.favoriteTeam].short} (쉬움 난이도에서만 공개)</p>` : ''}
       <section>${UI.toolTable(p)}</section>
+      ${p.twoWay ? `<section>${UI.toolTable(UI.altCard(p), `보조 포지션 스카우팅 · ${C.ROLES[p.alt.role]} (20–80)`)}</section>` : ''}
       <section>
         <h4>지명 전 시즌 기록</h4>
         ${amateurLine(p)}

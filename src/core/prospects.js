@@ -333,6 +333,8 @@
     const eligible = players.filter((p) => p.rank <= A.twoWay.maxRank && !p.proExperience);
     for (const chance of A.twoWay.chances) if (tw() < chance && eligible.length) twoWayIds.add(eligible.splice(Math.floor(tw() * eligible.length), 1)[0].id);
     for (const p of players) Object.assign(p, altSide(p, twoWayIds.has(p.id), ar));
+    // Public scouting card for the other side (future grades, floor, ceiling). Display only, own stream per player.
+    for (const p of players) p.alt.scouting = altScouting(p.alt, rng(seed + '-alt-scout-' + p.id));
     // Announced intentions (public): a few high-school players would rather go to college, and a rare
     // top prospect has interest from abroad. Own stream, so talent and ranks are unaffected.
     const I = TUNING.contracts.intent,
@@ -374,6 +376,17 @@
       scoutCeiling = Math.max(ready, G.grade(G.overall(potentialTools, role) * 0.8 + G.overall(trueTools, role) * 0.2 + normal(r) * 3));
     const velocity = pitcherRole(role) ? Math.round(clamp(V.base + (trueTools.stuff - V.pivot) * V.perStuff + normal(r) * V.noise * 2, V.min, V.max)) : null;
     return { twoWay, alt: { role, trueTools, potentialTools, tools, ready, scoutCeiling, ceilingGrade: scoutCeiling, velocity, upside: G.overall(potentialTools, role) } };
+  }
+  /** Scouts' future grades for the other side. Never read by the simulation. */
+  function altScouting(alt, r) {
+    const futureTools = Object.fromEntries(
+      Object.keys(alt.tools).map((k) => [k, Math.max(alt.tools[k], G.grade(alt.potentialTools[k] * 0.8 + alt.trueTools[k] * 0.2 + normal(r) * 3))]),
+    );
+    return {
+      futureTools,
+      floorGrade: Math.min(alt.scoutCeiling, Math.max(alt.ready - 5, G.grade(alt.scoutCeiling - 9))),
+      ceilingGrade: Math.max(alt.scoutCeiling, G.grade(alt.upside + normal(r) * 4)),
+    };
   }
   /** Replaces the amateur line with a last overseas season (or a short MLB sample). */
   function applyOverseasRecord(record, level, pitcher, talent, r) {
