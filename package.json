@@ -1,13 +1,15 @@
 {
-  "name": "draft-room-kbo-prototype",
-  "version": "0.6.0",
+  "name": "kbo-draft-room",
+  "version": "1.0.1",
   "private": true,
-  "description": "Self-contained fictional KBO draft simulator prototype",
+  "description": "Offline, single-file fictional KBO rookie draft and five-season career simulator",
   "scripts": {
     "build": "python3 build.py",
-    "test": "node --test tests/v06*.test.cjs",
-    "test:browser": "node tests/v06-browser.cjs",
-    "test:balance": "node tests/v06-balance.cjs"
+    "test": "node --test tests/v06*.test.cjs && node tests/golden.cjs",
+    "test:golden": "node tests/golden.cjs",
+    "test:browser": "node tests/v06-browser.cjs && node tests/v06-release-check.cjs",
+    "test:balance": "node tests/v06-balance.cjs",
+    "release": "python3 release.py"
   },
   "devDependencies": { "jsdom": "26.1.0", "playwright-core": "1.55.0" }
 }

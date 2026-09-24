@@ -1,35 +1,56 @@
-"""Package V0.6 source and already-verified HTML without old artifacts or dependencies."""
+"""Build and package a release into dist/: a standalone HTML file plus a source zip with SHA-256 manifest.
+
+Run the test suites first (npm test, npm run test:browser); this script only checks their saved logs.
+"""
 from pathlib import Path
-import hashlib, json, shutil, zipfile
-root=Path(__file__).resolve().parent
-log=(root/'tests/v06-core-results.txt').read_text()
-assert 'tests 21' in log and 'fail 0' in log
-balance=json.loads((root/'tests/v06-balance-results.json').read_text())
-browser=json.loads((root/'tests/v06-browser-results.json').read_text())
-assert balance['drafts']==600
-assert len(browser)==4 and all(not x['errors'] and x['seasons']==5 and x['exportImport'] for x in browser)
-(root/'examples').mkdir(exist_ok=True)
-browser_save=root/'tests/desktop-normal-on-save.json'
-example=root/'examples/demo-v06-five-seasons.json'
-# A source ZIP includes the validated example but not temporary browser downloads.
-if browser_save.is_file():shutil.copyfile(browser_save,example)
-assert example.is_file(), 'The validated V0.6 example save is missing.'
-demo=json.loads(example.read_text())
-assert demo.get('format')=='draft-room-v06' and demo.get('version')==6
-assert len(demo['game']['career']['years'])==5
-paths=[root/n for n in ['index.html','README.md','QA.md','CHANGELOG.md','build.py','release.py','package.json','package-lock.json','examples/demo-v06-five-seasons.json']]
-paths+=sorted(p for p in (root/'src').iterdir() if p.is_file())
-paths+=sorted(p for p in (root/'tests').glob('v06*') if p.is_file())
-assert all(p.is_file() for p in paths)
-sha=lambda b:hashlib.sha256(b).hexdigest()
-manifest={'release':'0.6.0','name':'Read the Player','automatedTests':21,'fullFlowCombinations':60,'balanceDrafts':600,'playerSeasons':225000,'chromiumViewports':4,'files':{str(p.relative_to(root)):sha(p.read_bytes()) for p in paths}}
-mp=root/'build-manifest.json';mp.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n');paths.append(mp)
-standalone=root.parent/'DRAFT-ROOM-V0.6.html';shutil.copyfile(root/'index.html',standalone)
-zp=root.parent/'kbo-draft-v0.6-scouting.zip'
-with zipfile.ZipFile(zp,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
-    for p in paths:z.write(p,str(Path(root.name)/p.relative_to(root)))
-with zipfile.ZipFile(zp) as z:
-    assert z.testzip() is None
-    assert z.read(root.name+'/index.html')==standalone.read_bytes()
-    for p,h in manifest['files'].items():assert sha(z.read(root.name+'/'+p))==h
-print(json.dumps({'zip':zp.name,'zipBytes':zp.stat().st_size,'html':standalone.name,'htmlBytes':standalone.stat().st_size,'sha256':sha(standalone.read_bytes()),'files':len(paths),'verified':True},indent=2))
+import hashlib, json, zipfile
+
+import build
+
+ROOT = Path(__file__).resolve().parent
+VERSION = json.loads((ROOT / 'package.json').read_text())['version']
+DIST = ROOT / 'dist'
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def main():
+    build.build()
+    core_log = (ROOT / 'tests/v06-core-results.txt').read_text()
+    assert '# fail 0' in core_log, 'unit tests have not passed'
+    browser = json.loads((ROOT / 'tests/v06-browser-results.json').read_text())
+    assert browser and all(not x['errors'] and x['seasons'] == 10 and x['exportImport'] for x in browser)
+    demo = json.loads((ROOT / 'examples/demo-ten-seasons.json').read_text())
+    assert demo['format'] == 'draft-room-save' and demo['seasons'] == 10
+
+    files = ['index.html', 'README.md', 'CHANGELOG.md', 'QA.md', 'build.py', 'release.py', 'package.json',
+             'package-lock.json', 'examples/demo-ten-seasons.json']
+    files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'src').rglob('*') if p.is_file())
+    # Test sources, fixtures and result logs; not screenshots, scratch output or downloaded saves.
+    files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'tests').rglob('*') if p.is_file()
+                    and not any(part.startswith(('screenshots', 'tmp')) for part in p.relative_to(ROOT / 'tests').parts)
+                    and not p.name.endswith('-save.json'))
+    files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'docs').rglob('*') if p.is_file())
+    manifest = {'release': VERSION, 'files': {f: sha((ROOT / f).read_bytes()) for f in files}}
+
+    DIST.mkdir(exist_ok=True)
+    html = DIST / f'DRAFT-ROOM-{VERSION}.html'
+    html.write_bytes((ROOT / 'index.html').read_bytes())
+    zip_path = DIST / f'kbo-draft-room-{VERSION}.zip'
+    prefix = f'kbo-draft-room-{VERSION}/'
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        for f in files:
+            z.write(ROOT / f, prefix + f)
+        z.writestr(prefix + 'build-manifest.json', json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+    with zipfile.ZipFile(zip_path) as z:
+        assert z.testzip() is None
+        for f, h in manifest['files'].items():
+            assert sha(z.read(prefix + f)) == h, f
+    print(json.dumps({'html': str(html.relative_to(ROOT)), 'zip': str(zip_path.relative_to(ROOT)),
+                      'files': len(files), 'htmlSha256': sha(html.read_bytes())}, indent=2))
+
+
+if __name__ == '__main__':
+    main()
