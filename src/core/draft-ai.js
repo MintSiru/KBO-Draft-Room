@@ -4,9 +4,9 @@
   const D = root.DraftData || (typeof require !== 'undefined' ? require('./prospects.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   const DIFFICULTIES = {
-    easy: { name: '이지', hint: '상세 조언과 비교 후보 · 단순한 AI', noise: 12 },
-    normal: { name: '노말', hint: '추천 근거 제공 · 구단 성향별 AI', noise: 5 },
-    hard: { name: '하드', hint: '핵심 관찰만 제공 · 보강·중복·희소성을 따지는 AI', noise: 1.5 },
+    easy: { name: '쉬움', hint: '상세 조언과 비교 후보 · 단순한 AI', noise: 12 },
+    normal: { name: '보통', hint: '추천 근거 제공 · 구단 성향별 AI', noise: 5 },
+    hard: { name: '어려움', hint: '핵심 관찰만 제공 · 보강·중복·희소성을 따지는 AI', noise: 1.5 },
   };
   function project(p) {
     return {

@@ -16,7 +16,7 @@
       <button class="btn quiet small" data-action="news-room">뉴스 ${g.news.length}</button>
       <button class="btn quiet small" data-action="records">기록실</button>
       <button class="btn quiet small" data-action="export-save">진행 파일 저장</button>
-      <span class="note" style="margin-left:auto">${g.career ? `${g.career.years.length}/5 시즌` : '대졸 의무 1명 · 5시즌 추적'}</span>
+      <span class="note" style="margin-left:auto">${g.career ? `${g.career.years.length}/${C.Career.SEASONS} 시즌` : `대졸 의무 1명 · ${C.Career.SEASONS}시즌 추적`}</span>
     </div>`;
   }
 
@@ -108,8 +108,10 @@
         <li>전국 ${C.ROUND_OPTIONS.join('·')}라운드 중 하나를 골라 지명합니다(지역 1차를 켜면 연고 지역 고졸 1명 추가). 구단마다 국내 4년제·2년제 대학 졸업예정자를 1명 이상 뽑아야 하며, 대학 얼리 참가자는 포함되지 않습니다.</li>
         <li>드래프트가 끝나면 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약을 할 수 있습니다. 육성선수는 첫 시즌에 1군 주전이 될 수 없습니다. 다른 구단도 3–5명씩 계약합니다.</li>
         <li>단장 기자회견에서 첫해 목표를 약속하고, 입단 소감을 듣습니다.</li>
-        <li>${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌을 한 해씩 진행합니다. 보직·기록·성장·건강이 다음 해로 이어지고, 2년 차가 끝난 뒤부터 트레이드, 3년 차가 끝난 뒤부터 방출이 생길 수 있습니다.</li>
-        <li>5년이 끝나면 10개 구단의 드래프트를 비교 평가합니다.</li>
+        <li>${C.ENTRY_YEAR}–${C.ENTRY_YEAR + C.Career.SEASONS - 1} ${C.Career.SEASONS}시즌을 한 해씩 진행합니다. 보직·기록·성장·건강이 다음 해로 이어지고, 2년 차가 끝난 뒤부터 트레이드, 3년 차가 끝난 뒤부터 방출이 생길 수 있습니다. 방출된 선수는 다른 팀에 입단하거나 은퇴합니다. 1군 기회가 오지 않거나 기량이 떨어진 선수는 스스로 은퇴하기도 합니다.</li>
+        <li><b>병역</b>: 2년 차부터 비시즌마다 병역을 마치지 않은 우리 선수의 입대를 정할 수 있습니다(구단 판단·상무 지원·현역 입대·미루기). 상무는 퓨처스리그에서 뛰며 성장하고, 현역·사회복무요원은 야구를 쉬어 기량이 조금 떨어집니다. 만 ${C.tuning.service.mustAge}세가 되는 해에는 입대해야 합니다.</li>
+        <li><b>국가대표</b>: ${C.tuning.international.map((e) => `${e.year} ${e.name}`).join(', ')}. 선발되어 아시안게임 금메달이나 올림픽 메달을 따면 병역 특례(예술체육요원)를 받습니다.</li>
+        <li>${C.Career.SEASONS}시즌이 끝나면 10개 구단의 드래프트를 WAR·주전 배출·기량 발전으로 비교 평가합니다. 중간 평가는 언제든 볼 수 있습니다.</li>
       </ol>
       <h3>능력치 읽는 법 (20–80)</h3>
       <ol>
@@ -117,7 +119,7 @@
         <li><b>현재</b>는 지금 기량, <b>미래 가치(FV)</b>는 성장 후 예상 역할, <b>플로어·실링</b>은 나쁘게·잘 풀렸을 때의 전망입니다.</li>
         <li>투수: 구위·커맨드·변화구는 투구 성적, 체력은 소화 이닝에 반영됩니다. 야수: 컨택·장타력·주력·수비와 보조 항목 선구안.</li>
         <li>스카우팅에는 관측 오차가 있고, 고졸일수록 큽니다. 프로에서 뛰는 해가 늘면 평가가 정확해집니다.</li>
-        <li>난이도는 조언의 양과 CPU 구단의 판단 방식만 바꿉니다. 선수 능력과 성장은 같습니다. 이지에서만 선수가 어릴 때 응원한 구단이 보입니다(효과 없음).</li>
+        <li>난이도는 조언의 양과 CPU 구단의 판단 방식만 바꿉니다. 선수 능력과 성장은 같습니다. 쉬움 난이도에서만 선수가 어릴 때 응원한 구단이 보입니다(효과 없음).</li>
       </ol>
       <h3>저장</h3>
       <ol>

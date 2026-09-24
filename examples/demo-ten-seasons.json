@@ -1,0 +1,65 @@
+{
+  "format": "draft-room-save",
+  "version": 2,
+  "sim": "0.8",
+  "teamId": "lg",
+  "local": true,
+  "seed": "demo-v08",
+  "difficulty": "normal",
+  "rounds": 11,
+  "phase": "owner",
+  "picks": [
+    "p010",
+    "p260",
+    "p399",
+    "p194",
+    "p219",
+    "p094",
+    "p044",
+    "p389",
+    "p335",
+    "p249",
+    "p299",
+    "p135"
+  ],
+  "dev": [
+    "p351",
+    "p206",
+    "p026"
+  ],
+  "gmChoice": "development",
+  "seasons": 10,
+  "service": [
+    [
+      2,
+      "p260",
+      "sangmu"
+    ],
+    [
+      3,
+      "p260",
+      "sangmu"
+    ],
+    [
+      4,
+      "p010",
+      "sangmu"
+    ],
+    [
+      5,
+      "p010",
+      "sangmu"
+    ],
+    [
+      6,
+      "p010",
+      "sangmu"
+    ],
+    [
+      7,
+      "p010",
+      "sangmu"
+    ]
+  ],
+  "stars": []
+}

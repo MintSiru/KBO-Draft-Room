@@ -100,7 +100,7 @@
     const gs = role === 'SP' ? (regular || farm ? games : Math.floor(games * P.spotStartShare)) : 0;
     const E = P.era;
     const targetERA = clamp(E.base - tools.stuff * E.perStuff - tools.command * E.perCommand - tools.breaking * E.perBreaking - (farm ? E.futuresBonus : 0) + normal(r) * E.noise, E.min, E.max);
-    const k9 = clamp(P.k9.base + (tools.stuff - P.k9.pivot) * P.k9.perStuff + tools.breaking * P.k9.perBreaking, P.k9.min, P.k9.max),
+    const k9 = clamp(P.k9.base + (tools.stuff - P.k9.pivot) * P.k9.perStuff + tools.breaking * P.k9.perBreaking + (role === 'RP' ? P.k9.reliefBonus : 0), P.k9.min, P.k9.max),
       bb9 = clamp(P.bb9.base - tools.command * P.bb9.perCommand, P.bb9.min, P.bb9.max);
     const W = P.startWin,
       rank = context.teamRank || W.defaultRank;
@@ -220,13 +220,16 @@
         : p.growthCurve === 'late'
           ? yearIndex < C.late.switchYear ? C.late.firstYears : C.late.later
           : C.normal;
+    const A = Gr.ageTaper,
+      over = age - A.fullUntil - (p.growthCurve === 'late' ? A.lateShift : 0),
+      taper = clamp(1 - over / (A.zeroAt - A.fullUntil), A.floor, 1);
     const after = {};
     for (const [key, v] of Object.entries(tools)) {
       const speed = key === 'speed' ? 'speed' : 'other';
       const gap = p.potentialTools[key] - v,
         aging = Math.max(0, age - Gr.agingFrom[speed]) * Gr.agingPerYear[speed];
       const gain =
-        gap * rate * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
+        gap * rate * taper * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
         normal(r) * Gr.noise -
         aging -
         (daysLost > H.heavyInjuryDays ? H.heavyInjuryGrowthPenalty : 0);
@@ -291,6 +294,129 @@
   }
   const growthLabel = (growth) => T.scores.growthLabels.find(([min]) => growth >= min)?.[1] ?? '기량 후퇴';
 
+  const pickLine = (lines, r) => lines[Math.floor(r() * lines.length)];
+  const RETURN_NOTES = ['전역하고 시즌 중반에 팀으로 돌아왔다.', '여름에 전역해 남은 시즌을 소화했다.', '복무를 마치고 시즌 도중 합류했다.'];
+
+  /**
+   * Public future value after a season. Scouts blend last year's estimate with what the player now looks
+   * able to reach: current ability plus the part of his ceiling that his age still leaves room for.
+   * Returns the unrounded estimate (stored so next year's blend does not compound rounding).
+   */
+  function fvUpdate(p, ability, age, yearIndex, previousRaw, r) {
+    const F = T.futureValue;
+    const room = clamp((F.matureAge + (p.growthCurve === 'late' ? F.lateShift : 0) - age) / F.window, 0, 1) * Math.min(1, p.developmentRate);
+    const reachable = ability + Math.max(0, p.upside - ability) * room;
+    const estimate = reachable + (p.observerBias || 0) / (1 + yearIndex) + normal(r) * F.noise;
+    return previousRaw * (1 - F.weight) + estimate * F.weight;
+  }
+
+  /**
+   * Wins above replacement, a simple estimate from the season line (not an official formula).
+   * Hitters: linear-weight batting runs + position + fielding + steals + replacement level.
+   * Pitchers: runs allowed per nine against a replacement pitcher for the role.
+   */
+  function warOf(stats, p, tools) {
+    const W = T.war;
+    if (!stats.games) return 0;
+    if (stats.kind === 'pitcher') {
+      const P = W.pitching,
+        ip = stats.outs / 3;
+      if (!ip) return 0;
+      const replacement = P.leagueRA9 + (stats.gs >= stats.games / 2 ? P.replacement.SP : P.replacement.RP);
+      return round(((replacement - stats.era * P.eraToRA) * ip) / 9 / W.runsPerWin, 1);
+    }
+    const H = W.hitting,
+      w = H.weights,
+      singles = stats.hits - stats.doubles - stats.triples - stats.hr;
+    if (!stats.pa) return 0;
+    const woba = (w.bb * stats.bb + w.single * singles + w.double * stats.doubles + w.triple * stats.triples + w.hr * stats.hr) / stats.pa;
+    const share = stats.games / H.seasonGames;
+    const runs =
+      ((woba - H.league) / H.scale) * stats.pa +
+      H.position[p.role] * share +
+      (tools.defense - 50) * H.perDefense * share +
+      stats.sb * H.perSB +
+      (H.replacementPer600 * stats.pa) / 600;
+    return round(runs / W.runsPerWin, 1);
+  }
+
+  const SERVICE_LABELS = { sangmu: '상무 (군 복무)', army: '현역 복무', social: '사회복무요원' };
+  const SERVICE_NOTES = {
+    sangmu: ['상무에서 퓨처스리그 경기를 뛰며 복무했다.', '상무 소속으로 퓨처스리그에 꾸준히 나섰다.', '상무에서 실전 감각을 유지했다.'],
+    army: ['현역으로 복무하며 야구를 쉬었다. 전역 뒤 몸을 다시 만들어야 한다.', '현역 복무로 한 시즌을 비웠다.', '군 복무 기간이라 공을 잡지 못했다.'],
+    social: ['사회복무요원으로 근무하며 퇴근 뒤 개인 훈련을 이어 갔다.', '사회복무요원 복무 중. 개인 운동으로 감각을 유지했다.'],
+  };
+
+  /** A season spent in military service. Sangmu plays a futures season; other service loses some sharpness. */
+  function serviceSeason(p, selection, g, team, previous, yearIndex, type) {
+    const tag = (stream) => `${g.seed}-${stream}-v6-${yearIndex}-${p.id}`;
+    const tools = { ...previous.tools },
+      abilityBefore = G.overall(tools, p.role);
+    const age = D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
+    let after, futures;
+    if (type === 'sangmu') {
+      after = developTools(p, tools, yearIndex, age, 0, rng(tag('growth')));
+      futures = statsFor(p, futuresGames(p, 'futures', 0, 0, rng(tag('performance'))), tools, 'futures', rng(tag('farm')), { teamRank: team.rank });
+    } else {
+      const r = rng(tag('growth')),
+        [base, width] = T.service.decline[type];
+      after = Object.fromEntries(
+        Object.entries(tools).map(([k, v]) => [k, round(clamp(v - (base + r() * width) * (k === 'stuff' || k === 'speed' ? T.service.declineHeavy : 1), 20, 80), 3)]),
+      );
+      futures = emptyStats(p);
+    }
+    const abilityAfter = G.overall(after, p.role),
+      growth = round(abilityAfter - abilityBefore, 2),
+      observed = G.observe(after, p.role, p, yearIndex + 1, rng(tag('report')));
+    const fvRaw = fvUpdate(p, abilityAfter, age, yearIndex, previous.fvRaw ?? p.scoutCeiling, rng(tag('fv')));
+    const scoutFV = Math.max(observed.ready, G.grade(fvRaw));
+    return {
+      playerId: p.id,
+      label: selection.label,
+      year: D.bio.ENTRY_YEAR + yearIndex,
+      teamId: team.id,
+      age,
+      route: 'service',
+      serviceType: type,
+      roleTier: 'service',
+      routeLabel: SERVICE_LABELS[type],
+      stats: emptyStats(p),
+      futures,
+      growth,
+      growthLabel: growthLabel(growth),
+      velocity: seasonVelocity(p, after, rng(tag('velocity'))),
+      developmentNote: `${SERVICE_LABELS[type]} · 현재 기량 ${previous.scoutReady} → ${observed.ready}`,
+      note: pickLine(SERVICE_NOTES[type], rng(tag('text'))),
+      routeReason: 'service',
+      limited: false,
+      daysLost: 0,
+      contribution: 0,
+      war: 0,
+      planScore: null,
+      target: '복무',
+      unexpected: false,
+      startGrade: previous.scoutReady,
+      startTools: { ...previous.publicTools },
+      publicTools: observed.tools,
+      scoutReady: observed.ready,
+      scoutFV,
+      endState: {
+        ability: round(abilityAfter, 3),
+        tools: after,
+        publicTools: observed.tools,
+        scoutReady: observed.ready,
+        scoutFV,
+        fvRaw: round(fvRaw, 3),
+        route: 'service',
+        roleTier: 'service',
+        limited: false,
+        daysLost: 0,
+        age,
+        performance: 0,
+      },
+    };
+  }
+
   // ---------------------------------------------------------------- one season
 
   /**
@@ -311,7 +437,9 @@
       { impact, previous, yearIndex, round: selection.round, fit, daysLost, blockedRegular: context.blockedRegular },
       perf,
     );
-    const games = firstTeamGames(p, route, yearIndex, daysLost, perf);
+    // Days away (service ending mid-season) cut playing time and growth like injury days, but are not injuries.
+    const missed = Math.min(T.health.playingDays, daysLost + (context.absentDays || 0));
+    const games = firstTeamGames(p, route, yearIndex, missed, perf);
     const stats = statsFor(p, games, tools, route === 'regular' ? 'regular' : 'major', rng(tag('counting', true)), {
       core,
       cameo: route === 'cameo',
@@ -320,12 +448,12 @@
     });
 
     const age = D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
-    const after = developTools(p, tools, yearIndex, age, daysLost, growR);
+    const after = developTools(p, tools, yearIndex, age, missed, growR);
     const abilityAfter = G.overall(after, p.role),
       growth = round(abilityAfter - abilityBefore, 2),
       observed = G.observe(after, p.role, p, yearIndex + 1, rng(tag('report')));
 
-    const farmGames = futuresGames(p, route, games, daysLost, perf);
+    const farmGames = futuresGames(p, route, games, missed, perf);
     const futures = statsFor(p, farmGames, tools, 'futures', rng(tag('farm')), { teamRank: team.rank });
 
     const startGrade = previous?.scoutReady ?? p.ready,
@@ -333,7 +461,8 @@
     const planScore = planScoreOf(p, { startGrade, growth, yearIndex, games, route, daysLost });
     const roleTier = core ? 'core' : route;
     const bestTool = Object.keys(after).sort((a, b) => after[b] - tools[b] - (after[a] - tools[a]))[0];
-    const note = reasonText(reason, daysLost, investment, rng(tag('text')));
+    const note = (context.absentDays ? pickLine(RETURN_NOTES, rng(tag('return-text'))) + ' ' : '') + reasonText(reason, daysLost, investment, rng(tag('text')));
+    const fvRaw = fvUpdate(p, abilityAfter, age, yearIndex, previous?.fvRaw ?? p.scoutCeiling, rng(tag('fv')));
 
     return {
       playerId: p.id,
@@ -355,6 +484,7 @@
       limited,
       daysLost,
       contribution: round(contributionOf(stats, tools)),
+      war: warOf(stats, p, tools),
       planScore,
       target: p.ready >= 45 ? '1군 경쟁 도전' : '퓨처스 적응·기술 발전',
       unexpected: route === 'regular' && selection.round >= 4,
@@ -362,11 +492,14 @@
       startTools: { ...startTools },
       publicTools: observed.tools,
       scoutReady: observed.ready,
+      scoutFV: Math.max(observed.ready, G.grade(fvRaw)),
       endState: {
         ability: round(abilityAfter, 3),
         tools: after,
         publicTools: observed.tools,
         scoutReady: observed.ready,
+        scoutFV: Math.max(observed.ready, G.grade(fvRaw)),
+        fvRaw: round(fvRaw, 3),
         route,
         roleTier,
         limited,
@@ -402,7 +535,7 @@
     };
   }
 
-  const api = { simulatePlayer, evaluate, emptyStats, statsFor, decideRole, developTools, planScoreOf };
+  const api = { simulatePlayer, serviceSeason, warOf, SERVICE_LABELS, evaluate, emptyStats, statsFor, decideRole, developTools, planScoreOf };
   root.DraftSeason = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

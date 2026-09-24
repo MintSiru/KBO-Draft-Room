@@ -15,7 +15,7 @@
   const Voices = root.DraftVoices || (typeof require !== 'undefined' ? require('./voices.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '0.7.0',
+  const RELEASE = '0.8.0',
     VERSION = 6,
     ROUND_OPTIONS = [5, 8, 11], // national rounds the player can choose; 11 is the current KBO format
     ROUNDS = 11,
@@ -275,7 +275,20 @@
         g.season,
         teamFor(g),
       );
-      entry('시즌 후 · ' + a.status, a.bonus);
+      entry('첫 시즌 약속 · ' + a.status, a.bonus);
+    }
+    // Every season: the club's finish, how many of this class held a regular job here, national medals.
+    // Old feelings fade a little each year, so the score drifts back toward 50 before the new season counts.
+    const F = TUNING.fans;
+    for (const y of g.career?.years || []) {
+      const own = new Set(myPicks(g).map((s) => s.playerId).concat(mySigned(g).map((s) => s.playerId)));
+      const rank = y.league.table.find((t) => t.teamId === g.teamId).rank,
+        champion = y.league.champion === g.teamId,
+        regulars = y.records.filter((r) => own.has(r.playerId) && r.teamId === g.teamId && r.route === 'regular').length,
+        medals = y.awards.filter((a) => a.scope === 'national' && own.has(a.playerId) && /메달/.test(a.title)).length;
+      score = Math.round(clamp(score + (50 - score) * F.fade, 0, 100));
+      const delta = F.byRank[rank - 1] + (champion ? F.champion : 0) + Math.min(F.maxRegulars, regulars) * F.perRegular + Math.min(F.maxMedals, medals);
+      entry(`${y.year} 시즌 · ${rank}위${champion ? ' · 우승' : ''} · 동기 주전 ${regulars}명${medals ? ` · 국가대표 메달 ${medals}명` : ''}`, delta);
     }
     return {
       score,
@@ -311,9 +324,26 @@
     g.phase = 'season';
     return g.season;
   }
-  function nextSeason(g) {
+  // ---------------------------------------------------------------- military service choices
+
+  const SERVICE_CHOICES = ['auto', 'sangmu', 'army', 'defer'];
+  /** Our players who could enlist before the next season, with deadline and Sangmu chance. */
+  function serviceOptions(g) {
+    if (!g.career || g.career.years.length >= Career.SEASONS) return [];
+    return Career.serviceOptions(g.career, poolFor(g).byId, g.career.years.length).filter((o) => o.teamId === g.teamId);
+  }
+  /** Plays the next season. `orders`: playerId → service choice for our players ('auto' if omitted). */
+  function nextSeason(g, orders = {}) {
     if (!g.career || !['season', 'owner'].includes(g.phase)) throw Error('첫 시즌을 먼저 진행해야 합니다.');
-    const result = Career.advance(g.career, signed(g), poolFor(g).byId, g.seed);
+    const options = new Map(serviceOptions(g).map((o) => [o.playerId, o]));
+    for (const [id, choice] of Object.entries(orders)) {
+      const o = options.get(id);
+      if (!o || !SERVICE_CHOICES.includes(choice) || (choice === 'defer' && o.must)) throw Error('병역 결정을 확인해야 합니다.');
+    }
+    const yearIndex = g.career.years.length;
+    g.serviceOrders ??= [];
+    for (const [id, choice] of Object.entries(orders).sort()) if (choice !== 'auto') g.serviceOrders.push([yearIndex, id, choice]);
+    const result = Career.advance(g.career, signed(g), poolFor(g).byId, g.seed, orders);
     g.phase = 'season';
     return result;
   }
@@ -334,7 +364,7 @@
    * (tests/golden.cjs fails until you do). A save from another SIM_VERSION is refused, never silently
    * replayed into a different history.
    */
-  const SIM_VERSION = '0.7',
+  const SIM_VERSION = '0.8',
     SAVE_FORMAT = 'draft-room-save',
     SAVE_VERSION = 2;
 
@@ -354,6 +384,7 @@
       dev: (g.devSigns || []).filter((s) => s.teamId === g.teamId).map((s) => s.playerId),
       gmChoice: g.gmChoice,
       seasons: g.career?.years.length ?? 0,
+      service: g.serviceOrders || [],
     };
   }
 
@@ -378,7 +409,8 @@
         !s.picks.every((id) => typeof id === 'string') ||
         !Number.isInteger(s.seasons) ||
         s.seasons < 0 ||
-        s.seasons > Career.SEASONS
+        s.seasons > Career.SEASONS ||
+        (s.service != null && (!Array.isArray(s.service) || !s.service.every((o) => Array.isArray(o) && o.length === 3 && Number.isInteger(o[0]) && o[0] >= 1 && o[0] < s.seasons)))
       )
         return null;
       const g = createGame(s.teamId, s.local, s.seed, s.difficulty, s.rounds);
@@ -404,7 +436,10 @@
       if (['season', 'owner'].includes(s.phase) && !s.seasons) return null;
       if (s.seasons) {
         runSeason(g); // requires the GM answer
-        while (g.career.years.length < s.seasons) nextSeason(g);
+        while (g.career.years.length < s.seasons) {
+          const yi = g.career.years.length;
+          nextSeason(g, Object.fromEntries((s.service || []).filter((o) => o[0] === yi).map((o) => [o[1], o[2]])));
+        }
       }
       if (g.phase !== 'draft') g.phase = s.phase; // e.g. revisiting interviews after season 1
       return g;
@@ -507,6 +542,8 @@
     validate,
     restore,
     signDevelopment,
+    serviceOptions,
+    SERVICE_CHOICES,
     tuning: TUNING,
     undrafted,
     signed,

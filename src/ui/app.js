@@ -5,7 +5,7 @@
     UI = window.DraftUI;
   const $ = (s) => document.querySelector(s);
   const STORE = 'draft-room-kbo-v6-scouting'; // unchanged since V0.6 so existing saves keep loading
-  const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', '5시즌', '평가'];
+  const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', `${C.Career.SEASONS}시즌`, '평가'];
   const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, signing: 4, interviews: 4, season: 5, owner: 6 };
 
   const newSeed = () => Date.now() + '-' + Math.random();
@@ -21,6 +21,7 @@
     recordsOpen: false,
     records: { team: 'ALL', scope: 'origin', year: 'all', level: 'stats', sort: 'rank' },
     yearIndex: 0,
+    service: {}, // military-service choices for the coming offseason: playerId → choice
     modal: null,
     storageOK: true,
     notice: null, // shown above the setup screen, e.g. when an old save could not be continued
@@ -34,6 +35,7 @@
     state.game = game;
     Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty, rounds: game.rounds });
     state.dev = { chosen: new Set(), role: 'ALL' };
+    state.service = {};
     state.stars = new Set(stars.filter((id) => typeof id === 'string' && C.getPlayer(game, id)));
     state.yearIndex = (game.career?.years.length || 1) - 1;
     if (game.phase === 'draft') C.advanceToUser(game);
@@ -90,7 +92,7 @@
       case 'draft': return UI.board(game, state.view, state.stars, state.selected);
       case 'signing': return UI.signing(game, state.dev.chosen, state.dev.role);
       case 'interviews': return UI.interviews(game);
-      case 'season': return UI.season(game, state.yearIndex);
+      case 'season': return UI.season(game, state.yearIndex, state.service);
       default: return UI.review(game);
     }
   }
@@ -264,7 +266,8 @@
     'next-season': () => {
       if (Date.now() - lastAdvance < 900) return; // guards against double taps
       lastAdvance = Date.now();
-      C.nextSeason(g());
+      C.nextSeason(g(), state.service);
+      state.service = {};
       state.yearIndex = g().career.years.length - 1;
       state.recordsOpen = false;
       render();
@@ -387,6 +390,10 @@
   document.addEventListener('change', (e) => {
     const id = e.target.id;
     if (id === 'import-file') return importSave(e.target.files[0]);
+    if (e.target.dataset.service) {
+      state.service[e.target.dataset.service] = e.target.value;
+      return;
+    }
     if (id.startsWith('record-')) {
       state.records[id.slice(7)] = e.target.value;
       return render();

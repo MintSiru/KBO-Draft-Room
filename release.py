@@ -21,12 +21,12 @@ def main():
     core_log = (ROOT / 'tests/v06-core-results.txt').read_text()
     assert '# fail 0' in core_log, 'unit tests have not passed'
     browser = json.loads((ROOT / 'tests/v06-browser-results.json').read_text())
-    assert browser and all(not x['errors'] and x['seasons'] == 5 and x['exportImport'] for x in browser)
-    demo = json.loads((ROOT / 'examples/demo-five-seasons.json').read_text())
-    assert demo['format'] == 'draft-room-save' and demo['seasons'] == 5
+    assert browser and all(not x['errors'] and x['seasons'] == 10 and x['exportImport'] for x in browser)
+    demo = json.loads((ROOT / 'examples/demo-ten-seasons.json').read_text())
+    assert demo['format'] == 'draft-room-save' and demo['seasons'] == 10
 
     files = ['index.html', 'README.md', 'CHANGELOG.md', 'QA.md', 'build.py', 'release.py', 'package.json',
-             'package-lock.json', 'examples/demo-five-seasons.json']
+             'package-lock.json', 'examples/demo-ten-seasons.json']
     files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'src').rglob('*') if p.is_file())
     # Test sources, fixtures and result logs; not screenshots, scratch output or downloaded saves.
     files += sorted(str(p.relative_to(ROOT)) for p in (ROOT / 'tests').rglob('*') if p.is_file()

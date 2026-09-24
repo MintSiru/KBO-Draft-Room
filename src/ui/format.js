@@ -22,11 +22,30 @@
   const gradeClass = (n) => 'g' + Math.max(30, Math.min(70, Math.floor(n / 10) * 10));
   const grade = (n) => `<span class="g ${gradeClass(n)}">${n}</span>`;
 
+  const obp = (s) => (s?.pa ? (s.hits + s.bb) / s.pa : null);
+  const slg = (s) => (s?.ab ? (s.hits + s.doubles + 2 * s.triples + 3 * s.hr) / s.ab : null);
+  const per9 = (n, outs) => (outs ? ((n * 27) / outs).toFixed(1) : '—');
+
   function statLine(s) {
     if (!s || !s.games) return '출전 기록 없음';
     return s.kind === 'pitcher'
-      ? `${s.games}경기 ${s.gs}선발 · ${C.innings(s.outs)}이닝 · ERA ${num(s.era, 2)} · ${s.wins}승 ${s.holds}홀드 ${s.saves}세이브 · ${s.k}K ${s.bb}BB`
-      : `${s.games}경기 ${s.pa}타석 · 타율 ${rate(s.avg)} · OPS ${rate(s.ops)} · ${s.hr}홈런 ${s.rbi}타점 ${s.sb}도루`;
+      ? `${s.games}경기 ${s.gs}선발 · ${C.innings(s.outs)}이닝 · ERA ${num(s.era, 2)} · ${s.wins}승 ${s.holds}홀드 ${s.saves}세이브 · ${s.k}K ${s.bb}BB (9이닝당 ${per9(s.k, s.outs)}K ${per9(s.bb, s.outs)}BB)`
+      : `${s.games}경기 ${s.pa}타석 · ${rate(s.avg)}/${rate(obp(s))}/${rate(slg(s))} (타율/출루율/장타율) · ${s.hr}홈런 ${s.rbi}타점 ${s.sb}도루`;
+  }
+
+  /** Where a signed player is now: '' if still with the club that signed him. */
+  function statusLabel(state, originTeamId) {
+    if (!state) return '';
+    if (state.status === 'released') return '방출';
+    if (state.status === 'retired') return '은퇴';
+    const moved = state.currentTeamId !== originTeamId ? `→ ${teamName(state.currentTeamId)}` : '';
+    return [moved, state.service ? '군 복무 중' : ''].filter(Boolean).join(' · ');
+  }
+  function serviceStatus(state) {
+    if (state.exempt) return `면제 (${state.exempt} 병역 특례)`;
+    if (state.service) return `복무 중 · ${C.Career.SERVICE_LABELS?.[state.service.type] ?? ''}`.trim();
+    if (state.served) return '마침';
+    return '미필';
   }
 
   /** Current / future grade table for one player (the scouting card used everywhere). */
@@ -69,6 +88,6 @@
   Object.assign(UI, {
     velocityChange,
     esc, tag, signed, num, rate, teamName, teamDot, player, playerLink, hand, grade, gradeClass,
-    statLine, toolTable, toolSnapshot,
+    statLine, toolTable, toolSnapshot, obp, slg, statusLabel, serviceStatus,
   });
 })(typeof window !== 'undefined' ? window : globalThis);

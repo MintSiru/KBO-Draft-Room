@@ -92,7 +92,7 @@
         </div>
         <button class="btn quiet small" data-action="star" data-id="${p.id}" aria-pressed="${stars.has(p.id)}">${stars.has(p.id) ? '★ 관심' : '☆ 관심'}</button>
       </div>
-      ${g.difficulty === 'easy' ? `<p class="favorite-note note">어릴 때 응원한 구단: ${C.TEAMS[p.favoriteTeam].short} (이지 난이도에서만 공개)</p>` : ''}
+      ${g.difficulty === 'easy' ? `<p class="favorite-note note">어릴 때 응원한 구단: ${C.TEAMS[p.favoriteTeam].short} (쉬움 난이도에서만 공개)</p>` : ''}
       <section>${UI.toolTable(p)}</section>
       <section>
         <h4>지명 전 시즌 기록</h4>

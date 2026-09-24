@@ -41,19 +41,19 @@
       // Extra call-up chance for early picks: byRound (round 0/1, 2, 3; later rounds get 0) × byYear.
       draftInvestment: { byRound: [0.18, 0.18, 0.1, 0.04], byYear: [1, 0.2, 0] },
       // Last year's regular keeps the job with base + (ability - pivot) × perAbility + form × perForm.
-      retention: { base: 0.87, pivot: 48, perAbility: 0.009, perForm: 0.018, min: 0.66, max: 0.97 },
+      retention: { base: 0.85, pivot: 50, perAbility: 0.02, perForm: 0.018, min: 0.66, max: 0.97 },
       // A regular who loses the job drops to the futures only when both ability and form are this low.
       demotion: { maxAbility: 38, maxForm: -0.8, poorForm: -0.5 },
       // Call-up: base + sigmoid((ability - pivot) / scale) × weight + bonuses.
-      callUp: { base: 0.025, pivot: 40, scale: 3.6, weight: 0.83, afterBackup: 0.08, needFit: 80, needBonus: 0.045, min: 0.015, max: 0.98 },
+      callUp: { base: 0.008, pivot: 46.5, scale: 1.6, weight: 0.85, afterBackup: 0.08, needFit: 80, needBonus: 0.045, min: 0.015, max: 0.98 },
       // Once called up, the chance the role is a regular one.
-      regular: { pivotByYear: [47, 45], scale: 3.6, weightByYear: [0.68, 0.86], afterBackup: 0.08, min: 0.01, max: 0.95 },
+      regular: { pivotByYear: [52.5, 51], scale: 2, weightByYear: [0.55, 0.8], afterBackup: 0.08, min: 0.01, max: 0.95 },
       // Otherwise backup rather than a short cameo: clamp((ability - pivot) / scale).
-      backupOverCameo: { pivot: 30, scale: 25, min: 0.2, max: 0.83 },
+      backupOverCameo: { pivot: 38, scale: 12, min: 0.2, max: 0.83 },
       core: { minAbility: 55, fromYear: 1 }, // "핵심" regulars
       // Regular slots per club and position among this draft class; beyond it a regular becomes backup.
-      cohortCapacity: { SP: 5, RP: 7, C: 2, IF: 4, OF: 3 },
-      closer: { minAbility: 48, fromYear: 1 },
+      cohortCapacity: { SP: 2, RP: 3, C: 1, IF: 2, OF: 2 },
+      closer: { minAbility: 52, fromYear: 1 },
     },
 
     games: {
@@ -71,8 +71,8 @@
 
     hitting: {
       paPerGame: { core: 4.25, regular: 3.95, futures: 3.6, cameo: 1.8, bench: 2.55 },
-      avg: { base: 0.2, pivot: 30, perContact: 0.0027, futuresBonus: 0.035, noise: 0.018, min: 0.16, max: 0.355 },
-      hr: { base: 0.007, pivot: 32, perPower: 0.00145, futuresBonus: 0.004, min: 0.001, max: 0.085 },
+      avg: { base: 0.207, pivot: 30, perContact: 0.0027, futuresBonus: 0.035, noise: 0.018, min: 0.16, max: 0.355 },
+      hr: { base: 0.007, pivot: 32, perPower: 0.00145, futuresBonus: 0.004, min: 0.001, max: 0.072 },
       walk: { base: 0.04, pivot: 30, perEye: 0.002, min: 0.025, max: 0.16 },
       strikeout: { base: 0.3, pivot: 30, perContact: 0.003, min: 0.1, max: 0.36, minNonHitShare: 0.5 },
       hitShare: { min: 0.08, max: 0.38 }, // per-AB non-HR hit chance bounds
@@ -84,14 +84,14 @@
 
     pitching: {
       era: { base: 7.75, perStuff: 0.025, perCommand: 0.029, perBreaking: 0.016, futuresBonus: 0.95, noise: 0.45, min: 1.9, max: 8.5 },
-      startIP: { base: 3.45, perStamina: 0.047, regular: 0.05, other: -0.45, noise: 1.1, min: 2.5, max: 7.6 },
+      startIP: { base: 3.2, perStamina: 0.047, regular: 0.05, other: -0.45, noise: 1.1, min: 2.5, max: 7.6 },
       reliefIP: { base: 0.85, noise: 0.7, min: 0.33, max: 2 },
       spotStartShare: 0.65, // share of a non-regular SP's games that are starts
-      k9: { base: 1.0, pivot: 20, perStuff: 0.22, perBreaking: 0.02, min: 3.5, max: 13 },
-      bb9: { base: 6.2, perCommand: 0.066, min: 1.1, max: 5.6 },
+      k9: { base: 0.2, pivot: 20, perStuff: 0.18, perBreaking: 0.02, reliefBonus: 1.2, min: 3.5, max: 13 },
+      bb9: { base: 6.9, perCommand: 0.066, min: 1.1, max: 5.6 },
       qualityStart: { minOuts: 18, maxRuns: 3 },
       // Starter win: at least minOuts, then base + (pivotRuns - runs) × perRun + team strength, then bullpen holds.
-      startWin: { minOuts: 15, base: 0.3, pivotRuns: 5, perRun: 0.075, rankPivot: 11, perRank: 0.01, defaultRank: 6, min: 0.08, max: 0.78, bullpenHold: 0.86 },
+      startWin: { minOuts: 15, base: 0.24, pivotRuns: 5, perRun: 0.075, rankPivot: 11, perRank: 0.01, defaultRank: 6, min: 0.08, max: 0.78, bullpenHold: 0.86 },
       relief: { win: 0.045, save: 0.57, hold: 0.29 }, // cumulative thresholds on one roll
     },
 
@@ -105,8 +105,31 @@
       noise: 0.65,
       minGain: -2.5,
       maxGain: 8,
+      // Growth toward the ceiling fades with age: full until `fullUntil`, down to `floor` by `zeroAt`
+      // (late developers get `lateShift` more years). Older draftees therefore reach less of their ceiling.
+      ageTaper: { fullUntil: 22, zeroAt: 28, lateShift: 2, floor: 0.08 },
       agingFrom: { speed: 26, other: 29 },
       agingPerYear: { speed: 0.38, other: 0.28 },
+    },
+
+    // Public future value re-estimated after each season (see season.fvUpdate).
+    // weight: share of the new estimate in the blend; room to grow closes linearly over `window` years before matureAge.
+    futureValue: { weight: 0.4, matureAge: 28, lateShift: 2, window: 7, noise: 2 },
+
+    // WAR estimate shown in the records. League levels are set so an average regular is about 2 WAR.
+    war: {
+      runsPerWin: 10,
+      hitting: {
+        weights: { bb: 0.72, single: 0.9, double: 1.25, triple: 1.58, hr: 2.05 },
+        league: 0.335, // league wOBA
+        scale: 1.2,
+        replacementPer600: 20,
+        position: { C: 10, IF: 2.5, OF: -4 }, // runs per full season
+        perDefense: 0.25, // fielding runs per grade point above 50, per full season
+        perSB: 0.15,
+        seasonGames: 144,
+      },
+      pitching: { leagueRA9: 5.3, eraToRA: 1.08, replacement: { SP: 0.6, RP: 0.3 } },
     },
 
     // Descriptive only: each season's top velocity follows the change in true stuff
@@ -143,7 +166,7 @@
     },
 
     offseason: {
-      release: { minClubSize: 4, fromYear: 2, minAge: 23, maxGrade: 40, base: 0.07, perGrade: 0.014, perAge: 0.012, max: 0.24 },
+      release: { minClubSize: 3, fromYear: 2, minAge: 22, maxGrade: 42, base: 0.2, perGrade: 0.03, perAge: 0.03, max: 0.6 },
       trade: {
         chance: 0.68,
         protectContribution: 50, // regulars at or above this are never traded
@@ -155,12 +178,54 @@
       },
     },
 
+    // Fan mood after each season (display only).
+    fans: { fade: 0.15, byRank: [5, 3, 2, 1, 0, -1, -2, -3, -4, -5], champion: 3, perRegular: 1, maxRegulars: 3, maxMedals: 2 },
+
+    // Military service. Every player without service or an exemption must enlist before `mustAge`
+    // (age at the end of the coming season). Decisions happen in the offseason, from the second pro season on.
+    service: {
+      mustAge: 28,
+      firstYear: 1,
+      // Seasons away and the share of the return season still available (18 months: back by June).
+      terms: { sangmu: { seasons: 1, returnShare: 0.45 }, army: { seasons: 1, returnShare: 0.45 }, social: { seasons: 2, returnShare: 1 } },
+      // Club default: yearly chance to send a player, by last season's role, times an age factor.
+      enlistByRoute: { futures: 0.3, cameo: 0.2, backup: 0.12, regular: 0.03, rehab: 0.35 },
+      enlistByAge: [[20, 0.8], [22, 1.2], [24, 1.6], [25, 2], [26, 2.8], [27, 4]], // [max age, factor]
+      // Sangmu selection chance: (grade - minGrade) × perGrade (+ playedBonus with first-team games), clamped.
+      sangmu: { maxAge: 27, minGrade: 40, perGrade: 0.035, playedBonus: 0.12, min: 0.03, max: 0.6, clubMinGrade: 42 },
+      // Social-service (공익) classification: base + injury days so far × perInjuryDay.
+      social: { base: 0.1, perInjuryDay: 0.0012, max: 0.4 },
+      decline: { army: [0.8, 1.6], social: [0.3, 0.8] }, // per tool per season: [base, span]
+      declineHeavy: 1.35, // stuff and speed fade faster
+      // Share of each pathway that has already served when drafted.
+      servedAtDraft: { 독립구단: 0.55, '해외독립 복귀': 0.5, '마이너 복귀': 0.25, '해외리그 복귀': 0.3, 'MLB 경험 복귀': 0.2, 대졸: 0.04 },
+      // Clubs hold back likely Asian Games picks (age limit, grade at least this) when the Games are this year or next.
+      holdForGames: 48,
+    },
+
+    // National-team events in the ten seasons. Medals give the 예술체육요원 exemption.
+    // A class supplies at most `max` players (the rest of the roster comes from other classes).
+    international: [
+      { year: 2028, name: 'LA 올림픽', ageLimit: null, minGrade: 57, max: 3, results: [[0.1, '금메달'], [0.2, '은메달'], [0.42, '동메달']], exempt: ['금메달', '은메달', '동메달'] },
+      { year: 2030, name: '도하 아시안게임', ageLimit: 25, minGrade: 50, max: 6, wildcard: { maxAge: 29, minGrade: 57, count: 1 }, results: [[0.78, '금메달'], [0.9, '은메달'], [1, '동메달']], exempt: ['금메달'] },
+      { year: 2034, name: '리야드 아시안게임', ageLimit: 25, minGrade: 50, max: 6, wildcard: { maxAge: 29, minGrade: 57, count: 1 }, results: [[0.78, '금메달'], [0.9, '은메달'], [1, '동메달']], exempt: ['금메달'] },
+    ],
+
+    retirement: {
+      // A released player signs with another club with (grade - minGrade) × perGrade, up to max, if young enough.
+      claim: { minGrade: 36, perGrade: 0.05, max: 0.6, maxAge: 30 },
+      stalled: { minAge: 24, seasons: 3, maxGrade: 42, chance: 0.3 }, // no first-team game for `seasons` years
+      veteran: { minAge: 31, maxGrade: 45, chance: 0.3 },
+      rehab: 0.25, // two straight seasons lost to rehab
+      afterService: { maxGrade: 35, chance: 0.3 }, // does not come back from service
+    },
+
     review: {
       weights: { need: 0.2, production: 0.5, growth: 0.3 },
-      contributionPerSeason: 30, // per player-season, for 100 production points
+      warPerSeason: 0.5, // WAR per player-season for 100 production points
       growth: { base: 35, perPoint: 3.5 },
       gradeCuts: [85, 70, 55],
-      pendingMaxAge: 24,
+      pendingMaxAge: 25,
     },
   };
 

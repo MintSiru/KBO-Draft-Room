@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f4f2ec">
-<meta name="description" content="가상의 KBO 신인 드래프트를 진행하고 지명한 선수들의 5년 경력을 시뮬레이션합니다.">
-<title>드래프트 룸 v0.7.0 — KBO 신인 드래프트</title>
+<meta name="description" content="가상의 KBO 신인 드래프트를 진행하고 지명한 선수들의 10년 경력을 시뮬레이션합니다.">
+<title>드래프트 룸 v0.8.0 — KBO 신인 드래프트</title>
 <style>
 /* Draft Room — one stylesheet. Scorebook look: paper, ink rules, tables; the club colour is the only accent. */
 :root {
@@ -390,19 +390,19 @@ details[open] > summary { margin-bottom: 6px; }
       // Extra call-up chance for early picks: byRound (round 0/1, 2, 3; later rounds get 0) × byYear.
       draftInvestment: { byRound: [0.18, 0.18, 0.1, 0.04], byYear: [1, 0.2, 0] },
       // Last year's regular keeps the job with base + (ability - pivot) × perAbility + form × perForm.
-      retention: { base: 0.87, pivot: 48, perAbility: 0.009, perForm: 0.018, min: 0.66, max: 0.97 },
+      retention: { base: 0.85, pivot: 50, perAbility: 0.02, perForm: 0.018, min: 0.66, max: 0.97 },
       // A regular who loses the job drops to the futures only when both ability and form are this low.
       demotion: { maxAbility: 38, maxForm: -0.8, poorForm: -0.5 },
       // Call-up: base + sigmoid((ability - pivot) / scale) × weight + bonuses.
-      callUp: { base: 0.025, pivot: 40, scale: 3.6, weight: 0.83, afterBackup: 0.08, needFit: 80, needBonus: 0.045, min: 0.015, max: 0.98 },
+      callUp: { base: 0.008, pivot: 46.5, scale: 1.6, weight: 0.85, afterBackup: 0.08, needFit: 80, needBonus: 0.045, min: 0.015, max: 0.98 },
       // Once called up, the chance the role is a regular one.
-      regular: { pivotByYear: [47, 45], scale: 3.6, weightByYear: [0.68, 0.86], afterBackup: 0.08, min: 0.01, max: 0.95 },
+      regular: { pivotByYear: [52.5, 51], scale: 2, weightByYear: [0.55, 0.8], afterBackup: 0.08, min: 0.01, max: 0.95 },
       // Otherwise backup rather than a short cameo: clamp((ability - pivot) / scale).
-      backupOverCameo: { pivot: 30, scale: 25, min: 0.2, max: 0.83 },
+      backupOverCameo: { pivot: 38, scale: 12, min: 0.2, max: 0.83 },
       core: { minAbility: 55, fromYear: 1 }, // "핵심" regulars
       // Regular slots per club and position among this draft class; beyond it a regular becomes backup.
-      cohortCapacity: { SP: 5, RP: 7, C: 2, IF: 4, OF: 3 },
-      closer: { minAbility: 48, fromYear: 1 },
+      cohortCapacity: { SP: 2, RP: 3, C: 1, IF: 2, OF: 2 },
+      closer: { minAbility: 52, fromYear: 1 },
     },
 
     games: {
@@ -420,8 +420,8 @@ details[open] > summary { margin-bottom: 6px; }
 
     hitting: {
       paPerGame: { core: 4.25, regular: 3.95, futures: 3.6, cameo: 1.8, bench: 2.55 },
-      avg: { base: 0.2, pivot: 30, perContact: 0.0027, futuresBonus: 0.035, noise: 0.018, min: 0.16, max: 0.355 },
-      hr: { base: 0.007, pivot: 32, perPower: 0.00145, futuresBonus: 0.004, min: 0.001, max: 0.085 },
+      avg: { base: 0.207, pivot: 30, perContact: 0.0027, futuresBonus: 0.035, noise: 0.018, min: 0.16, max: 0.355 },
+      hr: { base: 0.007, pivot: 32, perPower: 0.00145, futuresBonus: 0.004, min: 0.001, max: 0.072 },
       walk: { base: 0.04, pivot: 30, perEye: 0.002, min: 0.025, max: 0.16 },
       strikeout: { base: 0.3, pivot: 30, perContact: 0.003, min: 0.1, max: 0.36, minNonHitShare: 0.5 },
       hitShare: { min: 0.08, max: 0.38 }, // per-AB non-HR hit chance bounds
@@ -433,14 +433,14 @@ details[open] > summary { margin-bottom: 6px; }
 
     pitching: {
       era: { base: 7.75, perStuff: 0.025, perCommand: 0.029, perBreaking: 0.016, futuresBonus: 0.95, noise: 0.45, min: 1.9, max: 8.5 },
-      startIP: { base: 3.45, perStamina: 0.047, regular: 0.05, other: -0.45, noise: 1.1, min: 2.5, max: 7.6 },
+      startIP: { base: 3.2, perStamina: 0.047, regular: 0.05, other: -0.45, noise: 1.1, min: 2.5, max: 7.6 },
       reliefIP: { base: 0.85, noise: 0.7, min: 0.33, max: 2 },
       spotStartShare: 0.65, // share of a non-regular SP's games that are starts
-      k9: { base: 1.0, pivot: 20, perStuff: 0.22, perBreaking: 0.02, min: 3.5, max: 13 },
-      bb9: { base: 6.2, perCommand: 0.066, min: 1.1, max: 5.6 },
+      k9: { base: 0.2, pivot: 20, perStuff: 0.18, perBreaking: 0.02, reliefBonus: 1.2, min: 3.5, max: 13 },
+      bb9: { base: 6.9, perCommand: 0.066, min: 1.1, max: 5.6 },
       qualityStart: { minOuts: 18, maxRuns: 3 },
       // Starter win: at least minOuts, then base + (pivotRuns - runs) × perRun + team strength, then bullpen holds.
-      startWin: { minOuts: 15, base: 0.3, pivotRuns: 5, perRun: 0.075, rankPivot: 11, perRank: 0.01, defaultRank: 6, min: 0.08, max: 0.78, bullpenHold: 0.86 },
+      startWin: { minOuts: 15, base: 0.24, pivotRuns: 5, perRun: 0.075, rankPivot: 11, perRank: 0.01, defaultRank: 6, min: 0.08, max: 0.78, bullpenHold: 0.86 },
       relief: { win: 0.045, save: 0.57, hold: 0.29 }, // cumulative thresholds on one roll
     },
 
@@ -454,8 +454,31 @@ details[open] > summary { margin-bottom: 6px; }
       noise: 0.65,
       minGain: -2.5,
       maxGain: 8,
+      // Growth toward the ceiling fades with age: full until `fullUntil`, down to `floor` by `zeroAt`
+      // (late developers get `lateShift` more years). Older draftees therefore reach less of their ceiling.
+      ageTaper: { fullUntil: 22, zeroAt: 28, lateShift: 2, floor: 0.08 },
       agingFrom: { speed: 26, other: 29 },
       agingPerYear: { speed: 0.38, other: 0.28 },
+    },
+
+    // Public future value re-estimated after each season (see season.fvUpdate).
+    // weight: share of the new estimate in the blend; room to grow closes linearly over `window` years before matureAge.
+    futureValue: { weight: 0.4, matureAge: 28, lateShift: 2, window: 7, noise: 2 },
+
+    // WAR estimate shown in the records. League levels are set so an average regular is about 2 WAR.
+    war: {
+      runsPerWin: 10,
+      hitting: {
+        weights: { bb: 0.72, single: 0.9, double: 1.25, triple: 1.58, hr: 2.05 },
+        league: 0.335, // league wOBA
+        scale: 1.2,
+        replacementPer600: 20,
+        position: { C: 10, IF: 2.5, OF: -4 }, // runs per full season
+        perDefense: 0.25, // fielding runs per grade point above 50, per full season
+        perSB: 0.15,
+        seasonGames: 144,
+      },
+      pitching: { leagueRA9: 5.3, eraToRA: 1.08, replacement: { SP: 0.6, RP: 0.3 } },
     },
 
     // Descriptive only: each season's top velocity follows the change in true stuff
@@ -492,7 +515,7 @@ details[open] > summary { margin-bottom: 6px; }
     },
 
     offseason: {
-      release: { minClubSize: 4, fromYear: 2, minAge: 23, maxGrade: 40, base: 0.07, perGrade: 0.014, perAge: 0.012, max: 0.24 },
+      release: { minClubSize: 3, fromYear: 2, minAge: 22, maxGrade: 42, base: 0.2, perGrade: 0.03, perAge: 0.03, max: 0.6 },
       trade: {
         chance: 0.68,
         protectContribution: 50, // regulars at or above this are never traded
@@ -504,12 +527,54 @@ details[open] > summary { margin-bottom: 6px; }
       },
     },
 
+    // Fan mood after each season (display only).
+    fans: { fade: 0.15, byRank: [5, 3, 2, 1, 0, -1, -2, -3, -4, -5], champion: 3, perRegular: 1, maxRegulars: 3, maxMedals: 2 },
+
+    // Military service. Every player without service or an exemption must enlist before `mustAge`
+    // (age at the end of the coming season). Decisions happen in the offseason, from the second pro season on.
+    service: {
+      mustAge: 28,
+      firstYear: 1,
+      // Seasons away and the share of the return season still available (18 months: back by June).
+      terms: { sangmu: { seasons: 1, returnShare: 0.45 }, army: { seasons: 1, returnShare: 0.45 }, social: { seasons: 2, returnShare: 1 } },
+      // Club default: yearly chance to send a player, by last season's role, times an age factor.
+      enlistByRoute: { futures: 0.3, cameo: 0.2, backup: 0.12, regular: 0.03, rehab: 0.35 },
+      enlistByAge: [[20, 0.8], [22, 1.2], [24, 1.6], [25, 2], [26, 2.8], [27, 4]], // [max age, factor]
+      // Sangmu selection chance: (grade - minGrade) × perGrade (+ playedBonus with first-team games), clamped.
+      sangmu: { maxAge: 27, minGrade: 40, perGrade: 0.035, playedBonus: 0.12, min: 0.03, max: 0.6, clubMinGrade: 42 },
+      // Social-service (공익) classification: base + injury days so far × perInjuryDay.
+      social: { base: 0.1, perInjuryDay: 0.0012, max: 0.4 },
+      decline: { army: [0.8, 1.6], social: [0.3, 0.8] }, // per tool per season: [base, span]
+      declineHeavy: 1.35, // stuff and speed fade faster
+      // Share of each pathway that has already served when drafted.
+      servedAtDraft: { 독립구단: 0.55, '해외독립 복귀': 0.5, '마이너 복귀': 0.25, '해외리그 복귀': 0.3, 'MLB 경험 복귀': 0.2, 대졸: 0.04 },
+      // Clubs hold back likely Asian Games picks (age limit, grade at least this) when the Games are this year or next.
+      holdForGames: 48,
+    },
+
+    // National-team events in the ten seasons. Medals give the 예술체육요원 exemption.
+    // A class supplies at most `max` players (the rest of the roster comes from other classes).
+    international: [
+      { year: 2028, name: 'LA 올림픽', ageLimit: null, minGrade: 57, max: 3, results: [[0.1, '금메달'], [0.2, '은메달'], [0.42, '동메달']], exempt: ['금메달', '은메달', '동메달'] },
+      { year: 2030, name: '도하 아시안게임', ageLimit: 25, minGrade: 50, max: 6, wildcard: { maxAge: 29, minGrade: 57, count: 1 }, results: [[0.78, '금메달'], [0.9, '은메달'], [1, '동메달']], exempt: ['금메달'] },
+      { year: 2034, name: '리야드 아시안게임', ageLimit: 25, minGrade: 50, max: 6, wildcard: { maxAge: 29, minGrade: 57, count: 1 }, results: [[0.78, '금메달'], [0.9, '은메달'], [1, '동메달']], exempt: ['금메달'] },
+    ],
+
+    retirement: {
+      // A released player signs with another club with (grade - minGrade) × perGrade, up to max, if young enough.
+      claim: { minGrade: 36, perGrade: 0.05, max: 0.6, maxAge: 30 },
+      stalled: { minAge: 24, seasons: 3, maxGrade: 42, chance: 0.3 }, // no first-team game for `seasons` years
+      veteran: { minAge: 31, maxGrade: 45, chance: 0.3 },
+      rehab: 0.25, // two straight seasons lost to rehab
+      afterService: { maxGrade: 35, chance: 0.3 }, // does not come back from service
+    },
+
     review: {
       weights: { need: 0.2, production: 0.5, growth: 0.3 },
-      contributionPerSeason: 30, // per player-season, for 100 production points
+      warPerSeason: 0.5, // WAR per player-season for 100 production points
       growth: { base: 35, perPoint: 3.5 },
       gradeCuts: [85, 70, 55],
-      pendingMaxAge: 24,
+      pendingMaxAge: 25,
     },
   };
 
@@ -889,12 +954,14 @@ details[open] > summary { margin-bottom: 6px; }
 const groups=[
  {weight:5,names:'민준 서준 도윤 예준 시우 하준 주원 지호 지후 준우 준서 건우 현우 지훈 우진 선우 민재 현준 연우 정우 승우 승현 준혁 지환 승민 유준 준영 진우 성민 태현 동현 수빈 재윤 민성 성현 태민 준호 재현 지민 정민 재민 현수 민수 성훈 상현 동건 동훈 준수 수현 승준 경민 정훈 영준 민규 승훈'.split(' ')},
  {weight:3,names:'성준 진호 태준 동혁 상민 병찬 정현 기현 태훈 재훈 석현 현빈 태영 상훈 영훈 도현 재영 정윤 재원 준원 태원 동욱 승환 재환 진영 성진 우성 성빈 종현 종민 창민 창현 효준 강민 규민 대현 경수 경훈 종훈 원준 성우 진수 동우 민우 지웅 태웅 정빈 주형 준형 동준 성원 정호 재호 윤호 상우 동민 현성 규현 주호 명준 경준 태호 지수 윤성 승호 도훈 석준 영민'.split(' ')},
+ {weight:2,names:'시후 은우 이안 지오 로운 하율 도율 서후 선율 윤우 준희 태오 시훈 우현 건민 민결 지성 도경 태율 은결 재율 규빈 하온 연준 이든 지후 유건 채훈 수호 윤찬 민호 성연 도영 승유 태건 호연 지웅 서율 강현 준범 재하 현서 한결 도훈 민서 세윤 주안 윤서 시안 우림 동하 민율 하진 준하 태하 건휘 지율 도진 승하 현호 주성 태서 민건 준하 서하 재율 은석 경호 동주 성율 가온 라온 누리 새론'.split(' ')},
+ {weight:0.25,names:'준 건 훈 혁 찬 결 솔 현 율 원 진 강 빈 윤 담'.split(' ')},
  {weight:1,names:'도겸 도하 건희 건호 건형 건영 건준 건율 기범 기훈 기태 기성 기욱 규빈 규원 규호 규태 대영 대호 대훈 대윤 동규 동균 동완 동영 동원 동윤 동진 동찬 명재 명진 명호 문수 민석 민찬 민혁 민형 민호 범수 범준 범진 병규 병민 병수 병우 병진 병현 병훈 상규 상원 상준 상진 상혁 상호 서우 서원 서윤 서진 선규 선민 선재 선호 선혁 성규 성균 성재 성호 세민 세준 세진 세현 수민 수영 수원 승규 승빈 승원 승윤 승재 승진 승찬 시온 시윤 시현 신우 영규 영빈 영서 영수 영우 영재 영진 영찬 영호 용민 용준 용진 우빈 우석 우영 우주 우찬 우혁 원빈 원석 원영 원우 원재 원호 유민 유빈 유성 유찬 유현 윤규 윤재 윤준 윤혁 윤후 은성 은우 은찬 은호 의찬 이준 인규 인성 인우 인호 재경 재균 재서 재성 재우 재준 재찬 재혁 재형 정규 정수 정원 정준 정환 종규 종원 종찬 주영 주찬 준경 준규 준기 준민 준빈 준석 준성 준승 준용 준재 준찬 준현 준후 지안 지완 지원 지유 지율 지한 지현 진규 진서 진성 진석 진원 진혁 진현 찬규 찬민 찬우 찬영 찬용 찬원 찬준 찬혁 창규 창수 창우 창준 창훈 채민 채운 태경 태규 태균 태성 태수 태양 태연 태욱 태윤 태인 태진 태찬 태혁 태환 하람 하민 하성 하영 하윤 한결 한빈 한솔 한준 해성 혁준 현규 현기 현민 현석 현승 현욱 현진 현찬 형민 형준 형진 호준 호진 호영 홍준 환희 효민 효빈 효성 효진 휘준 휘성 희성 희준 희찬'.split(' ')}
 ];
 const seen=new Set();const givenNames=[];for(const group of groups)for(const name of group.names)if(!seen.has(name)){seen.add(name);givenNames.push({name,weight:group.weight});}
-const surnames=[['김',21],['이',15],['박',9],['최',5],['정',5],['강',3],['조',3],['윤',3],['장',2],['임',2],['한',2],['오',2],['서',2],['신',2],['권',2],['황',1],['안',1],['송',1],['전',1],['홍',1],['유',1],['고',1],['문',1],['양',1],['손',1],['배',1],['백',1],['허',1],['남',1],['심',1],['노',1],['하',1],['곽',1],['성',1],['차',1],['주',1],['민',1],['류',1],['진',1],['지',1]].map(([name,weight])=>({name,weight}));
+const surnames=[['김',21.5],['이',14.7],['박',8.4],['최',4.7],['정',4.3],['강',2.4],['조',2.1],['윤',2.1],['장',2],['임',1.7],['한',1.5],['오',1.5],['서',1.4],['신',1.4],['권',1.4],['황',1.4],['안',1.4],['송',1.3],['전',1.1],['홍',1.1],['유',1.1],['고',0.9],['문',0.9],['양',0.8],['손',0.8],['배',0.8],['백',0.7],['허',0.7],['남',0.6],['심',0.6],['노',0.6],['하',0.5],['곽',0.4],['성',0.4],['차',0.4],['주',0.4],['우',0.4],['구',0.4],['민',0.3],['류',0.3],['나',0.3],['진',0.3],['지',0.3],['엄',0.3],['채',0.3],['원',0.3],['천',0.3],['방',0.2],['공',0.2],['현',0.2],['함',0.2],['변',0.2],['염',0.2],['여',0.2],['추',0.2],['도',0.2],['소',0.1],['석',0.1],['선',0.1],['설',0.1],['마',0.1],['길',0.1],['연',0.1],['위',0.1],['표',0.1],['명',0.1],['기',0.1],['반',0.1],['왕',0.1],['금',0.1],['옥',0.1],['육',0.1],['인',0.1],['맹',0.1],['제',0.1],['모',0.1],['탁',0.05],['국',0.05],['어',0.05],['은',0.05],['편',0.05],['용',0.05],['예',0.05],['봉',0.05],['경',0.05],['피',0.03],['감',0.03],['남궁',0.05],['황보',0.05],['제갈',0.03],['선우',0.03],['독고',0.02]].map(([name,weight])=>({name,weight}));
 function weighted(list,r){let n=r()*list.reduce((s,x)=>s+x.weight,0);for(const x of list){n-=x.weight;if(n<0)return x.name;}return list.at(-1).name;}
-function makeName(r,used){for(let i=0;i<5000;i++){const family=weighted(surnames,r),given=weighted(givenNames,r),name=family+given;if(given[0]===given[1]||family===given[0]||used.has(name))continue;used.add(name);return {name,familyName:family,givenName:given};}throw Error('선수 이름 생성 후보가 부족합니다.');}
+function makeName(r,used){for(let i=0;i<5000;i++){const family=weighted(surnames,r),given=weighted(givenNames,r),name=family+given;if(given[0]===given[1]||family.at(-1)===given[0]||(given.length===1&&family.length>1)||used.has(name))continue;used.add(name);return {name,familyName:family,givenName:given};}throw Error('선수 이름 생성 후보가 부족합니다.');}
 const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목록과 게임용 가중치입니다. 출생연도별 실제 통계가 아닙니다.'};root.DraftNames=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
 </script>
@@ -2231,7 +2298,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     const gs = role === 'SP' ? (regular || farm ? games : Math.floor(games * P.spotStartShare)) : 0;
     const E = P.era;
     const targetERA = clamp(E.base - tools.stuff * E.perStuff - tools.command * E.perCommand - tools.breaking * E.perBreaking - (farm ? E.futuresBonus : 0) + normal(r) * E.noise, E.min, E.max);
-    const k9 = clamp(P.k9.base + (tools.stuff - P.k9.pivot) * P.k9.perStuff + tools.breaking * P.k9.perBreaking, P.k9.min, P.k9.max),
+    const k9 = clamp(P.k9.base + (tools.stuff - P.k9.pivot) * P.k9.perStuff + tools.breaking * P.k9.perBreaking + (role === 'RP' ? P.k9.reliefBonus : 0), P.k9.min, P.k9.max),
       bb9 = clamp(P.bb9.base - tools.command * P.bb9.perCommand, P.bb9.min, P.bb9.max);
     const W = P.startWin,
       rank = context.teamRank || W.defaultRank;
@@ -2351,13 +2418,16 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         : p.growthCurve === 'late'
           ? yearIndex < C.late.switchYear ? C.late.firstYears : C.late.later
           : C.normal;
+    const A = Gr.ageTaper,
+      over = age - A.fullUntil - (p.growthCurve === 'late' ? A.lateShift : 0),
+      taper = clamp(1 - over / (A.zeroAt - A.fullUntil), A.floor, 1);
     const after = {};
     for (const [key, v] of Object.entries(tools)) {
       const speed = key === 'speed' ? 'speed' : 'other';
       const gap = p.potentialTools[key] - v,
         aging = Math.max(0, age - Gr.agingFrom[speed]) * Gr.agingPerYear[speed];
       const gain =
-        gap * rate * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
+        gap * rate * taper * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
         normal(r) * Gr.noise -
         aging -
         (daysLost > H.heavyInjuryDays ? H.heavyInjuryGrowthPenalty : 0);
@@ -2422,6 +2492,129 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   }
   const growthLabel = (growth) => T.scores.growthLabels.find(([min]) => growth >= min)?.[1] ?? '기량 후퇴';
 
+  const pickLine = (lines, r) => lines[Math.floor(r() * lines.length)];
+  const RETURN_NOTES = ['전역하고 시즌 중반에 팀으로 돌아왔다.', '여름에 전역해 남은 시즌을 소화했다.', '복무를 마치고 시즌 도중 합류했다.'];
+
+  /**
+   * Public future value after a season. Scouts blend last year's estimate with what the player now looks
+   * able to reach: current ability plus the part of his ceiling that his age still leaves room for.
+   * Returns the unrounded estimate (stored so next year's blend does not compound rounding).
+   */
+  function fvUpdate(p, ability, age, yearIndex, previousRaw, r) {
+    const F = T.futureValue;
+    const room = clamp((F.matureAge + (p.growthCurve === 'late' ? F.lateShift : 0) - age) / F.window, 0, 1) * Math.min(1, p.developmentRate);
+    const reachable = ability + Math.max(0, p.upside - ability) * room;
+    const estimate = reachable + (p.observerBias || 0) / (1 + yearIndex) + normal(r) * F.noise;
+    return previousRaw * (1 - F.weight) + estimate * F.weight;
+  }
+
+  /**
+   * Wins above replacement, a simple estimate from the season line (not an official formula).
+   * Hitters: linear-weight batting runs + position + fielding + steals + replacement level.
+   * Pitchers: runs allowed per nine against a replacement pitcher for the role.
+   */
+  function warOf(stats, p, tools) {
+    const W = T.war;
+    if (!stats.games) return 0;
+    if (stats.kind === 'pitcher') {
+      const P = W.pitching,
+        ip = stats.outs / 3;
+      if (!ip) return 0;
+      const replacement = P.leagueRA9 + (stats.gs >= stats.games / 2 ? P.replacement.SP : P.replacement.RP);
+      return round(((replacement - stats.era * P.eraToRA) * ip) / 9 / W.runsPerWin, 1);
+    }
+    const H = W.hitting,
+      w = H.weights,
+      singles = stats.hits - stats.doubles - stats.triples - stats.hr;
+    if (!stats.pa) return 0;
+    const woba = (w.bb * stats.bb + w.single * singles + w.double * stats.doubles + w.triple * stats.triples + w.hr * stats.hr) / stats.pa;
+    const share = stats.games / H.seasonGames;
+    const runs =
+      ((woba - H.league) / H.scale) * stats.pa +
+      H.position[p.role] * share +
+      (tools.defense - 50) * H.perDefense * share +
+      stats.sb * H.perSB +
+      (H.replacementPer600 * stats.pa) / 600;
+    return round(runs / W.runsPerWin, 1);
+  }
+
+  const SERVICE_LABELS = { sangmu: '상무 (군 복무)', army: '현역 복무', social: '사회복무요원' };
+  const SERVICE_NOTES = {
+    sangmu: ['상무에서 퓨처스리그 경기를 뛰며 복무했다.', '상무 소속으로 퓨처스리그에 꾸준히 나섰다.', '상무에서 실전 감각을 유지했다.'],
+    army: ['현역으로 복무하며 야구를 쉬었다. 전역 뒤 몸을 다시 만들어야 한다.', '현역 복무로 한 시즌을 비웠다.', '군 복무 기간이라 공을 잡지 못했다.'],
+    social: ['사회복무요원으로 근무하며 퇴근 뒤 개인 훈련을 이어 갔다.', '사회복무요원 복무 중. 개인 운동으로 감각을 유지했다.'],
+  };
+
+  /** A season spent in military service. Sangmu plays a futures season; other service loses some sharpness. */
+  function serviceSeason(p, selection, g, team, previous, yearIndex, type) {
+    const tag = (stream) => `${g.seed}-${stream}-v6-${yearIndex}-${p.id}`;
+    const tools = { ...previous.tools },
+      abilityBefore = G.overall(tools, p.role);
+    const age = D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
+    let after, futures;
+    if (type === 'sangmu') {
+      after = developTools(p, tools, yearIndex, age, 0, rng(tag('growth')));
+      futures = statsFor(p, futuresGames(p, 'futures', 0, 0, rng(tag('performance'))), tools, 'futures', rng(tag('farm')), { teamRank: team.rank });
+    } else {
+      const r = rng(tag('growth')),
+        [base, width] = T.service.decline[type];
+      after = Object.fromEntries(
+        Object.entries(tools).map(([k, v]) => [k, round(clamp(v - (base + r() * width) * (k === 'stuff' || k === 'speed' ? T.service.declineHeavy : 1), 20, 80), 3)]),
+      );
+      futures = emptyStats(p);
+    }
+    const abilityAfter = G.overall(after, p.role),
+      growth = round(abilityAfter - abilityBefore, 2),
+      observed = G.observe(after, p.role, p, yearIndex + 1, rng(tag('report')));
+    const fvRaw = fvUpdate(p, abilityAfter, age, yearIndex, previous.fvRaw ?? p.scoutCeiling, rng(tag('fv')));
+    const scoutFV = Math.max(observed.ready, G.grade(fvRaw));
+    return {
+      playerId: p.id,
+      label: selection.label,
+      year: D.bio.ENTRY_YEAR + yearIndex,
+      teamId: team.id,
+      age,
+      route: 'service',
+      serviceType: type,
+      roleTier: 'service',
+      routeLabel: SERVICE_LABELS[type],
+      stats: emptyStats(p),
+      futures,
+      growth,
+      growthLabel: growthLabel(growth),
+      velocity: seasonVelocity(p, after, rng(tag('velocity'))),
+      developmentNote: `${SERVICE_LABELS[type]} · 현재 기량 ${previous.scoutReady} → ${observed.ready}`,
+      note: pickLine(SERVICE_NOTES[type], rng(tag('text'))),
+      routeReason: 'service',
+      limited: false,
+      daysLost: 0,
+      contribution: 0,
+      war: 0,
+      planScore: null,
+      target: '복무',
+      unexpected: false,
+      startGrade: previous.scoutReady,
+      startTools: { ...previous.publicTools },
+      publicTools: observed.tools,
+      scoutReady: observed.ready,
+      scoutFV,
+      endState: {
+        ability: round(abilityAfter, 3),
+        tools: after,
+        publicTools: observed.tools,
+        scoutReady: observed.ready,
+        scoutFV,
+        fvRaw: round(fvRaw, 3),
+        route: 'service',
+        roleTier: 'service',
+        limited: false,
+        daysLost: 0,
+        age,
+        performance: 0,
+      },
+    };
+  }
+
   // ---------------------------------------------------------------- one season
 
   /**
@@ -2442,7 +2635,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       { impact, previous, yearIndex, round: selection.round, fit, daysLost, blockedRegular: context.blockedRegular },
       perf,
     );
-    const games = firstTeamGames(p, route, yearIndex, daysLost, perf);
+    // Days away (service ending mid-season) cut playing time and growth like injury days, but are not injuries.
+    const missed = Math.min(T.health.playingDays, daysLost + (context.absentDays || 0));
+    const games = firstTeamGames(p, route, yearIndex, missed, perf);
     const stats = statsFor(p, games, tools, route === 'regular' ? 'regular' : 'major', rng(tag('counting', true)), {
       core,
       cameo: route === 'cameo',
@@ -2451,12 +2646,12 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     });
 
     const age = D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
-    const after = developTools(p, tools, yearIndex, age, daysLost, growR);
+    const after = developTools(p, tools, yearIndex, age, missed, growR);
     const abilityAfter = G.overall(after, p.role),
       growth = round(abilityAfter - abilityBefore, 2),
       observed = G.observe(after, p.role, p, yearIndex + 1, rng(tag('report')));
 
-    const farmGames = futuresGames(p, route, games, daysLost, perf);
+    const farmGames = futuresGames(p, route, games, missed, perf);
     const futures = statsFor(p, farmGames, tools, 'futures', rng(tag('farm')), { teamRank: team.rank });
 
     const startGrade = previous?.scoutReady ?? p.ready,
@@ -2464,7 +2659,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     const planScore = planScoreOf(p, { startGrade, growth, yearIndex, games, route, daysLost });
     const roleTier = core ? 'core' : route;
     const bestTool = Object.keys(after).sort((a, b) => after[b] - tools[b] - (after[a] - tools[a]))[0];
-    const note = reasonText(reason, daysLost, investment, rng(tag('text')));
+    const note = (context.absentDays ? pickLine(RETURN_NOTES, rng(tag('return-text'))) + ' ' : '') + reasonText(reason, daysLost, investment, rng(tag('text')));
+    const fvRaw = fvUpdate(p, abilityAfter, age, yearIndex, previous?.fvRaw ?? p.scoutCeiling, rng(tag('fv')));
 
     return {
       playerId: p.id,
@@ -2486,6 +2682,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       limited,
       daysLost,
       contribution: round(contributionOf(stats, tools)),
+      war: warOf(stats, p, tools),
       planScore,
       target: p.ready >= 45 ? '1군 경쟁 도전' : '퓨처스 적응·기술 발전',
       unexpected: route === 'regular' && selection.round >= 4,
@@ -2493,11 +2690,14 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       startTools: { ...startTools },
       publicTools: observed.tools,
       scoutReady: observed.ready,
+      scoutFV: Math.max(observed.ready, G.grade(fvRaw)),
       endState: {
         ability: round(abilityAfter, 3),
         tools: after,
         publicTools: observed.tools,
         scoutReady: observed.ready,
+        scoutFV: Math.max(observed.ready, G.grade(fvRaw)),
+        fvRaw: round(fvRaw, 3),
         route,
         roleTier,
         limited,
@@ -2533,7 +2733,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     };
   }
 
-  const api = { simulatePlayer, evaluate, emptyStats, statsFor, decideRole, developTools, planScoreOf };
+  const api = { simulatePlayer, serviceSeason, warOf, SERVICE_LABELS, evaluate, emptyStats, statsFor, decideRole, developTools, planScoreOf };
   root.DraftSeason = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -2545,9 +2745,9 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const D = root.DraftData || (typeof require !== 'undefined' ? require('./prospects.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   const DIFFICULTIES = {
-    easy: { name: '이지', hint: '상세 조언과 비교 후보 · 단순한 AI', noise: 12 },
-    normal: { name: '노말', hint: '추천 근거 제공 · 구단 성향별 AI', noise: 5 },
-    hard: { name: '하드', hint: '핵심 관찰만 제공 · 보강·중복·희소성을 따지는 AI', noise: 1.5 },
+    easy: { name: '쉬움', hint: '상세 조언과 비교 후보 · 단순한 AI', noise: 12 },
+    normal: { name: '보통', hint: '추천 근거 제공 · 구단 성향별 AI', noise: 5 },
+    hard: { name: '어려움', hint: '핵심 관찰만 제공 · 보강·중복·희소성을 따지는 AI', noise: 1.5 },
   };
   function project(p) {
     return {
@@ -2862,7 +3062,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const { rng, normal, clamp, round, mean } = D;
   const { TUNING: T, letter } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
-  const SEASONS = 5;
+  const SEASONS = 10;
   const fit = (p, t) => S.fit(p, t);
   function create(picks, byId, seed = '') {
     return {
@@ -2885,6 +3085,18 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
               route: null,
               limited: false,
               age: p.age,
+              scoutFV: p.scoutCeiling,
+              fvRaw: p.scoutCeiling,
+              // Some independent-league players and returnees have already done their service.
+              served: rng(seed + '-served-' + p.id)() < (T.service.servedAtDraft[p.pathway] ?? 0),
+              exempt: null,
+              service: null,
+              routeBefore: null,
+              absentDays: 0,
+              debuted: false,
+              noGameStreak: 0,
+              rehabStreak: 0,
+              injuryDays: 0,
             },
           ];
         }),
@@ -3019,29 +3231,177 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       });
     return out;
   }
-  function offseason(seed, yearIndex, career, records, byId, picks) {
+  // ---------------------------------------------------------------- military service
+
+  const ageIn = (p, yearIndex) => D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
+  const inService = (s) => !!s.service;
+  const canPlay = (s) => s.status === 'active' && !s.service;
+  const needsService = (s) => s.status === 'active' && !s.served && !s.exempt && !s.service;
+
+  /** Chance that Sangmu accepts the player this year (0 if too old). */
+  function sangmuChance(state, p, yearIndex) {
+    const Sg = T.service.sangmu;
+    if (ageIn(p, yearIndex) > Sg.maxAge) return 0;
+    return clamp((state.scoutReady - Sg.minGrade) * Sg.perGrade + (state.debuted ? Sg.playedBonus : 0), Sg.min, Sg.max);
+  }
+  /** Social-service (공익) classification; injuries make it more likely. Fixed per player once rolled. */
+  function socialService(state, seed) {
+    const So = T.service.social;
+    return rng(seed + '-physical-' + state.playerId)() < clamp(So.base + state.injuryDays * So.perInjuryDay, 0, So.max);
+  }
+  const gamesSoon = (yearIndex) =>
+    T.international.filter((e) => e.ageLimit && e.year >= D.bio.ENTRY_YEAR + yearIndex && e.year <= D.bio.ENTRY_YEAR + yearIndex + 1);
+
+  /** Players the club may send to service before season `yearIndex`, with what they could do. */
+  function serviceOptions(career, byId, yearIndex) {
+    const Sv = T.service;
+    if (yearIndex < Sv.firstYear || yearIndex >= SEASONS) return [];
+    return Object.values(career.players)
+      .filter(needsService)
+      .sort((a, b) => a.playerId.localeCompare(b.playerId))
+      .map((s) => {
+        const p = byId[s.playerId],
+          age = ageIn(p, yearIndex);
+        return { playerId: s.playerId, teamId: s.currentTeamId, age, must: age >= Sv.mustAge, sangmu: sangmuChance(s, p, yearIndex) };
+      });
+  }
+
+  /** Discharges, then enlistments before season `yearIndex`. `orders`: playerId → 'auto'|'sangmu'|'army'|'defer'. */
+  function serviceStep(career, byId, seed, yearIndex, orders) {
+    const Sv = T.service,
+      R = T.retirement,
+      year = D.bio.ENTRY_YEAR + yearIndex - 1, // the offseason after last season
+      events = [];
+    const states = Object.values(career.players).sort((a, b) => a.playerId.localeCompare(b.playerId));
+    for (const s of states) {
+      s.absentDays = 0;
+      if (!s.service || s.service.until !== yearIndex) continue;
+      const share = s.service.returnShare;
+      s.service = null;
+      s.served = true;
+      s.route = s.routeBefore;
+      s.performance = 0;
+      if (s.scoutReady <= R.afterService.maxGrade && rng(seed + '-retire-service-' + s.playerId)() < R.afterService.chance) {
+        s.status = 'retired';
+        events.push({ id: `${year}-retire-${s.playerId}`, type: 'retire', year, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [s.playerId], reason: '전역 후 팀에 복귀하지 않고 은퇴했다.' });
+        s.currentTeamId = null;
+        continue;
+      }
+      s.absentDays = Math.round((1 - share) * T.health.playingDays);
+    }
+    for (const o of serviceOptions(career, byId, yearIndex)) {
+      const s = career.players[o.playerId],
+        p = byId[o.playerId],
+        r = rng(`${seed}-enlist-${year}-${o.playerId}`);
+      const social = socialService(s, seed),
+        army = social ? 'social' : 'army';
+      let order = orders[o.playerId] || 'auto',
+        type = null,
+        note = null;
+      if (order === 'defer' && o.must) order = 'auto';
+      if (order === 'sangmu') {
+        if (!social && r() < o.sangmu) type = 'sangmu';
+        else if (o.must) type = army;
+        else note = social ? '사회복무요원 판정이라 상무에 지원할 수 없었다.' : '상무에 지원했지만 합격하지 못했다.';
+      } else if (order === 'army') type = army;
+      else if (order === 'auto') {
+        const held = !o.must && s.scoutReady >= Sv.holdForGames && gamesSoon(yearIndex).some((e) => ageIn(p, e.year - D.bio.ENTRY_YEAR) <= e.ageLimit);
+        const factor = Sv.enlistByAge.find(([maxAge]) => o.age <= maxAge)?.[1] ?? Sv.enlistByAge.at(-1)[1];
+        const want = o.must || (!held && r() < clamp((Sv.enlistByRoute[s.route] ?? Sv.enlistByRoute.futures) * factor, 0, 0.95));
+        if (want) {
+          if (social) type = 'social';
+          else if (s.scoutReady >= Sv.sangmu.clubMinGrade && r() < o.sangmu) type = 'sangmu';
+          else if (o.must || o.age >= 26 || s.scoutReady < Sv.sangmu.clubMinGrade) type = 'army';
+        }
+      }
+      if (note)
+        events.push({ id: `${year}-sangmu-miss-${o.playerId}`, type: 'note', year, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [o.playerId], reason: note });
+      if (!type) continue;
+      const term = Sv.terms[type];
+      s.service = { type, from: yearIndex, until: yearIndex + term.seasons, returnShare: term.returnShare };
+      s.routeBefore = s.route;
+      events.push({
+        id: `${year}-enlist-${o.playerId}`,
+        type: 'enlist',
+        service: type,
+        year,
+        fromTeamId: s.currentTeamId,
+        toTeamId: null,
+        playerIds: [o.playerId],
+        reason: `${M.SERVICE_LABELS[type]} 입대${o.must ? ' (입대 기한)' : ''}.`,
+      });
+    }
+    return events;
+  }
+
+  /** National-team events in season `yearIndex`: selection from public grades, a result, exemptions. */
+  function internationalStep(career, byId, seed, yearIndex) {
+    const year = D.bio.ENTRY_YEAR + yearIndex,
+      out = [];
+    for (const e of T.international.filter((x) => x.year === year)) {
+      const pool = Object.values(career.players).filter((s) => s.status === 'active' && (!s.service || s.service.type === 'sangmu'));
+      const score = (s) => s.scoutReady + (s.route === 'regular' ? 3 : 0) + (s.scoutFV || 0) / 100;
+      const byScore = (a, b) => score(b) - score(a) || a.playerId.localeCompare(b.playerId);
+      const young = pool.filter((s) => (!e.ageLimit || ageIn(byId[s.playerId], yearIndex) <= e.ageLimit) && s.scoutReady >= e.minGrade).sort(byScore).slice(0, e.max);
+      const wild = e.wildcard
+        ? pool.filter((s) => !young.includes(s) && ageIn(byId[s.playerId], yearIndex) <= e.wildcard.maxAge && s.scoutReady >= e.wildcard.minGrade).sort(byScore).slice(0, e.wildcard.count)
+        : [];
+      const team = [...young, ...wild];
+      const roll = rng(seed + '-intl-' + year)(),
+        result = e.results.find(([limit]) => roll < limit)?.[1] ?? null;
+      const exempt = e.exempt.includes(result) ? team.filter((s) => !s.served && !s.exempt) : [];
+      for (const s of exempt) {
+        s.exempt = e.name;
+        if (s.service) s.service.returnShare = 1; // early discharge after the Games
+      }
+      out.push({ year, name: e.name, playerIds: team.map((s) => s.playerId), result, exemptIds: exempt.map((s) => s.playerId) });
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------- offseason: retirement, release, trade
+
+  function offseason(seed, yearIndex, career, records, byId) {
     const events = [];
     if (yearIndex < 1 || yearIndex >= SEASONS - 1) return events;
     const year = D.bio.ENTRY_YEAR + yearIndex,
-      states = Object.values(career.players).sort((a, b) => a.playerId.localeCompare(b.playerId));
-    const counts = Object.fromEntries(
-      TEAMS.map((t) => [
-        t.id,
-        states.filter((s) => s.status === 'active' && s.currentTeamId === t.id).length,
-      ]),
-    );
+      states = Object.values(career.players).sort((a, b) => a.playerId.localeCompare(b.playerId)),
+      Rt = T.retirement;
+    const retire = (s, reason) => {
+      events.push({ id: `${year}-retire-${s.playerId}`, type: 'retire', year, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [s.playerId], reason });
+      s.status = 'retired';
+      s.currentTeamId = null;
+    };
+    // Released a year ago and still unsigned.
+    for (const s of states) if (s.status === 'released') retire(s, '새 팀을 찾지 못하고 은퇴했다.');
+    // Choosing to stop.
+    for (const s of states) {
+      if (!canPlay(s)) continue;
+      const r = rng(seed + '-retire-' + year + '-' + s.playerId);
+      const reason =
+        s.noGameStreak >= Rt.stalled.seasons && s.age >= Rt.stalled.minAge && s.scoutReady < Rt.stalled.maxGrade && r() < Rt.stalled.chance
+          ? '1군 기회가 오지 않아 스스로 유니폼을 벗었다.'
+          : s.rehabStreak >= 2 && r() < Rt.rehab
+            ? '거듭된 재활 끝에 은퇴를 결정했다.'
+            : s.age >= Rt.veteran.minAge && s.scoutReady < Rt.veteran.maxGrade && r() < Rt.veteran.chance
+              ? '기량이 떨어지면서 은퇴를 택했다.'
+              : null;
+      if (reason) retire(s, reason);
+    }
+    const counts = Object.fromEntries(TEAMS.map((t) => [t.id, states.filter((s) => s.status === 'active' && s.currentTeamId === t.id).length]));
     const touched = new Set(),
       Rl = T.offseason.release,
-      Tr = T.offseason.trade;
+      Tr = T.offseason.trade,
+      Cl = Rt.claim;
     for (const s of states) {
-      if (s.status !== 'active' || counts[s.currentTeamId] <= Rl.minClubSize) continue;
+      if (!canPlay(s) || counts[s.currentTeamId] <= Rl.minClubSize) continue;
       const p = byId[s.playerId],
         rec = records.find((x) => x.playerId === s.playerId),
         r = rng(seed + '-release-' + year + '-' + p.id);
       const old = career.years.at(-1)?.records.find((x) => x.playerId === s.playerId);
       // Stalled: old enough, below the grade bar and two straight seasons without a first-team game.
       const stalled =
-        yearIndex >= Rl.fromYear && s.age >= Rl.minAge && s.scoutReady < Rl.maxGrade && rec.stats.games === 0 && old?.stats.games === 0;
+        yearIndex >= Rl.fromYear && s.age >= Rl.minAge && s.scoutReady < Rl.maxGrade && rec.stats.games === 0 && old?.stats.games === 0 && old.route !== 'service';
       const chance = stalled
         ? clamp(Rl.base + (Rl.maxGrade - s.scoutReady) * Rl.perGrade + Math.max(0, s.age - Rl.minAge) * Rl.perAge, 0, Rl.max)
         : 0;
@@ -3054,19 +3414,27 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           fromTeamId: from,
           toTeamId: null,
           playerIds: [p.id],
-          reason: '만 23세 이상, 2년 연속 1군 기록 없음과 현재 공개 기량 40 미만을 함께 고려한 방출입니다.',
+          reason: '2년 연속 1군 기록이 없고 공개 기량이 40에 못 미쳐 방출됐다.',
         });
         counts[from]--;
-        s.status = 'released';
-        s.currentTeamId = null;
         touched.add(p.id);
+        // Another club may take a chance on him.
+        if (s.age <= Cl.maxAge && r() < clamp((s.scoutReady - Cl.minGrade) * Cl.perGrade, 0, Cl.max)) {
+          const to = TEAMS.filter((t) => t.id !== from).sort((a, b) => counts[a.id] - counts[b.id] || a.id.localeCompare(b.id))[0].id;
+          events.push({ id: year + '-claim-' + p.id, type: 'claim', year, fromTeamId: from, toTeamId: to, playerIds: [p.id], reason: '방출 뒤 입단 테스트를 거쳐 새 팀과 계약했다.' });
+          counts[to]++;
+          s.currentTeamId = to;
+        } else {
+          s.status = 'released';
+          s.currentTeamId = null;
+        }
       }
     }
     const rr = rng(seed + '-trade-' + year);
     if (rr() < Tr.chance) {
       const active = states.filter(
           (s) =>
-            s.status === 'active' &&
+            canPlay(s) &&
             !touched.has(s.playerId) &&
             !records.some((x) => x.playerId === s.playerId && x.route === 'regular' && x.contribution >= Tr.protectContribution),
         ),
@@ -3075,7 +3443,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       const V = Tr.value;
       const publicValue = (s) =>
         s.scoutReady * V.perReady +
-        byId[s.playerId].scoutCeiling * V.perFV -
+        (s.scoutFV ?? byId[s.playerId].scoutCeiling) * V.perFV -
         Math.max(0, s.age - V.agePivot) * V.perAge +
         (records.find((x) => x.playerId === s.playerId)?.contribution || 0) * V.perContribution;
       for (let i = 0; i < active.length; i++)
@@ -3117,16 +3485,32 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     }
     return events;
   }
-  function advance(career, picks, byId, seed) {
+
+  const OUT_OF_BASEBALL = {
+    released: ['방출 · 무소속', '무소속이라 이 해의 기록이 없습니다.'],
+    retired: ['은퇴', '은퇴해 기록이 없습니다.'],
+  };
+
+  /**
+   * Plays season `yearIndex` for every signed player: service changes, national team, each player's
+   * season, standings and awards, then the offseason. `orders` are the user's service choices.
+   */
+  function advance(career, picks, byId, seed, orders = {}) {
     const yearIndex = career.years.length;
-    if (yearIndex >= SEASONS) throw Error('5시즌이 모두 끝났습니다.');
+    if (yearIndex >= SEASONS) throw Error(SEASONS + '시즌이 모두 끝났습니다.');
     const year = D.bio.ENTRY_YEAR + yearIndex,
       plans = S.plans(seed, TEAMS),
       rankings = {};
+    if (yearIndex) {
+      const moves = serviceStep(career, byId, seed, yearIndex, orders);
+      career.years[yearIndex - 1].events.push(...moves);
+      career.events.push(...moves);
+    }
+    const international = internationalStep(career, byId, seed, yearIndex);
     for (const t of TEAMS)
       for (const role of Object.keys(D.ROLES)) {
         rankings[t.id + '-' + role] = Object.values(career.players)
-          .filter((s) => s.status === 'active' && s.currentTeamId === t.id && byId[s.playerId].role === role)
+          .filter((s) => canPlay(s) && s.currentTeamId === t.id && byId[s.playerId].role === role)
           .sort(
             (a, b) =>
               b.ability + (b.route === 'regular' ? 5 : 0) - (a.ability + (a.route === 'regular' ? 5 : 0)) ||
@@ -3137,42 +3521,60 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     const records = picks.map((sel) => {
       const p = byId[sel.playerId],
         state = career.players[p.id];
-      if (state.status !== 'active')
+      if (state.status !== 'active') {
+        const [routeLabel, note] = OUT_OF_BASEBALL[state.status];
         return {
           playerId: p.id,
           label: sel.label,
           year,
           teamId: null,
-          age: D.bio.ageAt(p.birthday, year + '-12-31'),
-          route: 'released',
-          routeLabel: '방출 · 무소속',
+          age: ageIn(p, yearIndex),
+          route: state.status,
+          routeLabel,
           stats: M.emptyStats(p),
           futures: M.emptyStats(p),
           growth: 0,
           growthLabel: '프로 기록 없음',
-          developmentNote: '방출 전 기록만 남아 있습니다.',
-          note: '무소속이라 이 해의 기록이 없습니다.',
+          developmentNote: '이전 기록만 남아 있습니다.',
+          note,
           limited: false,
           contribution: 0,
-          planScore: 0,
+          war: 0,
+          planScore: null,
           target: '경력 보존',
           scoutReady: state.scoutReady,
+          scoutFV: state.scoutFV,
         };
-      const t = { ...byTeam[state.currentTeamId], ...plans[state.currentTeamId] },
-        rank = rankings[t.id + '-' + p.role].indexOf(p.id),
-        capacity = T.roles.cohortCapacity[p.role];
-      const rec = M.simulatePlayer(p, sel, { seed }, t, fit(p, t), yearIndex ? state : null, yearIndex, {
-        // Development-contract players cannot be regulars in their first season.
-        blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
-        closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
-      });
+      }
+      const t = { ...byTeam[state.currentTeamId], ...plans[state.currentTeamId] };
+      let rec;
+      if (state.service) rec = M.serviceSeason(p, sel, { seed }, t, state, yearIndex, state.service.type);
+      else {
+        const rank = rankings[t.id + '-' + p.role].indexOf(p.id),
+          capacity = T.roles.cohortCapacity[p.role];
+        rec = M.simulatePlayer(p, sel, { seed }, t, fit(p, t), yearIndex ? state : null, yearIndex, {
+          // Development-contract players cannot be regulars in their first season.
+          blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
+          closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
+          absentDays: state.absentDays || 0,
+        });
+      }
       Object.assign(state, rec.endState);
+      if (rec.route !== 'service') {
+        state.debuted = state.debuted || rec.stats.games > 0;
+        state.noGameStreak = rec.stats.games > 0 ? 0 : (state.noGameStreak || 0) + 1;
+        state.rehabStreak = rec.route === 'rehab' ? (state.rehabStreak || 0) + 1 : 0;
+        state.injuryDays = (state.injuryDays || 0) + rec.daysLost;
+      }
       return rec;
     });
     const league = standings(seed, year, records),
       honors = awards(year, records, league);
-    const events = offseason(seed, yearIndex, career, records, byId, picks);
-    const row = { year, records, league, awards: honors, events };
+    for (const e of international)
+      for (const id of e.playerIds)
+        honors.push({ id: `${year}-national-${id}`, title: `${e.name} ${e.result ?? '국가대표'}`, scope: 'national', year, playerId: id, teamId: career.players[id].currentTeamId });
+    const events = offseason(seed, yearIndex, career, records, byId);
+    const row = { year, records, league, awards: honors, events, international };
     career.years.push(row);
     career.events.push(...events);
     return row;
@@ -3185,8 +3587,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       const own = picks.filter((s) => s.teamId === t.id),
         ids = new Set(own.map((s) => s.playerId)),
         records = career.years.flatMap((y) => y.records.filter((r) => ids.has(r.playerId)));
-      const total = records.reduce((n, r) => n + r.contribution, 0),
-        atHome = records.filter((r) => r.teamId === t.id).reduce((n, r) => n + r.contribution, 0);
+      const total = records.reduce((n, r) => n + (r.war || 0), 0),
+        atHome = records.filter((r) => r.teamId === t.id).reduce((n, r) => n + (r.war || 0), 0);
       const debut = own.filter((s) => history(career, s.playerId).some((r) => r.stats.games > 0)).length;
       const established = own.filter((s) =>
         history(career, s.playerId).some((r) => r.route === 'regular'),
@@ -3203,14 +3605,14 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         club,
       );
       const Rv = T.review;
-      const production = clamp((total / (own.length * Math.max(1, career.years.length) * Rv.contributionPerSeason)) * 100, 0, 100);
+      const production = clamp((Math.max(0, total) / (own.length * Math.max(1, career.years.length) * Rv.warPerSeason)) * 100, 0, 100);
       const growth = clamp(development * Rv.growth.perPoint + Rv.growth.base, 0, 100);
       const score = round(needs * Rv.weights.need + production * Rv.weights.production + growth * Rv.weights.growth);
       return {
         teamId: t.id,
         count: own.length,
-        total: round(total),
-        atHome: round(atHome),
+        total: round(total, 1),
+        atHome: round(atHome, 1),
         debut,
         established,
         development: round(development, 1),
@@ -3218,16 +3620,18 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         grade: letter(score, Rv.gradeCuts),
         pending: own.filter((s) => {
           const st = career.players[s.playerId];
-          return st.status === 'active' && st.age <= Rv.pendingMaxAge && st.scoutReady < byId[s.playerId].scoutCeiling;
+          return st.status === 'active' && st.age <= Rv.pendingMaxAge && st.scoutReady < st.scoutFV;
         }).length,
         released: own.filter((s) => career.players[s.playerId].status === 'released').length,
+        retired: own.filter((s) => career.players[s.playerId].status === 'retired').length,
+        national: new Set(career.years.flatMap((y) => y.awards).filter((a) => ids.has(a.playerId) && a.scope === 'national').map((a) => a.playerId)).size,
         awards: career.years
           .flatMap((y) => y.awards)
           .filter((a) => ids.has(a.playerId) && a.scope === 'draft-class').length,
       };
     }).sort((a, b) => b.score - a.score || b.total - a.total || a.teamId.localeCompare(b.teamId));
   }
-  root.DraftCareer = { SEASONS, create, advance, history, totalStats, review, standings };
+  root.DraftCareer = { SEASONS, SERVICE_LABELS: M.SERVICE_LABELS, create, advance, history, totalStats, review, standings, serviceOptions, sangmuChance };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.DraftCareer;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -3415,7 +3819,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const Voices = root.DraftVoices || (typeof require !== 'undefined' ? require('./voices.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '0.7.0',
+  const RELEASE = '0.8.0',
     VERSION = 6,
     ROUND_OPTIONS = [5, 8, 11], // national rounds the player can choose; 11 is the current KBO format
     ROUNDS = 11,
@@ -3675,7 +4079,20 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         g.season,
         teamFor(g),
       );
-      entry('시즌 후 · ' + a.status, a.bonus);
+      entry('첫 시즌 약속 · ' + a.status, a.bonus);
+    }
+    // Every season: the club's finish, how many of this class held a regular job here, national medals.
+    // Old feelings fade a little each year, so the score drifts back toward 50 before the new season counts.
+    const F = TUNING.fans;
+    for (const y of g.career?.years || []) {
+      const own = new Set(myPicks(g).map((s) => s.playerId).concat(mySigned(g).map((s) => s.playerId)));
+      const rank = y.league.table.find((t) => t.teamId === g.teamId).rank,
+        champion = y.league.champion === g.teamId,
+        regulars = y.records.filter((r) => own.has(r.playerId) && r.teamId === g.teamId && r.route === 'regular').length,
+        medals = y.awards.filter((a) => a.scope === 'national' && own.has(a.playerId) && /메달/.test(a.title)).length;
+      score = Math.round(clamp(score + (50 - score) * F.fade, 0, 100));
+      const delta = F.byRank[rank - 1] + (champion ? F.champion : 0) + Math.min(F.maxRegulars, regulars) * F.perRegular + Math.min(F.maxMedals, medals);
+      entry(`${y.year} 시즌 · ${rank}위${champion ? ' · 우승' : ''} · 동기 주전 ${regulars}명${medals ? ` · 국가대표 메달 ${medals}명` : ''}`, delta);
     }
     return {
       score,
@@ -3711,9 +4128,26 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     g.phase = 'season';
     return g.season;
   }
-  function nextSeason(g) {
+  // ---------------------------------------------------------------- military service choices
+
+  const SERVICE_CHOICES = ['auto', 'sangmu', 'army', 'defer'];
+  /** Our players who could enlist before the next season, with deadline and Sangmu chance. */
+  function serviceOptions(g) {
+    if (!g.career || g.career.years.length >= Career.SEASONS) return [];
+    return Career.serviceOptions(g.career, poolFor(g).byId, g.career.years.length).filter((o) => o.teamId === g.teamId);
+  }
+  /** Plays the next season. `orders`: playerId → service choice for our players ('auto' if omitted). */
+  function nextSeason(g, orders = {}) {
     if (!g.career || !['season', 'owner'].includes(g.phase)) throw Error('첫 시즌을 먼저 진행해야 합니다.');
-    const result = Career.advance(g.career, signed(g), poolFor(g).byId, g.seed);
+    const options = new Map(serviceOptions(g).map((o) => [o.playerId, o]));
+    for (const [id, choice] of Object.entries(orders)) {
+      const o = options.get(id);
+      if (!o || !SERVICE_CHOICES.includes(choice) || (choice === 'defer' && o.must)) throw Error('병역 결정을 확인해야 합니다.');
+    }
+    const yearIndex = g.career.years.length;
+    g.serviceOrders ??= [];
+    for (const [id, choice] of Object.entries(orders).sort()) if (choice !== 'auto') g.serviceOrders.push([yearIndex, id, choice]);
+    const result = Career.advance(g.career, signed(g), poolFor(g).byId, g.seed, orders);
     g.phase = 'season';
     return result;
   }
@@ -3734,7 +4168,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
    * (tests/golden.cjs fails until you do). A save from another SIM_VERSION is refused, never silently
    * replayed into a different history.
    */
-  const SIM_VERSION = '0.7',
+  const SIM_VERSION = '0.8',
     SAVE_FORMAT = 'draft-room-save',
     SAVE_VERSION = 2;
 
@@ -3754,6 +4188,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       dev: (g.devSigns || []).filter((s) => s.teamId === g.teamId).map((s) => s.playerId),
       gmChoice: g.gmChoice,
       seasons: g.career?.years.length ?? 0,
+      service: g.serviceOrders || [],
     };
   }
 
@@ -3778,7 +4213,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         !s.picks.every((id) => typeof id === 'string') ||
         !Number.isInteger(s.seasons) ||
         s.seasons < 0 ||
-        s.seasons > Career.SEASONS
+        s.seasons > Career.SEASONS ||
+        (s.service != null && (!Array.isArray(s.service) || !s.service.every((o) => Array.isArray(o) && o.length === 3 && Number.isInteger(o[0]) && o[0] >= 1 && o[0] < s.seasons)))
       )
         return null;
       const g = createGame(s.teamId, s.local, s.seed, s.difficulty, s.rounds);
@@ -3804,7 +4240,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       if (['season', 'owner'].includes(s.phase) && !s.seasons) return null;
       if (s.seasons) {
         runSeason(g); // requires the GM answer
-        while (g.career.years.length < s.seasons) nextSeason(g);
+        while (g.career.years.length < s.seasons) {
+          const yi = g.career.years.length;
+          nextSeason(g, Object.fromEntries((s.service || []).filter((o) => o[0] === yi).map((o) => [o[1], o[2]])));
+        }
       }
       if (g.phase !== 'draft') g.phase = s.phase; // e.g. revisiting interviews after season 1
       return g;
@@ -3907,6 +4346,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     validate,
     restore,
     signDevelopment,
+    serviceOptions,
+    SERVICE_CHOICES,
     tuning: TUNING,
     undrafted,
     signed,
@@ -3949,11 +4390,30 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   const gradeClass = (n) => 'g' + Math.max(30, Math.min(70, Math.floor(n / 10) * 10));
   const grade = (n) => `<span class="g ${gradeClass(n)}">${n}</span>`;
 
+  const obp = (s) => (s?.pa ? (s.hits + s.bb) / s.pa : null);
+  const slg = (s) => (s?.ab ? (s.hits + s.doubles + 2 * s.triples + 3 * s.hr) / s.ab : null);
+  const per9 = (n, outs) => (outs ? ((n * 27) / outs).toFixed(1) : '—');
+
   function statLine(s) {
     if (!s || !s.games) return '출전 기록 없음';
     return s.kind === 'pitcher'
-      ? `${s.games}경기 ${s.gs}선발 · ${C.innings(s.outs)}이닝 · ERA ${num(s.era, 2)} · ${s.wins}승 ${s.holds}홀드 ${s.saves}세이브 · ${s.k}K ${s.bb}BB`
-      : `${s.games}경기 ${s.pa}타석 · 타율 ${rate(s.avg)} · OPS ${rate(s.ops)} · ${s.hr}홈런 ${s.rbi}타점 ${s.sb}도루`;
+      ? `${s.games}경기 ${s.gs}선발 · ${C.innings(s.outs)}이닝 · ERA ${num(s.era, 2)} · ${s.wins}승 ${s.holds}홀드 ${s.saves}세이브 · ${s.k}K ${s.bb}BB (9이닝당 ${per9(s.k, s.outs)}K ${per9(s.bb, s.outs)}BB)`
+      : `${s.games}경기 ${s.pa}타석 · ${rate(s.avg)}/${rate(obp(s))}/${rate(slg(s))} (타율/출루율/장타율) · ${s.hr}홈런 ${s.rbi}타점 ${s.sb}도루`;
+  }
+
+  /** Where a signed player is now: '' if still with the club that signed him. */
+  function statusLabel(state, originTeamId) {
+    if (!state) return '';
+    if (state.status === 'released') return '방출';
+    if (state.status === 'retired') return '은퇴';
+    const moved = state.currentTeamId !== originTeamId ? `→ ${teamName(state.currentTeamId)}` : '';
+    return [moved, state.service ? '군 복무 중' : ''].filter(Boolean).join(' · ');
+  }
+  function serviceStatus(state) {
+    if (state.exempt) return `면제 (${state.exempt} 병역 특례)`;
+    if (state.service) return `복무 중 · ${C.Career.SERVICE_LABELS?.[state.service.type] ?? ''}`.trim();
+    if (state.served) return '마침';
+    return '미필';
   }
 
   /** Current / future grade table for one player (the scouting card used everywhere). */
@@ -3996,7 +4456,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   Object.assign(UI, {
     velocityChange,
     esc, tag, signed, num, rate, teamName, teamDot, player, playerLink, hand, grade, gradeClass,
-    statLine, toolTable, toolSnapshot,
+    statLine, toolTable, toolSnapshot, obp, slg, statusLabel, serviceStatus,
   });
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -4033,7 +4493,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     return `
     <div class="page-head">
       <h1>${C.ENTRY_YEAR} KBO 신인 드래프트</h1>
-      <p>구단을 맡아 신인을 지명하고, 뽑은 선수들이 ${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌 동안 어떻게 자라는지 지켜봅니다. 후보 ${C.POOL_SIZE}명은 게임마다 새로 만들어집니다.</p>
+      <p>구단을 맡아 신인을 지명하고, 뽑은 선수들이 ${C.ENTRY_YEAR}–${C.ENTRY_YEAR + C.Career.SEASONS - 1} ${C.Career.SEASONS}시즌 동안 어떻게 자라는지 지켜봅니다. 후보 ${C.POOL_SIZE}명은 게임마다 새로 만들어집니다.</p>
     </div>
     <div class="cols">
       <div>
@@ -4251,7 +4711,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         </div>
         <button class="btn quiet small" data-action="star" data-id="${p.id}" aria-pressed="${stars.has(p.id)}">${stars.has(p.id) ? '★ 관심' : '☆ 관심'}</button>
       </div>
-      ${g.difficulty === 'easy' ? `<p class="favorite-note note">어릴 때 응원한 구단: ${C.TEAMS[p.favoriteTeam].short} (이지 난이도에서만 공개)</p>` : ''}
+      ${g.difficulty === 'easy' ? `<p class="favorite-note note">어릴 때 응원한 구단: ${C.TEAMS[p.favoriteTeam].short} (쉬움 난이도에서만 공개)</p>` : ''}
       <section>${UI.toolTable(p)}</section>
       <section>
         <h4>지명 전 시즌 기록</h4>
@@ -4533,6 +4993,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           futures: chosen ? rec?.futures : C.Career.totalStats(hist, 'futures'),
           teamId: scope === 'origin' ? s.teamId : state ? state.currentTeamId : s.teamId,
           contribution: chosen ? rec?.contribution || 0 : hist.reduce((n, r) => n + r.contribution, 0),
+          war: chosen ? rec?.war ?? 0 : Math.round(hist.reduce((n, r) => n + (r.war || 0), 0) * 10) / 10,
           // Top velocity that season; for career totals, the latest one.
           velocity: chosen ? rec?.velocity ?? null : hist.findLast((r) => r.velocity)?.velocity ?? p.velocity ?? null,
           honors: years.flatMap((y) => y.awards).filter((a) => a.playerId === p.id && (!chosen || a.year === chosen.year)).length,
@@ -4545,6 +5006,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       switch (sort) {
         case 'rank': return x.s.overall;
         case 'contribution': return x.contribution;
+        case 'war': return x.war;
         case 'games': return st?.games ?? null;
         case 'hr': return only('hitter', st?.hr);
         case 'ops': return only('hitter', st?.ops);
@@ -4570,27 +5032,26 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       .map((kind) => {
         const group = list.filter((x) => x.p.record.kind === kind);
         if (!group.length) return '';
-        const labels = kind === 'hitter' ? ['G', 'PA', 'AVG', 'OPS', 'HR', 'RBI', 'SB'] : ['G', 'GS', 'IP', 'ERA', 'W', 'HLD', 'SV', 'K', 'BB', 'QS', '구속'];
+        const labels = kind === 'hitter' ? ['G', 'PA', 'AVG', 'OBP', 'SLG', 'OPS', 'HR', 'RBI', 'SB'] : ['G', 'GS', 'IP', 'ERA', 'W', 'HLD', 'SV', 'K', 'BB', 'QS', '구속'];
         const body = group
           .map((x) => {
             const s = x[level];
             const values = !s
               ? labels.map((l) => (l === '구속' && x.velocity ? x.velocity : '—'))
               : kind === 'hitter'
-                ? [s.games, s.pa, rate(s.avg), rate(s.ops), s.hr, s.rbi, s.sb]
+                ? [s.games, s.pa, rate(s.avg), rate(UI.obp(s)), rate(UI.slg(s)), rate(s.ops), s.hr, s.rbi, s.sb]
                 : [s.games, s.gs, C.innings(s.outs), num(s.era, 2), s.wins, s.holds, s.saves, s.k, s.bb, s.qs, x.velocity ?? '—'];
-            const now = x.state ? x.state.currentTeamId : x.s.teamId;
-            const moved = x.state?.status === 'released' ? '방출' : now !== x.s.teamId ? `→ ${teamName(now)}` : '';
+            const moved = UI.statusLabel(x.state, x.s.teamId);
             return `<tr class="${mixed && x.s.teamId === g.teamId ? 'mine' : ''}">
               <td>${playerLink(x.p.id, x.p.name)}<small>${teamName(x.s.teamId)} ${esc(x.s.label)} · ${C.ROLES[x.p.role]}</small></td>
               <td>${moved ? `<span class="warn">${moved}</span>` : ''}</td>
               ${values.map((v) => `<td class="n">${esc(v)}</td>`).join('')}
-              <td class="n">${level === 'stats' ? x.contribution : '—'}</td></tr>`;
+              <td class="n">${level === 'stats' ? num(x.war, 1) : '—'}</td></tr>`;
           })
           .join('');
         return `<h3 style="margin:16px 0 6px">${kind === 'hitter' ? '야수' : '투수'} <small class="muted">${group.length}명</small></h3>
           <div class="table-scroll" tabindex="0" aria-label="${kind === 'hitter' ? '야수' : '투수'} 기록 (가로 스크롤)">
-          <table class="t record-table"><thead><tr><th>선수</th><th>이적</th>${labels.map((l) => `<th class="n">${l}</th>`).join('')}<th class="n">기여</th></tr></thead>
+          <table class="t record-table"><thead><tr><th>선수</th><th>상태</th>${labels.map((l) => `<th class="n">${l}</th>`).join('')}<th class="n">WAR</th></tr></thead>
           <tbody>${body}</tbody></table></div>`;
       })
       .join('');
@@ -4599,47 +5060,109 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   function development(g, year) {
     const own = new Set(C.mySigned(g).map((s) => s.playerId));
     const cards = year.records
-      .filter((r) => own.has(r.playerId))
+      .filter((r) => own.has(r.playerId) && r.teamId)
       .map((r) => {
         const p = player(g, r.playerId);
         const from = r.startGrade ?? r.scoutReady;
         return `<article>
-          <div style="display:flex;justify-content:space-between;gap:6px">${playerLink(p.id, p.name)}${tag(r.routeLabel, r.route === 'regular' ? 'good' : '')}</div>
-          <p class="move">${from} → ${r.scoutReady} <small>현재 기량 · 지명 당시 FV ${p.scoutCeiling}</small></p>
+          <div style="display:flex;justify-content:space-between;gap:6px">${playerLink(p.id, p.name)}${tag(r.routeLabel, r.route === 'regular' ? 'good' : r.route === 'service' ? 'warn' : '')}</div>
+          <p class="move">${from} → ${r.scoutReady} <small>현재 기량 · FV ${p.scoutCeiling}${r.scoutFV !== p.scoutCeiling ? ` → ${r.scoutFV}` : ''}</small></p>
           ${r.velocity ? `<p class="note">최고 구속 ${r.velocity}km/h (${UI.velocityChange(g, r)})</p>` : ''}
           <p>${esc(r.note)}</p>
-          <p class="note">${esc(r.growthLabel)} · 계획 이행 ${r.planScore}점</p>
+          <p class="note">${esc(r.growthLabel)}${r.planScore != null ? ` · 계획 이행 ${r.planScore}점` : ''}${r.teamId !== g.teamId ? ` · 현재 ${teamName(r.teamId)}` : ''}</p>
         </article>`;
       })
       .join('');
     return `<h2 class="rule">보직과 성장 <small>시즌 시작 → 종료 평가</small></h2>
       <div class="development-grid">${cards}</div>
-      <p class="note">1군 콜업은 시즌 시작 기량으로 정하고, 종료 평가는 그해 성장을 반영합니다. 등급이 그대로여도 5점 단위 안에서 변화가 쌓입니다.</p>`;
+      <p class="note">1군 콜업은 시즌 시작 기량으로 정하고, 종료 평가는 그해 성장을 반영합니다. 등급이 그대로여도 5점 단위 안에서 변화가 쌓입니다. FV(미래 가치)는 스카우트가 매 시즌 다시 매깁니다.</p>`;
   }
 
   function events(g, items) {
     if (!items.length) return '<p class="note">선수 이동이 없었습니다.</p>';
+    const head = (ev) =>
+      ({
+        trade: `트레이드 · ${teamName(ev.fromTeamId)} ↔ ${teamName(ev.toTeamId)}`,
+        release: `방출 · ${teamName(ev.fromTeamId)}`,
+        claim: `입단 · ${teamName(ev.fromTeamId)} → ${teamName(ev.toTeamId)}`,
+        retire: '은퇴',
+        enlist: `입대 · ${teamName(ev.fromTeamId)}`,
+        note: `병역 · ${teamName(ev.fromTeamId)}`,
+      })[ev.type];
     return `<ul class="event-list">${items
       .map(
-        (ev) => `<li><b>${ev.type === 'trade' ? `트레이드 · ${teamName(ev.fromTeamId)} ↔ ${teamName(ev.toTeamId)}` : `방출 · ${teamName(ev.fromTeamId)}`}</b>
+        (ev) => `<li><b>${head(ev)}</b>
           ${ev.playerIds.map((id) => playerLink(id, player(g, id).name)).join(' ↔ ')}
           <small>${esc(ev.reason)} (${ev.year}시즌 종료 후)</small></li>`,
       )
       .join('')}</ul>`;
   }
 
-  function season(g, index) {
+  /** Offseason moves: ours first, the other clubs' folded away. */
+  function offseasonEvents(g, items) {
+    const ours = items.filter((ev) => ev.fromTeamId === g.teamId || ev.toTeamId === g.teamId),
+      rest = items.filter((ev) => !ours.includes(ev));
+    return `${ours.length ? events(g, ours) : '<p class="note">우리 팀 선수 이동이 없었습니다.</p>'}
+      ${rest.length ? `<details style="margin-top:8px"><summary>다른 구단 이동 ${rest.length}건</summary>${events(g, rest)}</details>` : ''}`;
+  }
+
+  /** National-team results for one season. */
+  function international(g, y) {
+    if (!y.international?.length) return '';
+    return y.international
+      .map((e) => {
+        const ours = e.playerIds.filter((id) => C.signed(g).some((s) => s.playerId === id && s.teamId === g.teamId));
+        return `<h2 class="rule">${esc(e.name)} <small>${esc(e.result ?? '메달 없음')}</small></h2>
+          <p>${e.playerIds.length ? `이번 드래프트 출신 ${e.playerIds.length}명 선발: ${e.playerIds.map((id) => playerLink(id, player(g, id).name)).join(', ')}` : '이번 드래프트 출신 선발 선수가 없습니다.'}</p>
+          ${e.exemptIds.length ? `<p class="note">병역 특례(예술체육요원): ${e.exemptIds.map((id) => esc(player(g, id).name)).join(', ')}</p>` : ''}
+          ${ours.length ? `<p class="note">우리가 지명한 선수 ${ours.length}명이 뽑혔습니다.</p>` : ''}`;
+      })
+      .join('');
+  }
+
+  const sangmuLabel = (chance) => (chance >= 0.45 ? '상무 유력' : chance >= 0.2 ? '상무 가능' : chance > 0 ? '상무 어려움' : '상무 나이 초과');
+  /** Offseason choice: which of our players go to military service before next season. */
+  function servicePanel(g, orders) {
+    const opts = C.serviceOptions(g);
+    if (!opts.length) return '';
+    const next = C.ENTRY_YEAR + g.career.years.length;
+    const games = C.tuning.international.filter((e) => e.year === next || e.year === next + 1);
+    const rows = opts
+      .map((o) => {
+        const p = player(g, o.playerId),
+          st = g.career.players[o.playerId],
+          cur = orders[o.playerId] || 'auto';
+        const opt = (v, label, off) => `<option value="${v}" ${cur === v ? 'selected' : ''} ${off ? 'disabled' : ''}>${label}</option>`;
+        return `<tr>
+          <td>${playerLink(p.id, p.name)}<small>${C.ROLES[p.role]} · 공개 기량 ${st.scoutReady} · FV ${st.scoutFV}</small></td>
+          <td class="n">${o.age}</td>
+          <td>${o.must ? tag('입대 기한', 'warn') : ''} ${esc(sangmuLabel(o.sangmu))}</td>
+          <td><select data-service="${esc(o.playerId)}" aria-label="${esc(p.name)} 병역">
+            ${opt('auto', '구단 판단')}${opt('sangmu', '상무 지원', !o.sangmu)}${opt('army', '현역·사회복무 입대')}${opt('defer', '올해는 미루기', o.must)}
+          </select></td></tr>`;
+      })
+      .join('');
+    return `<h2 class="rule">${next} 시즌 전 병역 결정</h2>
+      <p class="note">우리 팀 소속으로 병역을 마치지 않은 선수입니다. 상무는 지원해도 떨어질 수 있고, 떨어지면 1년 더 뛰고 다시 결정합니다. 만 ${C.tuning.service.mustAge}세가 되는 해에는 입대해야 합니다. 신체검사 결과에 따라 현역 대신 사회복무요원(2년)이 될 수 있습니다.</p>
+      ${games.map((e) => `<p class="note"><b>${e.year} ${esc(e.name)}</b> ${e.ageLimit ? `만 ${e.ageLimit}세 이하 선발` : '나이 제한 없음'} · ${e.exempt.join('·')} 획득 시 병역 특례</p>`).join('')}
+      <div class="table-scroll"><table class="t"><thead><tr><th>선수</th><th class="n">나이</th><th>상태</th><th>결정</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  function season(g, index, orders = {}) {
     const years = g.career.years,
+      total = C.Career.SEASONS,
       y = years[Math.min(index, years.length - 1)] || years.at(-1),
       yearNo = y.year - C.ENTRY_YEAR + 1,
       own = y.records.filter((r) => r.teamId === g.teamId),
       mine = rows(g, String(y.year), g.teamId, 'origin', 'rank'),
-      standing = y.league.table.find((t) => t.teamId === g.teamId);
+      joined = rows(g, String(y.year), 'ALL', 'origin', 'rank').filter((x) => x.rec?.teamId === g.teamId && x.s.teamId !== g.teamId),
+      standing = y.league.table.find((t) => t.teamId === g.teamId),
+      last = y === years.at(-1);
     const classAwards = y.awards.filter((a) => a.scope === 'draft-class'),
       champs = y.awards.filter((a) => a.scope === 'team');
     return `
     <div class="page-head">
-      <span class="kicker">${yearNo}년 차 / 5</span>
+      <span class="kicker">${yearNo}년 차 / ${total}</span>
       <h1>${y.year} 시즌 결과</h1>
       <p>${esc(teamName(g.teamId))} 정규시즌 ${standing.rank}위 (${standing.wins}승 ${standing.losses}패) · 한국시리즈 우승 ${esc(teamName(y.league.champion))}</p>
     </div>
@@ -4647,22 +5170,24 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       .map((s, i) => `<button data-action="view-year" data-index="${i}" aria-pressed="${s.year === y.year}">${s.year}</button>`)
       .join('')}</nav>
     <div class="summary-strip">
-      <div><b>${own.length}</b>우리 팀 소속 동기</div>
+      <div><b>${own.filter((r) => r.route !== 'service').length}</b>우리 팀 소속 동기</div>
       <div><b>${own.filter((r) => r.stats.games > 0).length}</b>1군 출전</div>
       <div><b>${own.filter((r) => r.route === 'regular').length}</b>1군 주전급</div>
-      <div><b>${standing.rank}위</b>정규시즌</div>
+      <div><b>${own.filter((r) => r.route === 'service').length}</b>군 복무</div>
     </div>
     <h2 class="rule">우리가 지명한 선수 <button class="btn quiet small" data-action="records">전체 구단 기록실</button></h2>
-    <p class="note">원지명 기준입니다. 다른 팀으로 옮긴 선수도 계속 보여 줍니다. 이름을 누르면 경력 전체를 볼 수 있습니다.</p>
+    <p class="note">원지명 기준입니다. 다른 팀으로 옮기거나 은퇴한 선수도 계속 보여 줍니다. 이름을 누르면 경력 전체를 볼 수 있습니다.</p>
     ${recordTable(g, mine)}
+    ${joined.length ? `<h2 class="rule">다른 팀에서 온 동기 <small>${y.year} 시즌 우리 팀 소속</small></h2>${recordTable(g, joined)}` : ''}
     ${development(g, y)}
+    ${international(g, y)}
     <div class="cols even" style="margin-top:8px">
       <section>
         <h2 class="rule">동기 개인상 <small>이번 드래프트 출신끼리 비교</small></h2>
         ${classAwards.length ? `<ul class="event-list">${classAwards.map((a) => `<li><b>${esc(a.title.replace('드래프트 동기 ', ''))}</b> ${playerLink(a.playerId, player(g, a.playerId).name)} <span class="muted">${teamName(a.teamId)}</span></li>`).join('')}</ul>` : '<p class="note">최소 출전 기준을 넘긴 선수가 없습니다.</p>'}
         <p class="note">우승 멤버: ${champs.map((a) => playerLink(a.playerId, player(g, a.playerId).name)).join(', ') || '없음'}</p>
         <h2 class="rule">${y.year} 비시즌</h2>
-        ${events(g, y.events)}
+        ${offseasonEvents(g, y.events)}
       </section>
       <section>
         <h2 class="rule">순위표</h2>
@@ -4674,9 +5199,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           .join('')}</details>
       </section>
     </div>
+    ${last ? servicePanel(g, orders) : ''}
     <div class="actions">
-      ${years.length < 5 ? `<button class="btn primary" data-action="next-season">${years.at(-1).year + 1} 시즌 진행</button>` : '<button class="btn primary" data-action="owner">5년 최종 평가 보기</button>'}
-      ${years.length < 5 ? '<button class="btn" data-action="owner">중간 평가</button>' : ''}
+      ${years.length < total ? `<button class="btn primary" data-action="next-season">${years.at(-1).year + 1} 시즌 진행</button>` : `<button class="btn primary" data-action="owner">${total}년 최종 평가 보기</button>`}
+      ${years.length < total ? '<button class="btn" data-action="owner">중간 평가</button>' : ''}
       <button class="btn quiet" data-action="interviews">입단 소감 다시 보기</button>
     </div>`;
   }
@@ -4685,7 +5211,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     const years = g.career?.years || [],
       list = rows(g, f.year, f.team, f.scope, f.sort, f.level);
     const opt = (v, label, cur) => `<option value="${v}" ${String(cur) === String(v) ? 'selected' : ''}>${label}</option>`;
-    const sorts = { rank: '지명 순서', contribution: '1군 기여', games: '경기 수', hr: '홈런', wins: '승수', ops: 'OPS', era: 'ERA (낮은 순)', outs: '이닝', awards: '수상 수' };
+    const sorts = { rank: '지명 순서', war: 'WAR', games: '경기 수', hr: '홈런', wins: '승수', ops: 'OPS', era: 'ERA (낮은 순)', outs: '이닝', awards: '수상 수' };
     return `
     <div class="page-head"><h1>전체 구단 기록실</h1>
       <p>10개 구단이 이번 드래프트에서 뽑은 선수 모두의 기록입니다. 이름을 누르면 경력 전체를 볼 수 있습니다.</p>
@@ -4697,7 +5223,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       <label class="field">리그<select id="record-level">${opt('stats', '1군', f.level)}${opt('futures', '퓨처스', f.level)}</select></label>
       <label class="field">정렬<select id="record-sort">${Object.entries(sorts).map(([k, l]) => opt(k, l, f.sort)).join('')}</select></label>
     </div>
-    <p class="note">${list.length}명. 기여는 1군 성적으로 만든 게임 내 지수입니다(WAR 아님).${years.length ? '' : ' 아직 시즌을 진행하지 않았습니다.'}</p>
+    <p class="note">${list.length}명. WAR은 1군 기록으로 계산한 게임 내 추정치입니다(대체 선수 대비 승리 기여).${years.length ? '' : ' 아직 시즌을 진행하지 않았습니다.'}</p>
     ${recordTable(g, list, f.level)}`;
   }
 
@@ -4709,16 +5235,17 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       state = g.career?.players[id];
     const honors = (g.career?.years || []).flatMap((y) => y.awards).filter((a) => a.playerId === id),
       evs = (g.career?.events || []).filter((a) => a.playerIds.includes(id));
-    const now = state ? state.currentTeamId : sel.teamId;
-    const pending = state?.status === 'active' && hist.length === 5 && hist.at(-1).age <= 24 && state.scoutReady < p.scoutCeiling;
+    const pending = state?.status === 'active' && hist.length >= C.Career.SEASONS && hist.at(-1).age <= C.tuning.review.pendingMaxAge && state.scoutReady < state.scoutFV;
+    const status = UI.statusLabel(state, sel.teamId);
     const r = p.record;
     return `<div class="career-profile">
-      <span class="kicker">${teamName(sel.teamId)} ${esc(sel.label)} ${sel.dev ? '계약' : '지명'}${now !== sel.teamId ? ` · 현재 ${teamName(now)}` : ''}</span>
+      <span class="kicker">${teamName(sel.teamId)} ${esc(sel.label)} ${sel.dev ? '계약' : '지명'}${status ? ` · ${esc(status)}` : ''}</span>
       <h2>${esc(p.name)}</h2>
       <p>${C.ROLES[p.role]} · ${esc(p.pathway)}${p.quotaEligible ? ' (대졸 의무 대상)' : ''} · ${UI.hand(p)} · ${p.height}cm ${p.weight}kg</p>
       <p class="muted">${esc(p.pathText)} · ${p.birthday} 출생 · 지명 당시 만 ${p.age}세${hist.length ? `, ${hist.at(-1).year}년 말 만 ${hist.at(-1).age}세` : ''}</p>
       <p>강점: ${esc(p.strength)} 과제: ${esc(p.weakness)}</p>
-      ${pending ? '<p class="callout">아직 성장 중인 젊은 선수입니다. 5년만으로 평가를 끝내기 이릅니다.</p>' : ''}
+      ${state ? `<p>병역: ${esc(UI.serviceStatus(state))} · 현재 FV ${state.scoutFV}${state.scoutFV !== p.scoutCeiling ? ` (지명 당시 ${p.scoutCeiling})` : ''}</p>` : ''}
+      ${pending ? '<p class="callout">아직 성장 중인 젊은 선수입니다. 평가를 끝내기 이릅니다.</p>' : ''}
       <h3>지명 당시 평가</h3>
       ${UI.toolTable(p)}
       ${state ? UI.toolSnapshot(p, state.publicTools, `현재 세부 기량 · 종합 ${state.scoutReady}`) : ''}
@@ -4729,19 +5256,19 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
             .map(
               (y) => `<article class="year-report">
                 <header><b>${y.year} · ${teamName(y.teamId)}</b>${tag(y.routeLabel, y.route === 'regular' ? 'good' : '')}</header>
-                <p>1군: ${UI.statLine(y.stats)}</p>
-                <p class="muted">퓨처스: ${UI.statLine(y.futures)}</p>
+                ${y.route === 'service' ? '' : `<p>1군: ${UI.statLine(y.stats)}${y.stats.games ? ` · WAR ${num(y.war, 1)}` : ''}</p>`}
+                <p class="muted">${y.route === 'service' && y.serviceType === 'sangmu' ? '상무(퓨처스)' : '퓨처스'}: ${UI.statLine(y.futures)}</p>
                 <p>${esc(y.note)}</p>
-                <p class="note">${esc(y.growthLabel)} · 현재 기량 ${y.startGrade ?? y.scoutReady} → ${y.scoutReady} · 계획 이행 ${y.planScore}${y.velocity ? ` · 최고 구속 ${y.velocity}km/h (${UI.velocityChange(g, y)})` : ''}</p>
+                ${y.teamId ? `<p class="note">${esc(y.growthLabel)} · 현재 기량 ${y.startGrade ?? y.scoutReady} → ${y.scoutReady} · FV ${y.scoutFV}${y.planScore != null ? ` · 계획 이행 ${y.planScore}` : ''}${y.velocity ? ` · 최고 구속 ${y.velocity}km/h (${UI.velocityChange(g, y)})` : ''}</p>` : ''}
                 ${y.publicTools ? UI.toolSnapshot(p, y.publicTools, '시즌 종료 세부 기량') : ''}
               </article>`,
             )
             .join('') +
-          `<p><b>1군 통산</b> ${UI.statLine(C.Career.totalStats(hist))}</p><p class="muted"><b>퓨처스 통산</b> ${UI.statLine(C.Career.totalStats(hist, 'futures'))}</p>`
+          `<p><b>1군 통산</b> ${UI.statLine(C.Career.totalStats(hist))} · WAR ${num(Math.round(hist.reduce((n, y) => n + (y.war || 0), 0) * 10) / 10, 1)}</p><p class="muted"><b>퓨처스 통산</b> ${UI.statLine(C.Career.totalStats(hist, 'futures'))}</p>`
         : '<p class="note">아직 프로 시즌을 치르지 않았습니다.</p>'}
       <h3>수상</h3>
       ${honors.length ? honors.map((a) => `<p>${a.year} · ${esc(a.title)} (${teamName(a.teamId)})</p>`).join('') : '<p class="note">없음</p>'}
-      <h3>이적·방출</h3>
+      <h3>이적·방출·병역</h3>
       ${events(g, evs)}
     </div>`;
   }
@@ -4759,12 +5286,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     const all = C.careerReview(g),
       mine = all.find((t) => t.teamId === g.teamId),
       n = g.career.years.length,
+      done = n >= C.Career.SEASONS,
       first = g.owner;
     const bar = (label, v) => `<div>${label} <b class="num">${Math.round(v)}%</b><span><i style="width:${Math.max(0, Math.min(100, v))}%"></i></span></div>`;
     return `
     <div class="page-head">
-      <span class="kicker">${n === 5 ? '최종 평가' : `중간 평가 · ${n}시즌 경과`}</span>
-      <h1>${n === 5 ? '다섯 시즌 뒤 돌아본 드래프트' : `${n}시즌까지의 드래프트 평가`}</h1>
+      <span class="kicker">${done ? '최종 평가' : `중간 평가 · ${n}시즌 경과`}</span>
+      <h1>${done ? `${n}시즌 뒤 돌아본 드래프트` : `${n}시즌까지의 드래프트 평가`}</h1>
       <p>원지명 선수가 어디서 뛰었든 전체 경력으로 평가하고, 우리 팀에서 낸 기여는 따로 셉니다.</p>
     </div>
     <div class="cols">
@@ -4774,16 +5302,16 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
           <div class="score-bars" style="flex:1;min-width:220px">
             ${bar('1군에 데뷔한 비율', (mine.debut / mine.count) * 100)}
             ${bar('주전급으로 자리 잡은 비율', (mine.established / mine.count) * 100)}
-            ${bar('기여 중 우리 팀에서 낸 비율', mine.total ? (mine.atHome / mine.total) * 100 : 0)}
+            ${bar('WAR 중 우리 팀에서 낸 비율', mine.total > 0 ? (Math.max(0, mine.atHome) / mine.total) * 100 : 0)}
           </div>
         </div>
         <dl class="facts" style="margin-top:14px">
           <dt>1군 출전</dt><dd>${mine.debut}/${mine.count}명 · 주전급 경험 ${mine.established}명</dd>
-          <dt>기여 합계</dt><dd>${mine.total} (우리 팀에서 ${mine.atHome})</dd>
+          <dt>WAR 합계</dt><dd>${num(mine.total, 1)} (우리 팀에서 ${num(mine.atHome, 1)})</dd>
           <dt>기량 변화</dt><dd>지명 당시 대비 평균 ${UI.signed(mine.development)}</dd>
-          <dt>기타</dt><dd>동기 개인상 ${mine.awards}회 · 방출 ${mine.released}명 · 성장 중 ${mine.pending}명</dd>
+          <dt>기타</dt><dd>동기 개인상 ${mine.awards}회 · 국가대표 ${mine.national}명 · 방출 ${mine.released}명 · 은퇴 ${mine.retired}명 · 성장 중 ${mine.pending}명</dd>
         </dl>
-        <p class="note">점수 = 보강 적합 20% + 기여(인원·시즌 보정) 50% + 기량 발전 30%.</p>
+        <p class="note">점수 = 보강 적합 20% + WAR(인원·시즌 보정) 50% + 기량 발전 30%.</p>
       </section>
       <aside>
         <section class="box"><h3>첫해 구단주 평가</h3>
@@ -4795,13 +5323,13 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     </div>
     <h2 class="rule">10개 구단 비교</h2>
     <div class="table-scroll" tabindex="0"><table class="t record-table">
-      <thead><tr><th>구단</th><th class="n">순위</th><th class="n">평가</th><th class="n">1군 출전</th><th class="n">주전급</th><th class="n">전체 기여</th><th class="n">원구단 기여</th><th class="n">개인상</th></tr></thead>
+      <thead><tr><th>구단</th><th class="n">순위</th><th class="n">평가</th><th class="n">1군 출전</th><th class="n">주전급</th><th class="n">전체 WAR</th><th class="n">원구단 WAR</th><th class="n">개인상</th><th class="n">국가대표</th></tr></thead>
       <tbody>${all
-        .map((x, i) => `<tr class="${x.teamId === g.teamId ? 'mine' : ''}"><td><button class="link" data-action="team-records" data-id="${x.teamId}">${teamName(x.teamId)}</button></td><td class="n">${i + 1}</td><td class="n">${x.grade} ${x.score}</td><td class="n">${x.debut}/${x.count}</td><td class="n">${x.established}</td><td class="n">${x.total}</td><td class="n">${x.atHome}</td><td class="n">${x.awards}</td></tr>`)
+        .map((x, i) => `<tr class="${x.teamId === g.teamId ? 'mine' : ''}"><td><button class="link" data-action="team-records" data-id="${x.teamId}">${teamName(x.teamId)}</button></td><td class="n">${i + 1}</td><td class="n">${x.grade} ${x.score}</td><td class="n">${x.debut}/${x.count}</td><td class="n">${x.established}</td><td class="n">${num(x.total, 1)}</td><td class="n">${num(x.atHome, 1)}</td><td class="n">${x.awards}</td><td class="n">${x.national}</td></tr>`)
         .join('')}</tbody>
     </table></div>
     <div class="actions">
-      ${n < 5 ? `<button class="btn primary" data-action="next-season">${C.ENTRY_YEAR + n} 시즌 진행</button>` : ''}
+      ${!done ? `<button class="btn primary" data-action="season">${C.ENTRY_YEAR + n} 시즌 준비</button>` : ''}
       <button class="btn" data-action="season">시즌별 기록</button>
       <button class="btn" data-action="records">전체 구단 기록실</button>
       <button class="btn quiet" data-action="export-save">진행 파일 저장</button>
@@ -4831,7 +5359,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       <button class="btn quiet small" data-action="news-room">뉴스 ${g.news.length}</button>
       <button class="btn quiet small" data-action="records">기록실</button>
       <button class="btn quiet small" data-action="export-save">진행 파일 저장</button>
-      <span class="note" style="margin-left:auto">${g.career ? `${g.career.years.length}/5 시즌` : '대졸 의무 1명 · 5시즌 추적'}</span>
+      <span class="note" style="margin-left:auto">${g.career ? `${g.career.years.length}/${C.Career.SEASONS} 시즌` : `대졸 의무 1명 · ${C.Career.SEASONS}시즌 추적`}</span>
     </div>`;
   }
 
@@ -4923,8 +5451,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         <li>전국 ${C.ROUND_OPTIONS.join('·')}라운드 중 하나를 골라 지명합니다(지역 1차를 켜면 연고 지역 고졸 1명 추가). 구단마다 국내 4년제·2년제 대학 졸업예정자를 1명 이상 뽑아야 하며, 대학 얼리 참가자는 포함되지 않습니다.</li>
         <li>드래프트가 끝나면 미지명 선수 중 최대 ${C.tuning.devContracts.max}명과 육성선수 계약을 할 수 있습니다. 육성선수는 첫 시즌에 1군 주전이 될 수 없습니다. 다른 구단도 3–5명씩 계약합니다.</li>
         <li>단장 기자회견에서 첫해 목표를 약속하고, 입단 소감을 듣습니다.</li>
-        <li>${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌을 한 해씩 진행합니다. 보직·기록·성장·건강이 다음 해로 이어지고, 2년 차가 끝난 뒤부터 트레이드, 3년 차가 끝난 뒤부터 방출이 생길 수 있습니다.</li>
-        <li>5년이 끝나면 10개 구단의 드래프트를 비교 평가합니다.</li>
+        <li>${C.ENTRY_YEAR}–${C.ENTRY_YEAR + C.Career.SEASONS - 1} ${C.Career.SEASONS}시즌을 한 해씩 진행합니다. 보직·기록·성장·건강이 다음 해로 이어지고, 2년 차가 끝난 뒤부터 트레이드, 3년 차가 끝난 뒤부터 방출이 생길 수 있습니다. 방출된 선수는 다른 팀에 입단하거나 은퇴합니다. 1군 기회가 오지 않거나 기량이 떨어진 선수는 스스로 은퇴하기도 합니다.</li>
+        <li><b>병역</b>: 2년 차부터 비시즌마다 병역을 마치지 않은 우리 선수의 입대를 정할 수 있습니다(구단 판단·상무 지원·현역 입대·미루기). 상무는 퓨처스리그에서 뛰며 성장하고, 현역·사회복무요원은 야구를 쉬어 기량이 조금 떨어집니다. 만 ${C.tuning.service.mustAge}세가 되는 해에는 입대해야 합니다.</li>
+        <li><b>국가대표</b>: ${C.tuning.international.map((e) => `${e.year} ${e.name}`).join(', ')}. 선발되어 아시안게임 금메달이나 올림픽 메달을 따면 병역 특례(예술체육요원)를 받습니다.</li>
+        <li>${C.Career.SEASONS}시즌이 끝나면 10개 구단의 드래프트를 WAR·주전 배출·기량 발전으로 비교 평가합니다. 중간 평가는 언제든 볼 수 있습니다.</li>
       </ol>
       <h3>능력치 읽는 법 (20–80)</h3>
       <ol>
@@ -4932,7 +5462,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
         <li><b>현재</b>는 지금 기량, <b>미래 가치(FV)</b>는 성장 후 예상 역할, <b>플로어·실링</b>은 나쁘게·잘 풀렸을 때의 전망입니다.</li>
         <li>투수: 구위·커맨드·변화구는 투구 성적, 체력은 소화 이닝에 반영됩니다. 야수: 컨택·장타력·주력·수비와 보조 항목 선구안.</li>
         <li>스카우팅에는 관측 오차가 있고, 고졸일수록 큽니다. 프로에서 뛰는 해가 늘면 평가가 정확해집니다.</li>
-        <li>난이도는 조언의 양과 CPU 구단의 판단 방식만 바꿉니다. 선수 능력과 성장은 같습니다. 이지에서만 선수가 어릴 때 응원한 구단이 보입니다(효과 없음).</li>
+        <li>난이도는 조언의 양과 CPU 구단의 판단 방식만 바꿉니다. 선수 능력과 성장은 같습니다. 쉬움 난이도에서만 선수가 어릴 때 응원한 구단이 보입니다(효과 없음).</li>
       </ol>
       <h3>저장</h3>
       <ol>
@@ -4955,7 +5485,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     UI = window.DraftUI;
   const $ = (s) => document.querySelector(s);
   const STORE = 'draft-room-kbo-v6-scouting'; // unchanged since V0.6 so existing saves keep loading
-  const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', '5시즌', '평가'];
+  const STEPS = ['구단 선택', '예상·추천', '드래프트', '입단', `${C.Career.SEASONS}시즌`, '평가'];
   const PHASE_STEP = { preview: 2, scouting: 2, draft: 3, signing: 4, interviews: 4, season: 5, owner: 6 };
 
   const newSeed = () => Date.now() + '-' + Math.random();
@@ -4971,6 +5501,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     recordsOpen: false,
     records: { team: 'ALL', scope: 'origin', year: 'all', level: 'stats', sort: 'rank' },
     yearIndex: 0,
+    service: {}, // military-service choices for the coming offseason: playerId → choice
     modal: null,
     storageOK: true,
     notice: null, // shown above the setup screen, e.g. when an old save could not be continued
@@ -4984,6 +5515,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     state.game = game;
     Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty, rounds: game.rounds });
     state.dev = { chosen: new Set(), role: 'ALL' };
+    state.service = {};
     state.stars = new Set(stars.filter((id) => typeof id === 'string' && C.getPlayer(game, id)));
     state.yearIndex = (game.career?.years.length || 1) - 1;
     if (game.phase === 'draft') C.advanceToUser(game);
@@ -5040,7 +5572,7 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
       case 'draft': return UI.board(game, state.view, state.stars, state.selected);
       case 'signing': return UI.signing(game, state.dev.chosen, state.dev.role);
       case 'interviews': return UI.interviews(game);
-      case 'season': return UI.season(game, state.yearIndex);
+      case 'season': return UI.season(game, state.yearIndex, state.service);
       default: return UI.review(game);
     }
   }
@@ -5214,7 +5746,8 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
     'next-season': () => {
       if (Date.now() - lastAdvance < 900) return; // guards against double taps
       lastAdvance = Date.now();
-      C.nextSeason(g());
+      C.nextSeason(g(), state.service);
+      state.service = {};
       state.yearIndex = g().career.years.length - 1;
       state.recordsOpen = false;
       render();
@@ -5337,6 +5870,10 @@ const api={givenNames,surnames,makeName,sourceNote:'완성형 이름 검수 목�
   document.addEventListener('change', (e) => {
     const id = e.target.id;
     if (id === 'import-file') return importSave(e.target.files[0]);
+    if (e.target.dataset.service) {
+      state.service[e.target.dataset.service] = e.target.value;
+      return;
+    }
     if (id.startsWith('record-')) {
       state.records[id.slice(7)] = e.target.value;
       return render();

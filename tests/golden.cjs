@@ -25,7 +25,7 @@ const PLAYER_KEYS = ['id', 'rank', 'name', 'role', 'type', 'pathway', 'region', 
   'futureTools', 'trueTools', 'potentialTools', 'growthCurve', 'developmentRate', 'observerBias', 'risk', 'favoriteTeam', 'pickTags',
   'uncertainty', 'regionalEligible', 'quotaEligible'];
 const simPlayer = (p) => ({ ...only(p, PLAYER_KEYS), record: numbersOf(p.record) });
-const RECORD_KEYS = ['playerId', 'teamId', 'year', 'age', 'route', 'roleTier', 'growth', 'scoutReady', 'publicTools', 'planScore', 'contribution', 'daysLost', 'limited'];
+const RECORD_KEYS = ['playerId', 'teamId', 'year', 'age', 'route', 'serviceType', 'roleTier', 'growth', 'scoutReady', 'scoutFV', 'publicTools', 'planScore', 'contribution', 'war', 'daysLost', 'limited'];
 const simRecord = (r) => ({ ...only(r, RECORD_KEYS), stats: numbersOf(r.stats), futures: numbersOf(r.futures), end: only(r.endState, ['ability', 'tools', 'performance']) });
 function simGame({ game: g, review, fans }) {
   return {
@@ -43,9 +43,11 @@ function simGame({ game: g, review, fans }) {
       champion: y.league.champion,
       series: y.league.series.map((x) => [x.home, x.away, x.homeWins, x.awayWins]),
       awards: y.awards.map((a) => [a.id, a.playerId, a.teamId]),
-      events: y.events.map((e) => [e.type, e.fromTeamId, e.toTeamId, ...e.playerIds]),
+      events: y.events.map((e) => [e.type, e.service, e.fromTeamId, e.toTeamId, ...e.playerIds]),
+      international: (y.international || []).map((e) => [e.name, e.result, e.playerIds, e.exemptIds]),
     })),
-    players: Object.values(g.career.players).map((s) => only(s, ['playerId', 'status', 'currentTeamId', 'ability', 'scoutReady'])),
+    players: Object.values(g.career.players).map((s) => only(s, ['playerId', 'status', 'currentTeamId', 'ability', 'scoutReady', 'scoutFV', 'served', 'exempt', 'service'])),
+    service: g.serviceOrders || [],
     review: review.map((x) => numbersOf(x)),
   };
 }
@@ -55,7 +57,11 @@ function play([team, local, seed, difficulty, gm]) {
   while (g.phase === 'draft') C.addPick(g, C.aiChoice(g).id);
   C.signDevelopment(g, C.undrafted(g).slice(2, 5).map((p) => p.id));
   C.chooseGM(g, gm); C.runSeason(g);
-  while (g.career.years.length < 5) C.nextSeason(g);
+  while (g.career.years.length < C.Career.SEASONS) {
+    // Every other season, send our first eligible player to Sangmu when he has a chance, else hold him back.
+    const o = C.serviceOptions(g)[0];
+    C.nextSeason(g, o && g.career.years.length % 2 ? { [o.playerId]: o.sangmu ? 'sangmu' : o.must ? 'army' : 'defer' } : {});
+  }
   return { game: g, review: C.careerReview(g), fans: C.fanState(g) };
 }
 const result = {};

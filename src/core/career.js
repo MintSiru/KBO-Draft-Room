@@ -8,7 +8,7 @@
   const { rng, normal, clamp, round, mean } = D;
   const { TUNING: T, letter } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
-  const SEASONS = 5;
+  const SEASONS = 10;
   const fit = (p, t) => S.fit(p, t);
   function create(picks, byId, seed = '') {
     return {
@@ -31,6 +31,18 @@
               route: null,
               limited: false,
               age: p.age,
+              scoutFV: p.scoutCeiling,
+              fvRaw: p.scoutCeiling,
+              // Some independent-league players and returnees have already done their service.
+              served: rng(seed + '-served-' + p.id)() < (T.service.servedAtDraft[p.pathway] ?? 0),
+              exempt: null,
+              service: null,
+              routeBefore: null,
+              absentDays: 0,
+              debuted: false,
+              noGameStreak: 0,
+              rehabStreak: 0,
+              injuryDays: 0,
             },
           ];
         }),
@@ -165,29 +177,177 @@
       });
     return out;
   }
-  function offseason(seed, yearIndex, career, records, byId, picks) {
+  // ---------------------------------------------------------------- military service
+
+  const ageIn = (p, yearIndex) => D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
+  const inService = (s) => !!s.service;
+  const canPlay = (s) => s.status === 'active' && !s.service;
+  const needsService = (s) => s.status === 'active' && !s.served && !s.exempt && !s.service;
+
+  /** Chance that Sangmu accepts the player this year (0 if too old). */
+  function sangmuChance(state, p, yearIndex) {
+    const Sg = T.service.sangmu;
+    if (ageIn(p, yearIndex) > Sg.maxAge) return 0;
+    return clamp((state.scoutReady - Sg.minGrade) * Sg.perGrade + (state.debuted ? Sg.playedBonus : 0), Sg.min, Sg.max);
+  }
+  /** Social-service (공익) classification; injuries make it more likely. Fixed per player once rolled. */
+  function socialService(state, seed) {
+    const So = T.service.social;
+    return rng(seed + '-physical-' + state.playerId)() < clamp(So.base + state.injuryDays * So.perInjuryDay, 0, So.max);
+  }
+  const gamesSoon = (yearIndex) =>
+    T.international.filter((e) => e.ageLimit && e.year >= D.bio.ENTRY_YEAR + yearIndex && e.year <= D.bio.ENTRY_YEAR + yearIndex + 1);
+
+  /** Players the club may send to service before season `yearIndex`, with what they could do. */
+  function serviceOptions(career, byId, yearIndex) {
+    const Sv = T.service;
+    if (yearIndex < Sv.firstYear || yearIndex >= SEASONS) return [];
+    return Object.values(career.players)
+      .filter(needsService)
+      .sort((a, b) => a.playerId.localeCompare(b.playerId))
+      .map((s) => {
+        const p = byId[s.playerId],
+          age = ageIn(p, yearIndex);
+        return { playerId: s.playerId, teamId: s.currentTeamId, age, must: age >= Sv.mustAge, sangmu: sangmuChance(s, p, yearIndex) };
+      });
+  }
+
+  /** Discharges, then enlistments before season `yearIndex`. `orders`: playerId → 'auto'|'sangmu'|'army'|'defer'. */
+  function serviceStep(career, byId, seed, yearIndex, orders) {
+    const Sv = T.service,
+      R = T.retirement,
+      year = D.bio.ENTRY_YEAR + yearIndex - 1, // the offseason after last season
+      events = [];
+    const states = Object.values(career.players).sort((a, b) => a.playerId.localeCompare(b.playerId));
+    for (const s of states) {
+      s.absentDays = 0;
+      if (!s.service || s.service.until !== yearIndex) continue;
+      const share = s.service.returnShare;
+      s.service = null;
+      s.served = true;
+      s.route = s.routeBefore;
+      s.performance = 0;
+      if (s.scoutReady <= R.afterService.maxGrade && rng(seed + '-retire-service-' + s.playerId)() < R.afterService.chance) {
+        s.status = 'retired';
+        events.push({ id: `${year}-retire-${s.playerId}`, type: 'retire', year, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [s.playerId], reason: '전역 후 팀에 복귀하지 않고 은퇴했다.' });
+        s.currentTeamId = null;
+        continue;
+      }
+      s.absentDays = Math.round((1 - share) * T.health.playingDays);
+    }
+    for (const o of serviceOptions(career, byId, yearIndex)) {
+      const s = career.players[o.playerId],
+        p = byId[o.playerId],
+        r = rng(`${seed}-enlist-${year}-${o.playerId}`);
+      const social = socialService(s, seed),
+        army = social ? 'social' : 'army';
+      let order = orders[o.playerId] || 'auto',
+        type = null,
+        note = null;
+      if (order === 'defer' && o.must) order = 'auto';
+      if (order === 'sangmu') {
+        if (!social && r() < o.sangmu) type = 'sangmu';
+        else if (o.must) type = army;
+        else note = social ? '사회복무요원 판정이라 상무에 지원할 수 없었다.' : '상무에 지원했지만 합격하지 못했다.';
+      } else if (order === 'army') type = army;
+      else if (order === 'auto') {
+        const held = !o.must && s.scoutReady >= Sv.holdForGames && gamesSoon(yearIndex).some((e) => ageIn(p, e.year - D.bio.ENTRY_YEAR) <= e.ageLimit);
+        const factor = Sv.enlistByAge.find(([maxAge]) => o.age <= maxAge)?.[1] ?? Sv.enlistByAge.at(-1)[1];
+        const want = o.must || (!held && r() < clamp((Sv.enlistByRoute[s.route] ?? Sv.enlistByRoute.futures) * factor, 0, 0.95));
+        if (want) {
+          if (social) type = 'social';
+          else if (s.scoutReady >= Sv.sangmu.clubMinGrade && r() < o.sangmu) type = 'sangmu';
+          else if (o.must || o.age >= 26 || s.scoutReady < Sv.sangmu.clubMinGrade) type = 'army';
+        }
+      }
+      if (note)
+        events.push({ id: `${year}-sangmu-miss-${o.playerId}`, type: 'note', year, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [o.playerId], reason: note });
+      if (!type) continue;
+      const term = Sv.terms[type];
+      s.service = { type, from: yearIndex, until: yearIndex + term.seasons, returnShare: term.returnShare };
+      s.routeBefore = s.route;
+      events.push({
+        id: `${year}-enlist-${o.playerId}`,
+        type: 'enlist',
+        service: type,
+        year,
+        fromTeamId: s.currentTeamId,
+        toTeamId: null,
+        playerIds: [o.playerId],
+        reason: `${M.SERVICE_LABELS[type]} 입대${o.must ? ' (입대 기한)' : ''}.`,
+      });
+    }
+    return events;
+  }
+
+  /** National-team events in season `yearIndex`: selection from public grades, a result, exemptions. */
+  function internationalStep(career, byId, seed, yearIndex) {
+    const year = D.bio.ENTRY_YEAR + yearIndex,
+      out = [];
+    for (const e of T.international.filter((x) => x.year === year)) {
+      const pool = Object.values(career.players).filter((s) => s.status === 'active' && (!s.service || s.service.type === 'sangmu'));
+      const score = (s) => s.scoutReady + (s.route === 'regular' ? 3 : 0) + (s.scoutFV || 0) / 100;
+      const byScore = (a, b) => score(b) - score(a) || a.playerId.localeCompare(b.playerId);
+      const young = pool.filter((s) => (!e.ageLimit || ageIn(byId[s.playerId], yearIndex) <= e.ageLimit) && s.scoutReady >= e.minGrade).sort(byScore).slice(0, e.max);
+      const wild = e.wildcard
+        ? pool.filter((s) => !young.includes(s) && ageIn(byId[s.playerId], yearIndex) <= e.wildcard.maxAge && s.scoutReady >= e.wildcard.minGrade).sort(byScore).slice(0, e.wildcard.count)
+        : [];
+      const team = [...young, ...wild];
+      const roll = rng(seed + '-intl-' + year)(),
+        result = e.results.find(([limit]) => roll < limit)?.[1] ?? null;
+      const exempt = e.exempt.includes(result) ? team.filter((s) => !s.served && !s.exempt) : [];
+      for (const s of exempt) {
+        s.exempt = e.name;
+        if (s.service) s.service.returnShare = 1; // early discharge after the Games
+      }
+      out.push({ year, name: e.name, playerIds: team.map((s) => s.playerId), result, exemptIds: exempt.map((s) => s.playerId) });
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------- offseason: retirement, release, trade
+
+  function offseason(seed, yearIndex, career, records, byId) {
     const events = [];
     if (yearIndex < 1 || yearIndex >= SEASONS - 1) return events;
     const year = D.bio.ENTRY_YEAR + yearIndex,
-      states = Object.values(career.players).sort((a, b) => a.playerId.localeCompare(b.playerId));
-    const counts = Object.fromEntries(
-      TEAMS.map((t) => [
-        t.id,
-        states.filter((s) => s.status === 'active' && s.currentTeamId === t.id).length,
-      ]),
-    );
+      states = Object.values(career.players).sort((a, b) => a.playerId.localeCompare(b.playerId)),
+      Rt = T.retirement;
+    const retire = (s, reason) => {
+      events.push({ id: `${year}-retire-${s.playerId}`, type: 'retire', year, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [s.playerId], reason });
+      s.status = 'retired';
+      s.currentTeamId = null;
+    };
+    // Released a year ago and still unsigned.
+    for (const s of states) if (s.status === 'released') retire(s, '새 팀을 찾지 못하고 은퇴했다.');
+    // Choosing to stop.
+    for (const s of states) {
+      if (!canPlay(s)) continue;
+      const r = rng(seed + '-retire-' + year + '-' + s.playerId);
+      const reason =
+        s.noGameStreak >= Rt.stalled.seasons && s.age >= Rt.stalled.minAge && s.scoutReady < Rt.stalled.maxGrade && r() < Rt.stalled.chance
+          ? '1군 기회가 오지 않아 스스로 유니폼을 벗었다.'
+          : s.rehabStreak >= 2 && r() < Rt.rehab
+            ? '거듭된 재활 끝에 은퇴를 결정했다.'
+            : s.age >= Rt.veteran.minAge && s.scoutReady < Rt.veteran.maxGrade && r() < Rt.veteran.chance
+              ? '기량이 떨어지면서 은퇴를 택했다.'
+              : null;
+      if (reason) retire(s, reason);
+    }
+    const counts = Object.fromEntries(TEAMS.map((t) => [t.id, states.filter((s) => s.status === 'active' && s.currentTeamId === t.id).length]));
     const touched = new Set(),
       Rl = T.offseason.release,
-      Tr = T.offseason.trade;
+      Tr = T.offseason.trade,
+      Cl = Rt.claim;
     for (const s of states) {
-      if (s.status !== 'active' || counts[s.currentTeamId] <= Rl.minClubSize) continue;
+      if (!canPlay(s) || counts[s.currentTeamId] <= Rl.minClubSize) continue;
       const p = byId[s.playerId],
         rec = records.find((x) => x.playerId === s.playerId),
         r = rng(seed + '-release-' + year + '-' + p.id);
       const old = career.years.at(-1)?.records.find((x) => x.playerId === s.playerId);
       // Stalled: old enough, below the grade bar and two straight seasons without a first-team game.
       const stalled =
-        yearIndex >= Rl.fromYear && s.age >= Rl.minAge && s.scoutReady < Rl.maxGrade && rec.stats.games === 0 && old?.stats.games === 0;
+        yearIndex >= Rl.fromYear && s.age >= Rl.minAge && s.scoutReady < Rl.maxGrade && rec.stats.games === 0 && old?.stats.games === 0 && old.route !== 'service';
       const chance = stalled
         ? clamp(Rl.base + (Rl.maxGrade - s.scoutReady) * Rl.perGrade + Math.max(0, s.age - Rl.minAge) * Rl.perAge, 0, Rl.max)
         : 0;
@@ -200,19 +360,27 @@
           fromTeamId: from,
           toTeamId: null,
           playerIds: [p.id],
-          reason: '만 23세 이상, 2년 연속 1군 기록 없음과 현재 공개 기량 40 미만을 함께 고려한 방출입니다.',
+          reason: '2년 연속 1군 기록이 없고 공개 기량이 40에 못 미쳐 방출됐다.',
         });
         counts[from]--;
-        s.status = 'released';
-        s.currentTeamId = null;
         touched.add(p.id);
+        // Another club may take a chance on him.
+        if (s.age <= Cl.maxAge && r() < clamp((s.scoutReady - Cl.minGrade) * Cl.perGrade, 0, Cl.max)) {
+          const to = TEAMS.filter((t) => t.id !== from).sort((a, b) => counts[a.id] - counts[b.id] || a.id.localeCompare(b.id))[0].id;
+          events.push({ id: year + '-claim-' + p.id, type: 'claim', year, fromTeamId: from, toTeamId: to, playerIds: [p.id], reason: '방출 뒤 입단 테스트를 거쳐 새 팀과 계약했다.' });
+          counts[to]++;
+          s.currentTeamId = to;
+        } else {
+          s.status = 'released';
+          s.currentTeamId = null;
+        }
       }
     }
     const rr = rng(seed + '-trade-' + year);
     if (rr() < Tr.chance) {
       const active = states.filter(
           (s) =>
-            s.status === 'active' &&
+            canPlay(s) &&
             !touched.has(s.playerId) &&
             !records.some((x) => x.playerId === s.playerId && x.route === 'regular' && x.contribution >= Tr.protectContribution),
         ),
@@ -221,7 +389,7 @@
       const V = Tr.value;
       const publicValue = (s) =>
         s.scoutReady * V.perReady +
-        byId[s.playerId].scoutCeiling * V.perFV -
+        (s.scoutFV ?? byId[s.playerId].scoutCeiling) * V.perFV -
         Math.max(0, s.age - V.agePivot) * V.perAge +
         (records.find((x) => x.playerId === s.playerId)?.contribution || 0) * V.perContribution;
       for (let i = 0; i < active.length; i++)
@@ -263,16 +431,32 @@
     }
     return events;
   }
-  function advance(career, picks, byId, seed) {
+
+  const OUT_OF_BASEBALL = {
+    released: ['방출 · 무소속', '무소속이라 이 해의 기록이 없습니다.'],
+    retired: ['은퇴', '은퇴해 기록이 없습니다.'],
+  };
+
+  /**
+   * Plays season `yearIndex` for every signed player: service changes, national team, each player's
+   * season, standings and awards, then the offseason. `orders` are the user's service choices.
+   */
+  function advance(career, picks, byId, seed, orders = {}) {
     const yearIndex = career.years.length;
-    if (yearIndex >= SEASONS) throw Error('5시즌이 모두 끝났습니다.');
+    if (yearIndex >= SEASONS) throw Error(SEASONS + '시즌이 모두 끝났습니다.');
     const year = D.bio.ENTRY_YEAR + yearIndex,
       plans = S.plans(seed, TEAMS),
       rankings = {};
+    if (yearIndex) {
+      const moves = serviceStep(career, byId, seed, yearIndex, orders);
+      career.years[yearIndex - 1].events.push(...moves);
+      career.events.push(...moves);
+    }
+    const international = internationalStep(career, byId, seed, yearIndex);
     for (const t of TEAMS)
       for (const role of Object.keys(D.ROLES)) {
         rankings[t.id + '-' + role] = Object.values(career.players)
-          .filter((s) => s.status === 'active' && s.currentTeamId === t.id && byId[s.playerId].role === role)
+          .filter((s) => canPlay(s) && s.currentTeamId === t.id && byId[s.playerId].role === role)
           .sort(
             (a, b) =>
               b.ability + (b.route === 'regular' ? 5 : 0) - (a.ability + (a.route === 'regular' ? 5 : 0)) ||
@@ -283,42 +467,60 @@
     const records = picks.map((sel) => {
       const p = byId[sel.playerId],
         state = career.players[p.id];
-      if (state.status !== 'active')
+      if (state.status !== 'active') {
+        const [routeLabel, note] = OUT_OF_BASEBALL[state.status];
         return {
           playerId: p.id,
           label: sel.label,
           year,
           teamId: null,
-          age: D.bio.ageAt(p.birthday, year + '-12-31'),
-          route: 'released',
-          routeLabel: '방출 · 무소속',
+          age: ageIn(p, yearIndex),
+          route: state.status,
+          routeLabel,
           stats: M.emptyStats(p),
           futures: M.emptyStats(p),
           growth: 0,
           growthLabel: '프로 기록 없음',
-          developmentNote: '방출 전 기록만 남아 있습니다.',
-          note: '무소속이라 이 해의 기록이 없습니다.',
+          developmentNote: '이전 기록만 남아 있습니다.',
+          note,
           limited: false,
           contribution: 0,
-          planScore: 0,
+          war: 0,
+          planScore: null,
           target: '경력 보존',
           scoutReady: state.scoutReady,
+          scoutFV: state.scoutFV,
         };
-      const t = { ...byTeam[state.currentTeamId], ...plans[state.currentTeamId] },
-        rank = rankings[t.id + '-' + p.role].indexOf(p.id),
-        capacity = T.roles.cohortCapacity[p.role];
-      const rec = M.simulatePlayer(p, sel, { seed }, t, fit(p, t), yearIndex ? state : null, yearIndex, {
-        // Development-contract players cannot be regulars in their first season.
-        blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
-        closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
-      });
+      }
+      const t = { ...byTeam[state.currentTeamId], ...plans[state.currentTeamId] };
+      let rec;
+      if (state.service) rec = M.serviceSeason(p, sel, { seed }, t, state, yearIndex, state.service.type);
+      else {
+        const rank = rankings[t.id + '-' + p.role].indexOf(p.id),
+          capacity = T.roles.cohortCapacity[p.role];
+        rec = M.simulatePlayer(p, sel, { seed }, t, fit(p, t), yearIndex ? state : null, yearIndex, {
+          // Development-contract players cannot be regulars in their first season.
+          blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
+          closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
+          absentDays: state.absentDays || 0,
+        });
+      }
       Object.assign(state, rec.endState);
+      if (rec.route !== 'service') {
+        state.debuted = state.debuted || rec.stats.games > 0;
+        state.noGameStreak = rec.stats.games > 0 ? 0 : (state.noGameStreak || 0) + 1;
+        state.rehabStreak = rec.route === 'rehab' ? (state.rehabStreak || 0) + 1 : 0;
+        state.injuryDays = (state.injuryDays || 0) + rec.daysLost;
+      }
       return rec;
     });
     const league = standings(seed, year, records),
       honors = awards(year, records, league);
-    const events = offseason(seed, yearIndex, career, records, byId, picks);
-    const row = { year, records, league, awards: honors, events };
+    for (const e of international)
+      for (const id of e.playerIds)
+        honors.push({ id: `${year}-national-${id}`, title: `${e.name} ${e.result ?? '국가대표'}`, scope: 'national', year, playerId: id, teamId: career.players[id].currentTeamId });
+    const events = offseason(seed, yearIndex, career, records, byId);
+    const row = { year, records, league, awards: honors, events, international };
     career.years.push(row);
     career.events.push(...events);
     return row;
@@ -331,8 +533,8 @@
       const own = picks.filter((s) => s.teamId === t.id),
         ids = new Set(own.map((s) => s.playerId)),
         records = career.years.flatMap((y) => y.records.filter((r) => ids.has(r.playerId)));
-      const total = records.reduce((n, r) => n + r.contribution, 0),
-        atHome = records.filter((r) => r.teamId === t.id).reduce((n, r) => n + r.contribution, 0);
+      const total = records.reduce((n, r) => n + (r.war || 0), 0),
+        atHome = records.filter((r) => r.teamId === t.id).reduce((n, r) => n + (r.war || 0), 0);
       const debut = own.filter((s) => history(career, s.playerId).some((r) => r.stats.games > 0)).length;
       const established = own.filter((s) =>
         history(career, s.playerId).some((r) => r.route === 'regular'),
@@ -349,14 +551,14 @@
         club,
       );
       const Rv = T.review;
-      const production = clamp((total / (own.length * Math.max(1, career.years.length) * Rv.contributionPerSeason)) * 100, 0, 100);
+      const production = clamp((Math.max(0, total) / (own.length * Math.max(1, career.years.length) * Rv.warPerSeason)) * 100, 0, 100);
       const growth = clamp(development * Rv.growth.perPoint + Rv.growth.base, 0, 100);
       const score = round(needs * Rv.weights.need + production * Rv.weights.production + growth * Rv.weights.growth);
       return {
         teamId: t.id,
         count: own.length,
-        total: round(total),
-        atHome: round(atHome),
+        total: round(total, 1),
+        atHome: round(atHome, 1),
         debut,
         established,
         development: round(development, 1),
@@ -364,15 +566,17 @@
         grade: letter(score, Rv.gradeCuts),
         pending: own.filter((s) => {
           const st = career.players[s.playerId];
-          return st.status === 'active' && st.age <= Rv.pendingMaxAge && st.scoutReady < byId[s.playerId].scoutCeiling;
+          return st.status === 'active' && st.age <= Rv.pendingMaxAge && st.scoutReady < st.scoutFV;
         }).length,
         released: own.filter((s) => career.players[s.playerId].status === 'released').length,
+        retired: own.filter((s) => career.players[s.playerId].status === 'retired').length,
+        national: new Set(career.years.flatMap((y) => y.awards).filter((a) => ids.has(a.playerId) && a.scope === 'national').map((a) => a.playerId)).size,
         awards: career.years
           .flatMap((y) => y.awards)
           .filter((a) => ids.has(a.playerId) && a.scope === 'draft-class').length,
       };
     }).sort((a, b) => b.score - a.score || b.total - a.total || a.teamId.localeCompare(b.teamId));
   }
-  root.DraftCareer = { SEASONS, create, advance, history, totalStats, review, standings };
+  root.DraftCareer = { SEASONS, SERVICE_LABELS: M.SERVICE_LABELS, create, advance, history, totalStats, review, standings, serviceOptions, sangmuChance };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.DraftCareer;
 })(typeof window !== 'undefined' ? window : globalThis);

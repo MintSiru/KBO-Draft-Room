@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const C=require('../src/core/engine.js'),D=require('../src/core/prospects.js'),M=require('../src/core/season.js'),S=require('../src/core/scouting.js');
 const clone=x=>JSON.parse(JSON.stringify(x));
 function draft(seed='unit06',team='lg',local=true,difficulty='normal'){const g=C.createGame(team,local,seed,difficulty);C.openScouting(g);C.beginDraft(g);while(g.phase==='draft')C.addPick(g,C.aiChoice(g).id);C.signDevelopment(g,C.undrafted(g).slice(3,5).map(p=>p.id));C.chooseGM(g,'development');return g;}
-function finish(g){C.runSeason(g);while(g.career.years.length<5)C.nextSeason(g);return g;}
+function finish(g){C.runSeason(g);while(g.career.years.length<C.Career.SEASONS)C.nextSeason(g);return g;}
 function checkStats(s){assert(s.games>=0);if(s.kind==='pitcher'){assert(s.k<=s.outs);assert(s.qs<=s.gs&&s.gs<=s.games);assert(s.wins+s.holds+s.saves<=s.games);assert.equal(s.era,s.outs?D.round(s.er*27/s.outs,2):null);}else{assert(s.hr+s.doubles+s.triples<=s.hits&&s.hits<=s.ab);assert(s.k<=s.ab-s.hits);assert.equal(s.pa,s.ab+s.bb);assert.equal(s.avg,s.ab?D.round(s.hits/s.ab,3):null);assert.equal(s.ops,s.ab?D.round((s.hits+s.bb)/s.pa+(s.hits+s.doubles+2*s.triples+3*s.hr)/s.ab,3):null);}}
 test('V6 namespace, strict phase order, round options and schedule sizes',()=>{const g=C.createGame('lg',true,'phase');assert.equal(C.VERSION,6);assert.equal(g.rounds,11);assert.equal(g.schedule.length,120);assert.equal(C.makeSchedule(false).length,110);assert.equal(C.createGame('lg',false,'r5','normal',5).schedule.length,50);assert.equal(C.createGame('lg',true,'r8','normal',8).schedule.length,90);assert.throws(()=>C.createGame('lg',false,'r7','normal',7));assert.throws(()=>C.beginDraft(g));assert(C.validate(g));C.openScouting(g);assert(C.validate(g));C.beginDraft(g);assert(C.validate(g));assert.throws(()=>C.openScouting(g));});
 test('400 candidates: composition, quota supply and rare pathways',()=>{for(let i=0;i<20;i++){const p=D.generatePool('pool07-'+i).players;const n=(f)=>p.filter(f).length;assert.equal(p.length,400);assert.equal(n(p=>p.quotaEligible),80);assert.equal(n(p=>p.pathway==='대졸'),56);assert.equal(n(p=>p.pathway==='2년제'),24);assert.equal(n(p=>p.pathway==='고졸')+n(p=>p.pathway==='야구 유학'),264);assert(n(p=>p.pathway==='야구 유학')<=1);assert.equal(n(p=>p.entryCategory==='overseas-return'),14);assert.equal(n(p=>p.pathway==='대학 얼리'),24);assert(n(p=>['MLB 경험 복귀','해외리그 복귀'].includes(p.pathway))<=1);for(const region of D.REGIONS)assert.equal(n(p=>['고졸','야구 유학'].includes(p.pathway)&&p.region===region),33);}});
@@ -13,8 +13,8 @@ test('club plans vary by seed, reproduce exactly and respect positions',()=>{con
 test('same seed and player talent are independent of difficulty and chosen club',()=>{const a=C.createGame('lg',false,'equal06','easy'),pa=clone(C.poolFor(a).players),b=C.createGame('kia',true,'equal06','hard');assert.deepEqual(C.poolFor(b).players,pa);assert.deepEqual(a.clubPlans,b.clubPlans);const p=pa[0],s={round:1,label:'1R',teamId:'lg'};assert.deepEqual(C.simulatePlayer(p,s,a),C.simulatePlayer(p,s,{...a,difficulty:'hard'}));});
 test('quota last-pick and global-supply safeguards survive adversarial selection',()=>{for(const local of [true,false]){const g=C.createGame('lg',local,'adversarial06');C.openScouting(g);C.beginDraft(g);while(g.phase==='draft'){const slot=g.schedule[g.cursor],list=C.available(g);assert(list.length);const q=C.quotaStatus(g,slot.teamId);if(slot.round>0&&q.missing&&q.remaining===1)assert(list.every(p=>p.quotaEligible));const p=slot.teamId==='lg'?(list.find(p=>!p.quotaEligible)||list[0]):(list.find(p=>p.quotaEligible)||list[0]);C.addPick(g,p.id);}for(const t of C.TEAMS)assert(C.quotaStatus(g,t.id).count>=1);}});
 test('regional and recommendation candidates are eligible, unique, and immutable',()=>{const g=C.createGame('lg',true,'local06'),original=clone(g.scoutReport),forecast=clone(g.forecasts);for(const r of g.scoutReport.candidates)assert(C.eligible(C.getPlayer(g,r.playerId),C.teamFor(g)));C.openScouting(g);C.beginDraft(g);while(g.phase==='draft'){const p=C.aiChoice(g),slot=g.schedule[g.cursor];if(slot.round===0)assert(C.eligible(p,C.teamFor(g,slot.teamId)));C.addPick(g,p.id);}assert.deepEqual(g.scoutReport,original);assert.deepEqual(g.forecasts,forecast);});
-test('all 60 club × local × difficulty combinations finish and replay every phase/year',()=>{for(const t of C.TEAMS)for(const local of [false,true])for(const diff of ['easy','normal','hard']){const g=draft('flow06-'+t.id+'-'+local+'-'+diff,t.id,local,diff);assert(C.validate(g));const p=clone(C.poolFor(g).players),news=clone(g.news),forecast=clone(g.forecasts);C.runSeason(g);const first=clone(g.season),owner=clone(g.owner),fans=C.fanState(g).score;for(let n=1;n<=5;n++){assert(C.validate(clone(g)));assert.equal(g.career.years.length,n);if(n<5)C.nextSeason(g);}assert.throws(()=>C.nextSeason(g));assert.deepEqual(g.season,first);assert.deepEqual(g.owner,owner);assert.equal(C.fanState(g).score,fans);assert.deepEqual(g.news,news);assert.deepEqual(g.forecasts,forecast);assert.deepEqual(C.poolFor(g).players,p);for(const club of C.TEAMS)assert(C.quotaStatus(g,club.id).count>=1);assert.equal(C.careerReview(g).length,10);}});
-test('counting stats, cumulative rates, team schedules and season affiliations reconcile',()=>{const g=finish(draft('records06'));for(const y of g.career.years){assert.equal(y.records.length,C.signed(g).length);assert.equal(y.league.table.reduce((n,x)=>n+x.wins,0),720);for(const t of y.league.table)assert.equal(t.wins+t.losses,144);for(const r of y.records){checkStats(r.stats);checkStats(r.futures);if(r.stats.kind==='hitter')assert(r.stats.games+r.futures.games<=144);}for(const a of y.awards){const rec=y.records.find(r=>r.playerId===a.playerId);assert.equal(a.teamId,rec.teamId);assert(rec.stats.games>0);}}for(const s of g.picks){const h=C.Career.history(g.career,s.playerId);for(const key of ['stats','futures']){const total=C.Career.totalStats(h,key);checkStats(total);assert.equal(total.games,h.reduce((n,r)=>n+r[key].games,0));}for(let i=1;i<h.length;i++)if(h[i].route!=='released')assert.equal(h[i].startGrade,h[i-1].scoutReady);}});
+test('all 60 club × local × difficulty combinations finish and replay every phase/year',()=>{for(const t of C.TEAMS)for(const local of [false,true])for(const diff of ['easy','normal','hard']){const g=draft('flow06-'+t.id+'-'+local+'-'+diff,t.id,local,diff);assert(C.validate(g));const p=clone(C.poolFor(g).players),news=clone(g.news),forecast=clone(g.forecasts);C.runSeason(g);const first=clone(g.season),owner=clone(g.owner),fans=clone(C.fanState(g).timeline);for(let n=1;n<=C.Career.SEASONS;n++){if(n===1||n===C.Career.SEASONS||(t.id==='lg'&&!local))assert(C.validate(clone(g)));assert.equal(g.career.years.length,n);if(n<C.Career.SEASONS)C.nextSeason(g);}assert.throws(()=>C.nextSeason(g));assert.deepEqual(g.season,first);assert.deepEqual(g.owner,owner);assert.deepEqual(C.fanState(g).timeline.slice(0,fans.length-1),fans.slice(0,-1));assert.equal(C.fanState(g).timeline.length,fans.length+C.Career.SEASONS-1);assert.deepEqual(g.news,news);assert.deepEqual(g.forecasts,forecast);assert.deepEqual(C.poolFor(g).players,p);for(const club of C.TEAMS)assert(C.quotaStatus(g,club.id).count>=1);assert.equal(C.careerReview(g).length,10);}});
+test('counting stats, cumulative rates, team schedules and season affiliations reconcile',()=>{const g=finish(draft('records06'));for(const y of g.career.years){assert.equal(y.records.length,C.signed(g).length);assert.equal(y.league.table.reduce((n,x)=>n+x.wins,0),720);for(const t of y.league.table)assert.equal(t.wins+t.losses,144);for(const r of y.records){checkStats(r.stats);checkStats(r.futures);if(r.stats.kind==='hitter')assert(r.stats.games+r.futures.games<=144);}for(const a of y.awards){const rec=y.records.find(r=>r.playerId===a.playerId);assert.equal(a.teamId,rec.teamId);if(a.scope!=='national')assert(rec.stats.games>0);}}for(const s of g.picks){const h=C.Career.history(g.career,s.playerId);for(const key of ['stats','futures']){const total=C.Career.totalStats(h,key);checkStats(total);assert.equal(total.games,h.reduce((n,r)=>n+r[key].games,0));}const out=r=>['released','retired'].includes(r.route);for(let i=1;i<h.length;i++)if(!out(h[i])&&!out(h[i-1]))assert.equal(h[i].startGrade,h[i-1].scoutReady);}});
 test('healthy established players do not randomly disappear into the futures',()=>{const g=C.createGame('lg',false,'retention06'),p=C.poolFor(g).players.find(p=>p.role==='SP'),sel={label:'1R',round:1},tools=Object.fromEntries(Object.keys(p.trueTools).map(k=>[k,52]));let healthy=0,retained=0;for(let i=0;i<1000;i++){const rec=M.simulatePlayer({...p,trueTools:tools,potentialTools:Object.fromEntries(Object.keys(tools).map(k=>[k,60]))},sel,{seed:'retention-'+i},C.teamFor(g),90,{tools,route:'regular',scoutReady:50,publicTools:tools,performance:.3},2);if(!rec.limited){healthy++;retained+=rec.route==='regular';assert(rec.stats.games>0);assert.notEqual(rec.route,'futures');}}assert(retained/healthy>.8&&retained/healthy<.99);});
 test('tool interventions affect relevant statistics without using overall-point shortcuts',()=>{const r=seed=>D.rng(seed),p={role:'OF'},base={contact:50,power:50,speed:50,defense:50,eye:50};const sum=(kind,key,delta,stat)=>{let s=0;for(let i=0;i<400;i++){const tools={...kind};tools[key]+=delta;s+=M.statsFor(p,130,tools,'regular',r('tool-'+i))[stat];}return s;};assert(sum(base,'power',15,'hr')>sum(base,'power',-10,'hr')*2);assert(sum(base,'contact',15,'hits')>sum(base,'contact',-10,'hits'));assert(sum(base,'speed',15,'sb')>sum(base,'speed',-10,'sb'));assert(sum(base,'eye',15,'bb')>sum(base,'eye',-10,'bb'));const sp={role:'SP'},tb={stuff:50,command:50,breaking:50,stamina:50};let lowBB=0,highBB=0,lowIP=0,highIP=0,lowK=0,highK=0;for(let i=0;i<400;i++){lowBB+=M.statsFor(sp,28,{...tb,command:35},'regular',r('sp-'+i)).bb;highBB+=M.statsFor(sp,28,{...tb,command:65},'regular',r('sp-'+i)).bb;lowIP+=M.statsFor(sp,28,{...tb,stamina:35},'regular',r('ip-'+i)).outs;highIP+=M.statsFor(sp,28,{...tb,stamina:65},'regular',r('ip-'+i)).outs;lowK+=M.statsFor(sp,28,{...tb,stuff:35},'regular',r('k-'+i)).k;highK+=M.statsFor(sp,28,{...tb,stuff:65},'regular',r('k-'+i)).k;}assert(highBB<lowBB);assert(highIP>lowIP);assert(highK>lowK);});
 test('mature starter wins and slugger home runs have no V5 artificial caps',()=>{let maxW=0,maxHR=0,maxIP=0;for(let i=0;i<300;i++){const a=M.statsFor({role:'SP'},30,{stuff:65,command:65,breaking:60,stamina:60},'regular',D.rng('starP-'+i));const b=M.statsFor({role:'OF'},135,{contact:55,power:65,speed:45,defense:45,eye:50},'regular',D.rng('starH-'+i));maxW=Math.max(maxW,a.wins);maxIP=Math.max(maxIP,a.outs/3);maxHR=Math.max(maxHR,b.hr);checkStats(a);checkStats(b);}assert(maxW>=15);assert(maxIP>=160);assert(maxHR>=30);});
@@ -24,7 +24,7 @@ test('restore rebuilds derived data from inputs and rejects edited inputs',()=>{
  for(const change of [x=>x.scoutReport.candidates[0].playerId='p999',x=>x.clubPlans.lg.staff.style='other',x=>x.forecasts[0].picks[0].playerId='p999',x=>x.career.years[0].records[0].stats.games++,x=>x.career.players[x.picks[0].playerId].tools={},x=>x.owner.score++,x=>x.news[0].headline='edited']){const bad=clone(g);change(bad);assert.equal(JSON.stringify(C.restore(bad)),honest);}
  // Inputs are checked: wrong version, a CPU pick the AI would not make, an illegal pick, too many seasons, unknown GM answer.
  const cpu=g.picks.findIndex(s=>s.teamId!=='lg'),mine=g.picks.findIndex(s=>s.teamId==='lg');
- for(const change of [x=>x.version=5,x=>x.picks[cpu].playerId=x.picks.at(-1).playerId,x=>x.picks[mine].playerId='p999',x=>x.career.years.push(x.career.years[0]),x=>x.gmChoice='other',x=>x.seed='',x=>x.cursor=3]){const bad=clone(g);change(bad);assert.equal(C.restore(bad),null);assert(!C.validate(bad));}
+ for(const change of [x=>x.version=5,x=>x.picks[cpu].playerId=x.picks.at(-1).playerId,x=>x.picks[mine].playerId='p999',x=>x.career.years.push(...x.career.years),x=>x.gmChoice='other',x=>x.seed='',x=>x.cursor=3]){const bad=clone(g);change(bad);assert.equal(C.restore(bad),null);assert(!C.validate(bad));}
  assert(!C.validate(null));assert(!C.validate({}));});
 test('every new sort handles mixed positions and nulls in both directions',()=>{const g=C.createGame('lg',false,'sort06'),ps=C.poolFor(g).players,t=C.teamFor(g);for(const key of Object.keys(C.rules.SORTS))for(const dir of ['asc','desc']){const sorted=C.rules.sortPlayers(ps,key,dir,t);let seenNull=false,last=null;for(const p of sorted){const v=C.rules.sortValue(p,key,t);if(v==null)seenNull=true;else{assert(!seenNull);if(last!=null)assert(dir==='asc'?v>=last:v<=last);last=v;}}}});
 
@@ -56,13 +56,22 @@ test('compact saves replay identically in every phase and stay tiny', () => {
   roundTrip(g);
   C.runSeason(g);
   roundTrip(g);
-  while (g.career.years.length < 5) {
-    C.nextSeason(g);
+  let ordered = 0;
+  while (g.career.years.length < C.Career.SEASONS) {
+    // Send our first eligible player to Sangmu (or the army) and hold the next one back, when allowed.
+    const opts = C.serviceOptions(g),
+      orders = {};
+    if (opts[0]) orders[opts[0].playerId] = opts[0].sangmu ? 'sangmu' : 'army';
+    if (opts[1] && !opts[1].must) orders[opts[1].playerId] = 'defer';
+    ordered += Object.keys(orders).length;
+    C.nextSeason(g, orders);
     roundTrip(g);
   }
+  assert(ordered > 0 && g.serviceOrders.length === ordered);
+  assert(g.career.events.some((e) => e.type === 'enlist' && e.fromTeamId === 'doosan'));
   g.phase = 'owner';
   roundTrip(g);
-  g.phase = 'interviews'; // revisiting interviews keeps the five seasons
+  g.phase = 'interviews'; // revisiting interviews keeps every season
   roundTrip(g);
 });
 
@@ -75,7 +84,11 @@ test('compact saves refuse other simulation versions and invalid inputs', () => 
     { picks: [...save.picks, 'p001'] }, // more picks than slots
     { picks: ['p999', ...save.picks.slice(1)] }, // not a player
     { picks: [save.picks[1], save.picks[0], ...save.picks.slice(2)] }, // order changes who is available
-    { seasons: 6 },
+    { seasons: C.Career.SEASONS + 1 },
+    { service: 'sangmu' },
+    { service: [[0, save.picks[0], 'army']] }, // no service choice before the second season
+    { service: [[1, 'p999', 'army']] }, // not one of our players
+    { service: [[1, save.picks[0], 'marines']] },
     { gmChoice: null }, // seasons need a GM answer
     { gmChoice: 'other' },
     { phase: 'draft' },
@@ -111,7 +124,7 @@ test('tuning values are finite numbers and frozen', () => {
     assert(Object.isFrozen(o), path + ' is frozen');
     for (const [k, v] of Object.entries(o)) {
       if (v && typeof v === 'object') walk(v, path + '.' + k);
-      else if (typeof v !== 'string') assert(Number.isFinite(v), `${path}.${k} is a finite number`);
+      else if (typeof v !== 'string' && v !== null) assert(Number.isFinite(v), `${path}.${k} is a finite number`);
     }
   };
   walk(TUNING, 'TUNING');

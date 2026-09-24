@@ -30,7 +30,7 @@
     return `
     <div class="page-head">
       <h1>${C.ENTRY_YEAR} KBO 신인 드래프트</h1>
-      <p>구단을 맡아 신인을 지명하고, 뽑은 선수들이 ${C.ENTRY_YEAR}–${C.ENTRY_YEAR + 4} 다섯 시즌 동안 어떻게 자라는지 지켜봅니다. 후보 ${C.POOL_SIZE}명은 게임마다 새로 만들어집니다.</p>
+      <p>구단을 맡아 신인을 지명하고, 뽑은 선수들이 ${C.ENTRY_YEAR}–${C.ENTRY_YEAR + C.Career.SEASONS - 1} ${C.Career.SEASONS}시즌 동안 어떻게 자라는지 지켜봅니다. 후보 ${C.POOL_SIZE}명은 게임마다 새로 만들어집니다.</p>
     </div>
     <div class="cols">
       <div>
