@@ -15,7 +15,7 @@ const KEY = 'draft-room-kbo-v6-scouting';
       errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(pathToFileURL(file).href);
-    assert.match(await page.title(), /v0\.9/);
+    assert.match(await page.title(), /v1\.0/);
     assert.equal(await page.locator('[data-action=start]').count(), 1);
 
     await page.evaluate(([key, g]) => localStorage.setItem(key, JSON.stringify({ game: g, selectedTeam: g.teamId, local: g.local, difficulty: g.difficulty, stars: [] })), [KEY, legacy.game]);
@@ -32,7 +32,7 @@ const KEY = 'draft-room-kbo-v6-scouting';
       return game.picks.filter((s) => !s.refused).length + game.devSigns.length;
     }, KEY);
     await page.locator('[data-action=records]').first().click();
-    assert.equal(await page.locator('.record-table tbody tr').count(), signed);
+    assert.equal(await page.locator('.record-table tbody tr:not(.second)').count(), signed);
     assert.deepEqual(errors, []);
     console.log(`PASS packaged build: fresh start, older autosave kept aside, example import (${signed} players in the records), no page errors.`);
   } finally {

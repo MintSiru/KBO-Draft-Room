@@ -59,7 +59,7 @@
         return `<button class="player-row" data-action="player" data-id="${p.id}" aria-pressed="${selected === p.id}">
           <span class="rk">${p.rank}</span>
           <span><span class="nm">${stars.has(p.id) ? '★ ' : ''}${esc(p.name)}<small>${hand(p)}</small></span>
-            <span class="meta">${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)}${p.intent ? ` · <b class="warn">${C.contracts.INTENT_LABELS[p.intent]}</b>` : ''}</span></span>
+            <span class="meta">${C.ROLES[p.role]} · ${esc(p.school)} · ${esc(p.pathway)}${p.intent ? ` · <b class="warn">${C.contracts.INTENT_LABELS[p.intent]}</b>` : ''}${p.twoWay ? ' · <b>이도류</b>' : ''}</span></span>
           <span class="val">${sortValue(p, v.sort, team)}<small>${esc(label)}</small></span>
           <span class="fit ${fit >= 80 ? 'core' : ''}">${C.fitLabel(p, team)}</span>
         </button>`;
@@ -93,6 +93,7 @@
         <button class="btn quiet small" data-action="star" data-id="${p.id}" aria-pressed="${stars.has(p.id)}">${stars.has(p.id) ? '★ 관심' : '☆ 관심'}</button>
       </div>
       ${p.intent ? `<p class="callout">${p.intent === 'abroad' ? '<b>해외 구단 관심</b> · 미국 구단의 제안을 받았다고 알려졌습니다. 계약금을 크게 요구하고, 조건이 맞지 않으면 해외로 갈 수 있습니다.' : '<b>진학 희망</b> · 대학 진학도 생각하고 있다고 밝혔습니다. 계약금을 더 요구하고, 협상이 틀어지면 대학에 갈 수 있습니다.'}</p>` : ''}
+      ${p.twoWay ? `<p class="callout ok"><b>투타 겸업 유망주</b> · ${C.ROLES[p.alt.role]}로도 현재 ${p.alt.ready} · 미래 ${p.alt.scoutCeiling}로 평가받습니다. 입단 뒤 겸업을 이어 갈지, 한쪽에 전념할지 정할 수 있습니다.</p>` : p.alt.scoutCeiling >= C.tuning.altTalent.publicMinFV ? `<p class="note">${C.ROLES[p.alt.role]}로도 가능성이 있다는 평가(현재 ${p.alt.ready} · 미래 ${p.alt.scoutCeiling})가 있습니다.</p>` : ''}
       ${g.difficulty === 'easy' ? `<p class="favorite-note note">어릴 때 응원한 구단: ${C.TEAMS[p.favoriteTeam].short} (쉬움 난이도에서만 공개)</p>` : ''}
       <section>${UI.toolTable(p)}</section>
       <section>

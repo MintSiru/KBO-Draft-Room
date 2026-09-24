@@ -122,7 +122,10 @@
       });
   }
 
+  const kindOf = (role) => (role === 'SP' || role === 'RP' ? 'pitcher' : 'hitter');
+
   Object.assign(UI, {
+    kindOf,
     markdown,
     releases,
     velocityChange,

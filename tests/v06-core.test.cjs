@@ -234,3 +234,71 @@ test('contracts: budgets hold, refusals leave the class, bad offers are refused'
   assert.equal(C.loadSave({ ...save, counters: ['p999'] }).error, 'invalid');
   assert.equal(C.loadSave({ ...save, gm: { first: 'nope' } }).error, 'invalid');
 });
+
+test('development plans: focus, position changes and two-way players', () => {
+  // Focus: the chosen tool grows faster than under a balanced plan, the others slower.
+  const p = { potentialTools: { contact: 70, power: 70, speed: 70, defense: 70, eye: 70 }, growthCurve: 'normal', developmentRate: 1 };
+  const tools = { contact: 60, power: 60, speed: 60, defense: 60, eye: 60 }; // small gaps, below the yearly cap
+  const grow = (focus) => M.developTools(p, tools, 0, 19, 0, D.rng('focus'), 0, focus);
+  assert(grow('power').power > grow('balanced').power);
+  assert(grow('power').contact < grow('balanced').contact);
+
+  // Find a draft where our club takes a two-way prospect.
+  let g = null;
+  for (let i = 0; i < 120 && !g; i++) {
+    const x = C.createGame('lg', false, 'plans-' + i);
+    C.openScouting(x);
+    C.beginDraft(x);
+    while (x.phase === 'draft') {
+      const mine = x.schedule[x.cursor].teamId === 'lg',
+        tw = mine && C.available(x).find((q) => q.twoWay);
+      C.addPick(x, (tw || C.aiChoice(x)).id);
+    }
+    if (C.myPicks(x).some((s) => C.getPlayer(x, s.playerId).twoWay)) g = x;
+  }
+  assert(g, 'a two-way prospect was available');
+  C.signAll(g);
+  C.signDevelopment(g, []);
+  C.chooseGM(g, 'development');
+  const opts = C.planOptions(g),
+    tw = opts.find((o) => o.twoWayCapable),
+    sp = opts.find((o) => o.role === 'SP' && !o.twoWayCapable),
+    inf = opts.find((o) => o.role === 'IF' && !o.twoWayCapable);
+  // Invalid plans are refused before anything happens.
+  assert.throws(() => C.runSeason(g, { p999: { focus: 'power' } }));
+  if (sp) assert.throws(() => C.runSeason(g, { [sp.playerId]: { focus: 'power' } })); // a hitter's tool for a pitcher
+  if (inf) assert.throws(() => C.runSeason(g, { [inf.playerId]: { role: 'C' } })); // nobody moves to catcher
+  assert.equal(g.career, null);
+  const plans = {};
+  if (sp) plans[sp.playerId] = { role: 'RP', focus: 'stuff' };
+  if (inf) plans[inf.playerId] = { role: 'OF' };
+  C.runSeason(g, plans);
+  if (sp) {
+    const st = g.career.players[sp.playerId];
+    assert.equal(st.role, 'RP');
+    assert.equal(st.focus, 'stuff');
+    assert.equal(g.career.years[0].records.find((r) => r.playerId === sp.playerId).role, 'RP');
+  }
+  if (inf) {
+    const st = g.career.players[inf.playerId],
+      before = C.getPlayer(g, inf.playerId).potentialTools.defense;
+    assert.equal(st.role, 'OF');
+    assert.equal(st.potential.defense, Math.min(80, before + C.tuning.positions.defenseShift.IF.OF));
+  }
+  // The two-way player plays both sides in year one; his second side is never a regular.
+  const r0 = g.career.years[0].records.find((r) => r.playerId === tw.playerId);
+  assert(r0.second && r0.second.role === tw.other.role && r0.second.routeLabel);
+  assert.notEqual(r0.second.routeLabel, '1군 안착');
+  // End two-way play before season two; afterwards there is no second side.
+  C.nextSeason(g, {}, { [tw.playerId]: { twoWay: false } });
+  assert.equal(g.career.years[1].records.find((r) => r.playerId === tw.playerId).second, undefined);
+  while (g.career.years.length < C.Career.SEASONS) C.nextSeason(g);
+  // Plans are part of the save and replay exactly; edited plans are refused.
+  const save = C.toSave(g);
+  assert(save.plans.length >= 1);
+  assert.deepEqual(clone(C.loadSave(clone(save)).game), clone(g));
+  assert.equal(C.loadSave({ ...save, plans: [[0, save.picks[0], 'nonsense', null, null]] }).error, 'invalid');
+  assert.equal(C.loadSave({ ...save, plans: [[1, save.picks[0], null, null, null]] }).error, 'invalid'); // a plan that changes nothing
+  // CPU clubs move some players on their own.
+  assert(g.career.events.some((e) => e.type === 'position' && e.fromTeamId !== 'lg'));
+});

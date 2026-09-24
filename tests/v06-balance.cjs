@@ -40,6 +40,7 @@ for (const difficulty of ['easy', 'normal', 'hard']) {
   const hitters = [], starters = [], relievers = [], seasonWar = [], classWar = [], scores = [], enlistAges = [];
   const events = { trade: 0, release: 0, claim: 0, retire: 0, enlist: 0 };
   const service = { sangmu: 0, army: 0, social: 0, exempt: 0, overdue: 0, players: 0 };
+  const moves = { starterToRelief: 0, catcherMove: 0, sideSwitch: 0, twoWayEnded: 0, other: 0, twoWaySigned: 0, twoWaySeasons: 0, secondGames: 0 };
   const deals = { refused: 0, byIntent: { none: 0, college: 0, abroad: 0 }, leftShare: [], boosts: [], overBudget: 0 };
   let near5 = 0, players = 0, maxW = 0, maxHR = 0, tenW = 0, twentyHR = 0, fv60Pools = 0, mlbPools = 0;
 
@@ -47,6 +48,19 @@ for (const difficulty of ['easy', 'normal', 'hard']) {
     const g = playDraft(difficulty, i),
       pool = C.poolFor(g);
     mlbPools += pool.players.some((p) => p.pathway === 'MLB 경험 복귀');
+    for (const e of g.career.events.filter((e) => e.type === 'position')) {
+      const k = e.from === e.to ? 'twoWayEnded' : e.from === 'SP' && e.to === 'RP' ? 'starterToRelief' : e.from === 'C' ? 'catcherMove' : ['SP', 'RP'].includes(e.from) !== ['SP', 'RP'].includes(e.to) ? 'sideSwitch' : 'other';
+      moves[k]++;
+    }
+    for (const s of C.signed(g)) {
+      if (!C.getPlayer(g, s.playerId).twoWay) continue;
+      moves.twoWaySigned++;
+      for (const r of C.Career.history(g.career, s.playerId))
+        if (r.second) {
+          moves.twoWaySeasons++;
+          moves.secondGames += r.second.stats.games;
+        }
+    }
     for (const t of C.refusals(g)) {
       deals.refused++;
       deals.byIntent[C.getPlayer(g, t.playerId).intent || 'none']++;
@@ -171,6 +185,12 @@ for (const difficulty of ['easy', 'normal', 'hard']) {
       medianGrowthBoost: r3(median(deals.boosts)),
       overBudget: deals.overBudget,
     },
+    positions: {
+      changesPerDraft: Object.fromEntries(Object.entries(moves).filter(([k]) => !['twoWaySigned', 'twoWaySeasons', 'secondGames'].includes(k)).map(([k, v]) => [k, D.round(v / N, 2)])),
+      twoWaySignedPerDraft: D.round(moves.twoWaySigned / N, 2),
+      twoWaySeasonsPerDraft: D.round(moves.twoWaySeasons / N, 2),
+      secondSideFirstTeamGamesPerSeason: D.round(moves.secondGames / (moves.twoWaySeasons || 1), 1),
+    },
     movesPerDraft: Object.fromEntries(Object.entries(events).map(([k, v]) => [k, D.round(v / N, 2)])),
     meanFinalScore: D.round(avg(scores), 2),
     mlbPools,
@@ -203,6 +223,8 @@ for (const difficulty of ['easy', 'normal', 'hard']) {
   assert(row.meanFinalScore >= 45 && row.meanFinalScore <= 80);
   assert(events.trade > 0 && events.retire > 0);
   assert(row.contracts.overBudget === 0, 'no club spends past its budget');
+  const changes = Object.values(row.positions.changesPerDraft).reduce((a, b) => a + b, 0);
+  assert(changes > 1 && changes < 40, 'CPU clubs move some players, not most');
   assert(row.contracts.refusalsPerDraft >= 0.5 && row.contracts.refusalsPerDraft <= 6, 'a few refusals each draft');
 }
 const report = {

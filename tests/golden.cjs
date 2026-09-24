@@ -25,7 +25,7 @@ const PLAYER_KEYS = ['id', 'rank', 'name', 'role', 'type', 'pathway', 'region', 
   'futureTools', 'trueTools', 'potentialTools', 'growthCurve', 'developmentRate', 'observerBias', 'risk', 'favoriteTeam', 'pickTags',
   'uncertainty', 'regionalEligible', 'quotaEligible'];
 const simPlayer = (p) => ({ ...only(p, PLAYER_KEYS), record: numbersOf(p.record) });
-const RECORD_KEYS = ['playerId', 'teamId', 'year', 'age', 'route', 'serviceType', 'roleTier', 'growth', 'scoutReady', 'scoutFV', 'publicTools', 'planScore', 'contribution', 'war', 'daysLost', 'limited'];
+const RECORD_KEYS = ['playerId', 'teamId', 'year', 'age', 'role', 'second', 'route', 'serviceType', 'roleTier', 'growth', 'scoutReady', 'scoutFV', 'publicTools', 'planScore', 'contribution', 'war', 'daysLost', 'limited'];
 const simRecord = (r) => ({ ...only(r, RECORD_KEYS), stats: numbersOf(r.stats), futures: numbersOf(r.futures), end: only(r.endState, ['ability', 'tools', 'performance']) });
 function simGame({ game: g, review, fans }) {
   return {
@@ -49,7 +49,8 @@ function simGame({ game: g, review, fans }) {
       events: y.events.map((e) => [e.type, e.service, e.fromTeamId, e.toTeamId, ...e.playerIds]),
       international: (y.international || []).map((e) => [e.name, e.result, e.playerIds, e.exemptIds]),
     })),
-    players: Object.values(g.career.players).map((s) => only(s, ['playerId', 'status', 'currentTeamId', 'ability', 'scoutReady', 'scoutFV', 'served', 'exempt', 'service'])),
+    players: Object.values(g.career.players).map((s) => only(s, ['playerId', 'status', 'currentTeamId', 'ability', 'scoutReady', 'scoutFV', 'served', 'exempt', 'service', 'role', 'focus', 'twoWay', 'roleHistory', 'other'])),
+    plans: g.devPlans || [],
     service: g.serviceOrders || [],
     review: review.map((x) => numbersOf(x)),
   };
@@ -60,7 +61,13 @@ function play([team, local, seed, difficulty, gm]) {
   while (g.phase === 'draft') C.addPick(g, C.aiChoice(g).id);
   C.signAll(g);
   C.signDevelopment(g, C.undrafted(g).slice(2, 2 + Math.min(3, Math.floor(C.budgetLeft(g) / C.tuning.contracts.devCost))).map((p) => p.id));
-  C.chooseGM(g, gm, { first: ['now', 'project', 'fit'][seed.charCodeAt(seed.length - 1) % 3] }); C.runSeason(g);
+  C.chooseGM(g, gm, { first: ['now', 'project', 'fit'][seed.charCodeAt(seed.length - 1) % 3] });
+  // First-season plans: focus our first pick on his first tool and move the first movable player.
+  const opts = C.planOptions(g), plans = {};
+  if (opts[0]) plans[opts[0].playerId] = { focus: opts[0].focusOptions[1] };
+  const mover = opts.find((o) => o.roleOptions.length && o !== opts[0]);
+  if (mover) plans[mover.playerId] = { role: mover.roleOptions[0] };
+  C.runSeason(g, plans);
   while (g.career.years.length < C.Career.SEASONS) {
     // Every other season, send our first eligible player to Sangmu when he has a chance, else hold him back.
     const o = C.serviceOptions(g)[0];

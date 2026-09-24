@@ -57,7 +57,7 @@
         .join('')}</ul>`;
   }
 
-  function interviews(g, answers) {
+  function interviews(g, answers, plans = {}) {
     const quotes = C.mySignedPicks(g)
       .map((s) => {
         const p = player(g, s.playerId);
@@ -76,6 +76,7 @@
     <h2 class="rule">입단 소감</h2>
     <div class="quotes">${quotes}</div>
     ${devList(g)}
+    ${g.gmChoice && !g.career ? UI.planPanel(g, plans, `${C.ENTRY_YEAR} 시즌 육성 계획`) : ''}
     ${UI.pickLog(g)}
     <div class="actions">
       <button class="btn primary" data-action="simulate" ${g.gmChoice ? '' : 'disabled'}>${g.career ? '시즌 화면으로 돌아가기' : `${C.ENTRY_YEAR} 시즌 진행`}</button>

@@ -188,7 +188,7 @@
   }
 
   /** First-team games for the role, reduced by time lost to injury. */
-  function firstTeamGames(p, route, yearIndex, daysLost, r) {
+  function firstTeamGames(p, route, yearIndex, daysLost, r, scale = 1) {
     const M = T.games,
       kind = isPitcher(p) ? p.role : 'hitter';
     let games = 0;
@@ -198,19 +198,22 @@
     }
     if (route === 'backup') games = span(M.backup[kind], r);
     if (route === 'cameo') games = span(M.cameo[isPitcher(p) ? 'pitcher' : 'hitter'], r);
-    return round(games * (1 - daysLost / T.health.playingDays));
+    return round(games * (1 - daysLost / T.health.playingDays) * scale);
   }
 
-  function futuresGames(p, route, games, daysLost, r) {
+  function futuresGames(p, route, games, daysLost, r, scale = 1) {
     const F = T.games.futures,
       kind = isPitcher(p) ? 'pitcher' : 'hitter';
     let n = route === 'rehab' ? 0 : route === 'regular' || route === 'backup' ? F[route][kind] : span(F.development[kind], r);
-    n = round(n * (1 - daysLost / T.health.playingDays));
+    n = round(n * (1 - daysLost / T.health.playingDays) * scale);
     return kind === 'hitter' ? Math.min(n, T.games.hitterSeasonCap - games) : n;
   }
 
   /** Tool growth toward each tool's hidden ceiling, minus injury and aging. */
-  function developTools(p, tools, yearIndex, age, daysLost, r, boost = 0) {
+  /** Growth multiplier for one tool under a development focus ('balanced' or a tool key). */
+  const focusFactor = (focus, key) => (!focus || focus === 'balanced' ? 1 : key === focus ? T.focus.chosen : T.focus.others);
+
+  function developTools(p, tools, yearIndex, age, daysLost, r, boost = 0, focus = 'balanced', scale = 1) {
     const Gr = T.growth,
       C = Gr.rateByCurve,
       H = T.health;
@@ -229,7 +232,7 @@
       const gap = p.potentialTools[key] - v,
         aging = Math.max(0, age - Gr.agingFrom[speed]) * Gr.agingPerYear[speed];
       const gain =
-        gap * rate * taper * (1 + boost) * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
+        gap * rate * taper * scale * focusFactor(focus, key) * (1 + boost) * p.developmentRate * (key === 'speed' ? Gr.speedShare : 1) * (1 - daysLost / H.growthDays) +
         normal(r) * Gr.noise -
         aging -
         (daysLost > H.heavyInjuryDays ? H.heavyInjuryGrowthPenalty : 0);
@@ -348,14 +351,14 @@
   };
 
   /** A season spent in military service. Sangmu plays a futures season; other service loses some sharpness. */
-  function serviceSeason(p, selection, g, team, previous, yearIndex, type) {
+  function serviceSeason(p, selection, g, team, previous, yearIndex, type, focus = 'balanced') {
     const tag = (stream) => `${g.seed}-${stream}-v6-${yearIndex}-${p.id}`;
     const tools = { ...previous.tools },
       abilityBefore = G.overall(tools, p.role);
     const age = D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
     let after, futures;
     if (type === 'sangmu') {
-      after = developTools(p, tools, yearIndex, age, 0, rng(tag('growth')));
+      after = developTools(p, tools, yearIndex, age, 0, rng(tag('growth')), 0, focus);
       futures = statsFor(p, futuresGames(p, 'futures', 0, 0, rng(tag('performance'))), tools, 'futures', rng(tag('farm')), { teamRank: team.rank });
     } else {
       const r = rng(tag('growth')),
@@ -376,6 +379,7 @@
       year: D.bio.ENTRY_YEAR + yearIndex,
       teamId: team.id,
       age,
+      role: p.role,
       route: 'service',
       serviceType: type,
       roleTier: 'service',
@@ -430,16 +434,17 @@
       abilityBefore = G.overall(tools, p.role),
       pitcher = isPitcher(p);
 
-    const { limited, daysLost } = rollHealth(p, rng(tag('health')));
+    // A two-way player's second side shares the injury of the first.
+    const { limited, daysLost } = context.health || rollHealth(p, rng(tag('health')));
     const growR = rng(tag('growth'));
-    const impact = abilityBefore + normal(perf) * T.roles.impactNoise;
+    const impact = abilityBefore + normal(perf) * T.roles.impactNoise - (context.impactShift || 0);
     const { route, reason, core, investment } = decideRole(
       { impact, previous, yearIndex, round: selection.round, fit, daysLost, blockedRegular: context.blockedRegular },
       perf,
     );
     // Days away (service ending mid-season) cut playing time and growth like injury days, but are not injuries.
     const missed = Math.min(T.health.playingDays, daysLost + (context.absentDays || 0));
-    const games = firstTeamGames(p, route, yearIndex, missed, perf);
+    const games = firstTeamGames(p, route, yearIndex, missed, perf, context.gamesScale ?? 1);
     const stats = statsFor(p, games, tools, route === 'regular' ? 'regular' : 'major', rng(tag('counting', true)), {
       core,
       cameo: route === 'cameo',
@@ -448,12 +453,12 @@
     });
 
     const age = D.bio.ageAt(p.birthday, `${D.bio.ENTRY_YEAR + yearIndex}-12-31`);
-    const after = developTools(p, tools, yearIndex, age, missed, growR, context.growthBoost || 0);
+    const after = developTools(p, tools, yearIndex, age, missed, growR, context.growthBoost || 0, context.focus, context.growthScale ?? 1);
     const abilityAfter = G.overall(after, p.role),
       growth = round(abilityAfter - abilityBefore, 2),
       observed = G.observe(after, p.role, p, yearIndex + 1, rng(tag('report')));
 
-    const farmGames = futuresGames(p, route, games, missed, perf);
+    const farmGames = futuresGames(p, route, games, missed, perf, context.gamesScale ?? 1);
     const futures = statsFor(p, farmGames, tools, 'futures', rng(tag('farm')), { teamRank: team.rank });
 
     const startGrade = previous?.scoutReady ?? p.ready,
@@ -469,6 +474,7 @@
       label: selection.label,
       year: D.bio.ENTRY_YEAR + yearIndex,
       teamId: team.id,
+      role: p.role,
       age,
       route,
       roleTier,
@@ -535,7 +541,7 @@
     };
   }
 
-  const api = { simulatePlayer, serviceSeason, warOf, SERVICE_LABELS, evaluate, emptyStats, statsFor, decideRole, developTools, planScoreOf };
+  const api = { simulatePlayer, serviceSeason, warOf, focusFactor, isPitcher, SERVICE_LABELS, evaluate, emptyStats, statsFor, decideRole, developTools, planScoreOf };
   root.DraftSeason = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

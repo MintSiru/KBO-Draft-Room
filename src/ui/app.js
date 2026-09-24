@@ -18,6 +18,7 @@
     offers: {}, // first offers being edited: playerId → amount (the ask when missing)
     counters: new Set(), // counter-offers the user will accept
     gm: {}, // press-conference answers before they are confirmed: question id → option id
+    plans: {}, // development plans for the coming season: playerId → { role?, focus?, twoWay? }
     view: defaultView(), // draft-board filters
     selected: null, // player shown in the draft profile
     stars: new Set(),
@@ -38,7 +39,7 @@
     state.game = game;
     Object.assign(state.setup, { selectedTeam: game.teamId, local: game.local, difficulty: game.difficulty, rounds: game.rounds });
     state.dev = { chosen: new Set(), role: 'ALL' };
-    Object.assign(state, { service: {}, offers: {}, counters: new Set(), gm: {} });
+    Object.assign(state, { service: {}, offers: {}, counters: new Set(), gm: {}, plans: {} });
     state.stars = new Set(stars.filter((id) => typeof id === 'string' && C.getPlayer(game, id)));
     state.yearIndex = (game.career?.years.length || 1) - 1;
     if (game.phase === 'draft') C.advanceToUser(game);
@@ -95,8 +96,8 @@
       case 'draft': return UI.board(game, state.view, state.stars, state.selected);
       case 'negotiation': return UI.negotiation(game, state.offers, state.counters);
       case 'signing': return UI.signing(game, state.dev.chosen, state.dev.role);
-      case 'interviews': return UI.interviews(game, state.gm);
-      case 'season': return UI.season(game, state.yearIndex, state.service);
+      case 'interviews': return UI.interviews(game, state.gm, state.plans);
+      case 'season': return UI.season(game, state.yearIndex, state.service, state.plans);
       default: return UI.review(game);
     }
   }
@@ -270,8 +271,9 @@
     'next-season': () => {
       if (Date.now() - lastAdvance < 900) return; // guards against double taps
       lastAdvance = Date.now();
-      C.nextSeason(g(), state.service);
+      C.nextSeason(g(), state.service, state.plans);
       state.service = {};
+      state.plans = {};
       state.yearIndex = g().career.years.length - 1;
       state.recordsOpen = false;
       render();
@@ -286,7 +288,7 @@
     },
     start: () => {
       const { selectedTeam, local, seed, difficulty, rounds } = state.setup;
-      Object.assign(state, { recordsOpen: false, yearIndex: 0, selected: null, view: defaultView(), stars: new Set(), service: {} });
+      Object.assign(state, { recordsOpen: false, yearIndex: 0, selected: null, view: defaultView(), stars: new Set(), service: {}, plans: {} });
       lastAdvance = 0;
       state.game = C.createGame(selectedTeam, local, seed, difficulty, rounds);
       state.dev = { chosen: new Set(), role: 'ALL' };
@@ -368,7 +370,8 @@
       else notify(`${name} 지명 완료`);
     },
     simulate: () => {
-      C.runSeason(g());
+      C.runSeason(g(), g().career ? {} : state.plans);
+      state.plans = {};
       state.yearIndex = g().career.years.length - 1;
       state.recordsOpen = false;
       render();
@@ -414,6 +417,17 @@
   document.addEventListener('change', (e) => {
     const id = e.target.id;
     if (id === 'import-file') return importSave(e.target.files[0]);
+    const plan = e.target.dataset.planRole || e.target.dataset.planFocus || e.target.dataset.planTwoway;
+    if (plan) {
+      const entry = (state.plans[plan] ??= {});
+      if (e.target.dataset.planRole) {
+        entry.role = e.target.value;
+        delete entry.focus; // focus options depend on the position
+      }
+      if (e.target.dataset.planFocus) entry.focus = e.target.value;
+      if (e.target.dataset.planTwoway) entry.twoWay = e.target.value === 'true';
+      return render();
+    }
     if (e.target.dataset.offer) {
       state.offers[e.target.dataset.offer] = Number(e.target.value);
       return render();

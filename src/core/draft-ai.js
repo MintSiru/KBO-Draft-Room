@@ -40,6 +40,9 @@
       awards: [...p.awards],
       proExperience: p.proExperience ? { level: p.proExperience.level } : null,
       intent: p.intent ?? null,
+      twoWay: !!p.twoWay,
+      // Scouts mention the other side only when it is worth something.
+      altPublic: p.alt && p.alt.scoutCeiling >= T.altTalent.publicMinFV ? { role: p.alt.role, ready: p.alt.ready, scoutCeiling: p.alt.scoutCeiling } : null,
     };
   }
   function fit(p, t) {

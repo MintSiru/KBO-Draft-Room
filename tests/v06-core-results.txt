@@ -1,195 +1,201 @@
 
-> kbo-draft-room@0.9.0 test
+> kbo-draft-room@1.0.0 test
 > node --test tests/v06*.test.cjs && node tests/golden.cjs
 
 TAP version 13
 # Subtest: V6 namespace, strict phase order, round options and schedule sizes
 ok 1 - V6 namespace, strict phase order, round options and schedule sizes
   ---
-  duration_ms: 133.503918
+  duration_ms: 148.300363
   type: 'test'
   ...
 # Subtest: 400 candidates: composition, quota supply and rare pathways
 ok 2 - 400 candidates: composition, quota supply and rare pathways
   ---
-  duration_ms: 383.68357
+  duration_ms: 403.947297
   type: 'test'
   ...
 # Subtest: all public ability grades use 20–80 by fives; FV differs from ceiling
 ok 3 - all public ability grades use 20–80 by fives; FV differs from ceiling
   ---
-  duration_ms: 13.870405
+  duration_ms: 16.408267
   type: 'test'
   ...
 # Subtest: domestic/overseas biographies and catalog preserve chronology and eligibility
 ok 4 - domestic/overseas biographies and catalog preserve chronology and eligibility
   ---
-  duration_ms: 125.025261
+  duration_ms: 138.450515
   type: 'test'
   ...
 # Subtest: AI, media and recommendations cannot read hidden talent or preferences
 ok 5 - AI, media and recommendations cannot read hidden talent or preferences
   ---
-  duration_ms: 27.023023
+  duration_ms: 29.473656
   type: 'test'
   ...
 # Subtest: club plans vary by seed, reproduce exactly and respect positions
 ok 6 - club plans vary by seed, reproduce exactly and respect positions
   ---
-  duration_ms: 1.868515
+  duration_ms: 1.883479
   type: 'test'
   ...
 # Subtest: same seed and player talent are independent of difficulty and chosen club
 ok 7 - same seed and player talent are independent of difficulty and chosen club
   ---
-  duration_ms: 40.355985
+  duration_ms: 54.003698
   type: 'test'
   ...
 # Subtest: quota last-pick and global-supply safeguards survive adversarial selection
 ok 8 - quota last-pick and global-supply safeguards survive adversarial selection
   ---
-  duration_ms: 57.408541
+  duration_ms: 62.946259
   type: 'test'
   ...
 # Subtest: regional and recommendation candidates are eligible, unique, and immutable
 ok 9 - regional and recommendation candidates are eligible, unique, and immutable
   ---
-  duration_ms: 82.164199
+  duration_ms: 143.409517
   type: 'test'
   ...
 # Subtest: all 60 club × local × difficulty combinations finish and replay every phase/year
 ok 10 - all 60 club × local × difficulty combinations finish and replay every phase/year
   ---
-  duration_ms: 29156.301177
+  duration_ms: 112880.889642
   type: 'test'
   ...
 # Subtest: counting stats, cumulative rates, team schedules and season affiliations reconcile
 ok 11 - counting stats, cumulative rates, team schedules and season affiliations reconcile
   ---
-  duration_ms: 144.70259
+  duration_ms: 735.242815
   type: 'test'
   ...
 # Subtest: healthy established players do not randomly disappear into the futures
 ok 12 - healthy established players do not randomly disappear into the futures
   ---
-  duration_ms: 41.653703
+  duration_ms: 59.480394
   type: 'test'
   ...
 # Subtest: tool interventions affect relevant statistics without using overall-point shortcuts
 ok 13 - tool interventions affect relevant statistics without using overall-point shortcuts
   ---
-  duration_ms: 124.940732
+  duration_ms: 116.264383
   type: 'test'
   ...
 # Subtest: mature starter wins and slugger home runs have no V5 artificial caps
 ok 14 - mature starter wins and slugger home runs have no V5 artificial caps
   ---
-  duration_ms: 9.728994
+  duration_ms: 8.985154
   type: 'test'
   ...
 # Subtest: trait-specific development carries tools forward and is not four identical boosts
 ok 15 - trait-specific development carries tools forward and is not four identical boosts
   ---
-  duration_ms: 133.45244
+  duration_ms: 791.054215
   type: 'test'
   ...
 # Subtest: restore rebuilds derived data from inputs and rejects edited inputs
 ok 16 - restore rebuilds derived data from inputs and rejects edited inputs
   ---
-  duration_ms: 1819.696489
+  duration_ms: 7871.071136
   type: 'test'
   ...
 # Subtest: every new sort handles mixed positions and nulls in both directions
 ok 17 - every new sort handles mixed positions and nulls in both directions
   ---
-  duration_ms: 61.772302
+  duration_ms: 71.81258
   type: 'test'
   ...
 # Subtest: compact saves replay identically in every phase and stay tiny
 ok 18 - compact saves replay identically in every phase and stay tiny
   ---
-  duration_ms: 2277.93521
+  duration_ms: 6313.69199
   type: 'test'
   ...
 # Subtest: compact saves refuse other simulation versions and invalid inputs
 ok 19 - compact saves refuse other simulation versions and invalid inputs
   ---
-  duration_ms: 739.126407
+  duration_ms: 1770.965534
   type: 'test'
   ...
 # Subtest: v0.6.0 saves are refused as another simulation version, bare or wrapped
 ok 20 - v0.6.0 saves are refused as another simulation version, bare or wrapped
   ---
-  duration_ms: 10.436706
+  duration_ms: 10.251654
   type: 'test'
   ...
 # Subtest: tuning values are finite numbers and frozen
 ok 21 - tuning values are finite numbers and frozen
   ---
-  duration_ms: 0.900777
+  duration_ms: 0.773729
   type: 'test'
   ...
 # Subtest: season steps: role rules, growth ceiling and plan score bounds
 ok 22 - season steps: role rules, growth ceiling and plan score bounds
   ---
-  duration_ms: 12.936962
+  duration_ms: 21.945854
   type: 'test'
   ...
 # Subtest: contracts: budgets hold, refusals leave the class, bad offers are refused
 ok 23 - contracts: budgets hold, refusals leave the class, bad offers are refused
   ---
-  duration_ms: 1380.471616
+  duration_ms: 2197.097751
+  type: 'test'
+  ...
+# Subtest: development plans: focus, position changes and two-way players
+ok 24 - development plans: focus, position changes and two-way players
+  ---
+  duration_ms: 2485.413859
   type: 'test'
   ...
 # Subtest: DOM: new guide and all catalog groups open with no undefined names
-ok 24 - DOM: new guide and all catalog groups open with no undefined names
+ok 25 - DOM: new guide and all catalog groups open with no undefined names
   ---
-  duration_ms: 338.213622
+  duration_ms: 335.382265
   type: 'test'
   ...
 # Subtest: DOM: scouting phase persists, recommends three candidates, profile shows public tools and filters
-ok 25 - DOM: scouting phase persists, recommends three candidates, profile shows public tools and filters
+ok 26 - DOM: scouting phase persists, recommends three candidates, profile shows public tools and filters
   ---
-  duration_ms: 739.136036
+  duration_ms: 749.253328
   type: 'test'
   ...
 # Subtest: DOM: easy-only favorite team and complete mobile-friendly grade markup
-ok 26 - DOM: easy-only favorite team and complete mobile-friendly grade markup
+ok 27 - DOM: easy-only favorite team and complete mobile-friendly grade markup
   ---
-  duration_ms: 372.478844
+  duration_ms: 385.258199
   type: 'test'
   ...
 # Subtest: renderers only expose public current tools and preserve original scouting snapshot
-ok 27 - renderers only expose public current tools and preserve original scouting snapshot
+ok 28 - renderers only expose public current tools and preserve original scouting snapshot
   ---
-  duration_ms: 489.155874
+  duration_ms: 649.261673
   type: 'test'
   ...
 # Subtest: DOM: a save from another simulation version is kept aside, not overwritten
-ok 28 - DOM: a save from another simulation version is kept aside, not overwritten
+ok 29 - DOM: a save from another simulation version is kept aside, not overwritten
   ---
-  duration_ms: 96.165329
+  duration_ms: 100.132063
   type: 'test'
   ...
 # Subtest: DOM: ten seasons with service choices, records and review render cleanly
-ok 29 - DOM: ten seasons with service choices, records and review render cleanly
+ok 30 - DOM: ten seasons with service choices, records and review render cleanly
   ---
-  duration_ms: 3946.584841
+  duration_ms: 5172.57946
   type: 'test'
   ...
 # Subtest: DOM: the start screen shows the latest update and the full update log
-ok 30 - DOM: the start screen shows the latest update and the full update log
+ok 31 - DOM: the start screen shows the latest update and the full update log
   ---
-  duration_ms: 122.604621
+  duration_ms: 126.362252
   type: 'test'
   ...
-1..30
-# tests 30
+1..31
+# tests 31
 # suites 0
-# pass 30
+# pass 31
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 36896.511625
-golden: 9 cases unchanged (SIM_VERSION 0.9)
+# duration_ms 136461.91182
+golden: 9 cases unchanged (SIM_VERSION 1.0)

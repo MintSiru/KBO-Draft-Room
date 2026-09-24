@@ -16,7 +16,7 @@
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   const Deal = root.DraftContracts || (typeof require !== 'undefined' ? require('./contracts.js') : null);
   // Save format version. V0.6 changed the grade scale and career model, so V0.5 saves do not load.
-  const RELEASE = '0.9.0',
+  const RELEASE = '1.0.0',
     VERSION = 6,
     ROUND_OPTIONS = [5, 8, 11], // national rounds the player can choose; 11 is the current KBO format
     ROUNDS = 11,
@@ -477,15 +477,62 @@
       pledge,
     };
   }
-  function runSeason(g) {
+  // ---------------------------------------------------------------- development plans
+
+  /** Focus, position and two-way options for our players before the next season (or the first one). */
+  function planOptions(g) {
+    const byId = poolFor(g).byId;
+    if (g.career && g.career.years.length >= Career.SEASONS) return [];
+    return Career.planOptions(g.career || Career.create(signed(g), byId, g.seed), byId, g.career ? g.career.years.length : 0, g.teamId);
+  }
+  /**
+   * Validates plans (playerId → { focus?, role?, twoWay? }) against the options, keeps only real changes and
+   * records them for the save. Throws on anything the options do not allow.
+   */
+  function takePlans(g, plans, yearIndex, options) {
+    const byOption = new Map(options.map((o) => [o.playerId, o])),
+      out = {};
+    for (const [id, plan] of Object.entries(plans || {})) {
+      const o = byOption.get(id);
+      if (!o || !plan || typeof plan !== 'object' || Array.isArray(plan)) throw Error('육성 계획을 확인해야 합니다.');
+      const clean = {};
+      if (plan.role != null && plan.role !== o.role) {
+        if (!o.roleOptions.includes(plan.role)) throw Error('바꿀 수 없는 포지션입니다.');
+        clean.role = plan.role;
+      }
+      if (plan.focus != null) {
+        const kind = Career.kindOf(clean.role || o.role);
+        if (plan.focus !== 'balanced' && !Career.FOCUS_KEYS[kind].includes(plan.focus)) throw Error('육성 방향을 확인해야 합니다.');
+        if (plan.focus !== o.focus || clean.role) clean.focus = plan.focus;
+      }
+      if (plan.twoWay != null) {
+        if (typeof plan.twoWay !== 'boolean' || (plan.twoWay && !o.twoWayCapable)) throw Error('투타 겸업 여부를 확인해야 합니다.');
+        if (plan.twoWay !== o.twoWay) clean.twoWay = plan.twoWay;
+      }
+      if (Object.keys(clean).length) out[id] = clean;
+    }
+    g.devPlans ??= [];
+    for (const [id, c] of Object.entries(out).sort()) g.devPlans.push([yearIndex, id, c.focus ?? null, c.role ?? null, c.twoWay ?? null]);
+    return out;
+  }
+  const plansFor = (list, yearIndex) =>
+    Object.fromEntries(
+      (list || [])
+        .filter((x) => x[0] === yearIndex)
+        .map(([, id, focus, role, twoWay]) => [id, Object.fromEntries(Object.entries({ focus, role, twoWay }).filter(([, v]) => v != null))]),
+    );
+
+  function runSeason(g, plans = {}) {
     if (g.cursor !== g.schedule.length || !g.gmChoice)
       throw Error('드래프트와 단장 인터뷰를 먼저 완료해야 합니다.');
     const { byId } = poolFor(g);
     if (!g.career) {
       // Unspent budget becomes development support for each club's own signings.
       const boosts = Object.fromEntries(TEAMS.map((t) => [t.id, Deal.growthBoost(budgetLeft(g, t.id), g.budgets[t.id])]));
-      g.career = Career.create(signed(g), byId, g.seed, boosts);
-      Career.advance(g.career, signed(g), byId, g.seed);
+      const career = Career.create(signed(g), byId, g.seed, boosts);
+      const clean = takePlans(g, plans, 0, Career.planOptions(career, byId, 0, g.teamId));
+      g.career = career;
+      Career.advance(g.career, signed(g), byId, g.seed, {}, clean, g.teamId);
       // First-year evaluation covers this club's signed draft picks (development contracts are judged over the career).
       const drafted = new Set(mySignedPicks(g).map((s) => s.playerId));
       g.season = g.career.years[0].records.filter((s) => s.teamId === g.teamId && drafted.has(s.playerId));
@@ -503,7 +550,7 @@
     return Career.serviceOptions(g.career, poolFor(g).byId, g.career.years.length).filter((o) => o.teamId === g.teamId);
   }
   /** Plays the next season. `orders`: playerId → service choice for our players ('auto' if omitted). */
-  function nextSeason(g, orders = {}) {
+  function nextSeason(g, orders = {}, plans = {}) {
     if (!g.career || !['season', 'owner'].includes(g.phase)) throw Error('첫 시즌을 먼저 진행해야 합니다.');
     const options = new Map(serviceOptions(g).map((o) => [o.playerId, o]));
     for (const [id, choice] of Object.entries(orders)) {
@@ -511,9 +558,10 @@
       if (!o || !SERVICE_CHOICES.includes(choice) || (choice === 'defer' && o.must)) throw Error('병역 결정을 확인해야 합니다.');
     }
     const yearIndex = g.career.years.length;
+    const clean = takePlans(g, plans, yearIndex, planOptions(g));
     g.serviceOrders ??= [];
     for (const [id, choice] of Object.entries(orders).sort()) if (choice !== 'auto') g.serviceOrders.push([yearIndex, id, choice]);
-    const result = Career.advance(g.career, signed(g), poolFor(g).byId, g.seed, orders);
+    const result = Career.advance(g.career, signed(g), poolFor(g).byId, g.seed, orders, clean, g.teamId);
     g.phase = 'season';
     return result;
   }
@@ -536,7 +584,7 @@
    * (tests/golden.cjs fails until you do). A save from another SIM_VERSION is refused, never silently
    * replayed into a different history.
    */
-  const SIM_VERSION = '0.9',
+  const SIM_VERSION = '1.0',
     SAVE_FORMAT = 'draft-room-save',
     SAVE_VERSION = 2;
 
@@ -560,6 +608,7 @@
       gm: g.gmAnswers || null,
       seasons: g.career?.years.length ?? 0,
       service: g.serviceOrders || [],
+      plans: g.devPlans || [],
     };
   }
 
@@ -585,7 +634,8 @@
         !Number.isInteger(s.seasons) ||
         s.seasons < 0 ||
         s.seasons > Career.SEASONS ||
-        (s.service != null && (!Array.isArray(s.service) || !s.service.every((o) => Array.isArray(o) && o.length === 3 && Number.isInteger(o[0]) && o[0] >= 1 && o[0] < s.seasons)))
+        (s.service != null && (!Array.isArray(s.service) || !s.service.every((o) => Array.isArray(o) && o.length === 3 && Number.isInteger(o[0]) && o[0] >= 1 && o[0] < s.seasons))) ||
+        (s.plans != null && (!Array.isArray(s.plans) || !s.plans.every((o) => Array.isArray(o) && o.length === 5 && Number.isInteger(o[0]) && o[0] >= 0 && o[0] < s.seasons)))
       )
         return null;
       const g = createGame(s.teamId, s.local, s.seed, s.difficulty, s.rounds);
@@ -624,11 +674,12 @@
       }
       if (['season', 'owner'].includes(s.phase) && !s.seasons) return null;
       if (s.seasons) {
-        runSeason(g); // requires the GM answer
+        runSeason(g, plansFor(s.plans, 0)); // requires the GM answer
         while (g.career.years.length < s.seasons) {
           const yi = g.career.years.length;
-          nextSeason(g, Object.fromEntries((s.service || []).filter((o) => o[0] === yi).map((o) => [o[1], o[2]])));
+          nextSeason(g, Object.fromEntries((s.service || []).filter((o) => o[0] === yi).map((o) => [o[1], o[2]])), plansFor(s.plans, yi));
         }
+        if (JSON.stringify(g.devPlans || []) !== JSON.stringify(s.plans || [])) return null; // plans that changed nothing
       }
       if (g.phase !== 'draft') g.phase = s.phase; // e.g. revisiting interviews after season 1
       return g;
@@ -749,6 +800,7 @@
     contracts: Deal,
     serviceOptions,
     SERVICE_CHOICES,
+    planOptions,
     tuning: TUNING,
     undrafted,
     signed,

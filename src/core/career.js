@@ -9,7 +9,62 @@
   const { TUNING: T, letter } = root.DraftTuning || (typeof require !== 'undefined' ? require('./tuning.js') : null);
   const S = root.DraftScouting || (typeof require !== 'undefined' ? require('./scouting.js') : null);
   const SEASONS = 10;
+  const G = D.grades;
   const fit = (p, t) => S.fit(p, t);
+
+  // ---------------------------------------------------------------- positions and sides
+
+  const pitcherRole = (role) => role === 'SP' || role === 'RP';
+  const kindOf = (role) => (pitcherRole(role) ? 'pitcher' : 'hitter');
+  const FOCUS_KEYS = { pitcher: ['stuff', 'command', 'breaking', 'stamina'], hitter: ['contact', 'power', 'speed', 'defense', 'eye'] };
+  /** Draft-day reference values for one side ('main' is how he was drafted, 'alt' the other side). */
+  function sideBase(p, side) {
+    const a = side === 'main' ? p : p.alt;
+    return { trueTools: a.trueTools, velocity: a.velocity, ready: a.ready, scoutCeiling: a.scoutCeiling, ceilingGrade: a.ceilingGrade };
+  }
+  /** The player as he plays now: current position, that side's hidden ceiling and draft-day references. */
+  const viewOf = (p, st) => ({ ...p, ...sideBase(p, st.side), role: st.role, potentialTools: st.potential, upside: G.overall(st.potential, st.role) });
+  const SIDE_KEYS = ['side', 'role', 'tools', 'potential', 'publicTools', 'scoutReady', 'scoutFV', 'fvRaw', 'ability', 'route', 'performance'];
+  /** Pitcher ↔ hitter: the other side becomes the current one; each side keeps its own progress. */
+  function switchSide(state) {
+    const mine = {};
+    for (const k of SIDE_KEYS) {
+      mine[k] = state[k];
+      state[k] = state.other[k];
+    }
+    state.other = mine;
+  }
+  /** Moves he could make before season `yearIndex` (never back to catcher). */
+  function roleOptions(state, p, yearIndex) {
+    const same = { SP: ['RP'], RP: ['SP'], C: ['IF', 'OF'], IF: ['OF'], OF: ['IF'] }[state.role];
+    const other =
+      ageIn(p, yearIndex) <= T.positions.sideSwitchMaxAge && (p.twoWay || state.other.scoutFV >= T.altTalent.publicMinFV - 5) ? [state.other.role] : [];
+    return [...same, ...other];
+  }
+  /** Changes position. Same-side moves adjust defence (or velocity); the first season there is an adjustment year. */
+  function changeRole(state, to, year) {
+    const P = T.positions,
+      from = state.role;
+    const bump = (key, d) => {
+      if (!d || state.tools[key] == null) return;
+      state.potential[key] = clamp(state.potential[key] + d, 20, 80);
+      state.tools[key] = Math.min(state.potential[key], clamp(state.tools[key] + d, 20, 80));
+    };
+    if (kindOf(to) !== kindOf(from)) {
+      switchSide(state);
+      state.focus = 'balanced'; // the old focus was a tool of the other side
+    }
+    else {
+      state.role = to;
+      if (from === 'SP' && to === 'RP') bump('stuff', P.toReliever.stuff);
+      if (from === 'RP' && to === 'SP') bump('stuff', P.toStarter.stuff);
+      bump('defense', P.defenseShift[from]?.[to] ?? 0);
+      state.route = null; // a new job: last year's role does not carry over
+    }
+    state.ability = round(G.overall(state.tools, state.role), 3);
+    state.adapting = true;
+    state.roleHistory.push({ year, from, to });
+  }
   function create(picks, byId, seed = '', boosts = {}) {
     return {
       seed,
@@ -44,6 +99,28 @@
               noGameStreak: 0,
               rehabStreak: 0,
               injuryDays: 0,
+              // Position, the other side, development focus.
+              side: 'main',
+              role: p.role,
+              potential: { ...p.potentialTools },
+              performance: 0,
+              focus: 'balanced',
+              twoWay: !!p.twoWay,
+              adapting: false,
+              roleHistory: [],
+              other: {
+                side: 'alt',
+                role: p.alt.role,
+                tools: { ...p.alt.trueTools },
+                potential: { ...p.alt.potentialTools },
+                publicTools: { ...p.alt.tools },
+                scoutReady: p.alt.ready,
+                scoutFV: p.alt.scoutCeiling,
+                fvRaw: p.alt.scoutCeiling,
+                ability: round(G.overall(p.alt.trueTools, p.alt.role), 3),
+                route: null,
+                performance: 0,
+              },
             },
           ];
         }),
@@ -51,7 +128,10 @@
       events: [],
     };
   }
-  function totalStats(records, key = 'stats') {
+  /** Career totals for one kind of play (the latest one by default); seasons of the other kind are left out. */
+  function totalStats(all, key = 'stats', kind = null) {
+    kind ??= all.at(-1)?.[key]?.kind;
+    const records = all.filter((r) => r[key]?.kind === kind);
     const first = records[0]?.[key];
     if (!first) return null;
     const out = { kind: first.kind };
@@ -399,11 +479,13 @@
             b = active[j],
             pa = byId[a.playerId],
             pb = byId[b.playerId];
-          if (a.currentTeamId === b.currentTeamId || pa.role === pb.role) continue;
+          if (a.currentTeamId === b.currentTeamId || a.role === b.role) continue;
           const ta = { ...byTeam[a.currentTeamId], ...plans[a.currentTeamId] },
             tb = { ...byTeam[b.currentTeamId], ...plans[b.currentTeamId] },
-            gainA = fit(pb, ta) - fit(pa, ta),
-            gainB = fit(pa, tb) - fit(pb, tb);
+            va = viewOf(pa, a),
+            vb = viewOf(pb, b),
+            gainA = fit(vb, ta) - fit(va, ta),
+            gainB = fit(va, tb) - fit(vb, tb);
           if (gainA < 0 || gainB < 0 || gainA + gainB < Tr.minCombinedGain || Math.abs(publicValue(a) - publicValue(b)) > Tr.maxValueGap)
             continue;
           pairs.push({
@@ -433,6 +515,77 @@
     return events;
   }
 
+  // ---------------------------------------------------------------- development plans
+
+  /** What the club can decide for each of its players before season `yearIndex`. */
+  function planOptions(career, byId, yearIndex, teamId) {
+    return Object.values(career.players)
+      .filter((s) => s.status === 'active' && s.currentTeamId === teamId)
+      .sort((a, b) => a.playerId.localeCompare(b.playerId))
+      .map((s) => {
+        const p = byId[s.playerId],
+          playing = canPlay(s);
+        return {
+          playerId: s.playerId,
+          role: s.role,
+          kind: kindOf(s.role),
+          focus: s.focus,
+          focusOptions: ['balanced', ...FOCUS_KEYS[kindOf(s.role)]],
+          roleOptions: playing && !s.service ? roleOptions(s, p, yearIndex) : [],
+          twoWay: s.twoWay,
+          twoWayCapable: !!p.twoWay && playing,
+          inService: !!s.service,
+          other: { role: s.other.role, ready: s.other.scoutReady, fv: s.other.scoutFV },
+        };
+      });
+  }
+
+  /**
+   * Focus, position and two-way decisions before season `yearIndex`. The user's plans apply to his own
+   * players; CPU clubs follow simple habits from the second season on. Returns the resulting events.
+   */
+  function planStep(career, byId, seed, yearIndex, plans, userTeamId) {
+    const P = T.positions,
+      W = T.twoWay,
+      year = D.bio.ENTRY_YEAR + yearIndex,
+      when = yearIndex ? year - 1 : year,
+      events = [];
+    const move = (s, to, reason) => {
+      const from = s.role;
+      changeRole(s, to, year);
+      events.push({ id: `${year}-position-${s.playerId}`, type: 'position', year: when, preseason: !yearIndex, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [s.playerId], from, to, reason });
+    };
+    for (const s of Object.values(career.players).sort((a, b) => a.playerId.localeCompare(b.playerId))) {
+      if (s.status !== 'active') continue;
+      const p = byId[s.playerId];
+      if (userTeamId && s.currentTeamId === userTeamId) {
+        const plan = plans[s.playerId];
+        if (!plan) continue;
+        if (canPlay(s) && plan.role && plan.role !== s.role) move(s, plan.role, '구단 결정으로 포지션을 바꿨다.');
+        if (plan.focus) s.focus = plan.focus;
+        if (!canPlay(s)) continue;
+        if (plan.twoWay === false && s.twoWay) {
+          s.twoWay = false;
+          events.push({ id: `${year}-two-way-${s.playerId}`, type: 'position', year: when, preseason: !yearIndex, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [s.playerId], from: s.role, to: s.role, reason: '투타 겸업을 접고 한쪽에 전념하기로 했다.' });
+        }
+        if (plan.twoWay === true && p.twoWay) s.twoWay = true;
+        continue;
+      }
+      if (!yearIndex || !canPlay(s)) continue;
+      const r = rng(`${seed}-position-${year}-${s.playerId}`),
+        C = P.cpu;
+      if (s.twoWay && yearIndex >= W.dropFromYear && Math.abs(s.scoutReady - s.other.scoutReady) >= W.dropGap) {
+        s.twoWay = false;
+        if (s.other.scoutReady > s.scoutReady) move(s, s.other.role, '투타 겸업을 접고 더 나은 쪽을 택했다.');
+        else events.push({ id: `${year}-two-way-${s.playerId}`, type: 'position', year: when, preseason: !yearIndex, fromTeamId: s.currentTeamId, toTeamId: null, playerIds: [s.playerId], from: s.role, to: s.role, reason: '투타 겸업을 접고 한쪽에 전념하기로 했다.' });
+      } else if (!s.twoWay && ageIn(p, yearIndex) <= C.switchSide.maxAge && s.other.scoutReady >= s.scoutReady + C.switchSide.margin && r() < C.switchSide.chance)
+        move(s, s.other.role, pitcherRole(s.role) ? '마운드보다 타석에서 가능성을 보고 타자로 전향했다.' : '강한 어깨를 살려 투수로 전향했다.');
+      else if (s.role === 'SP' && s.publicTools.stamina < C.starterToRelief.maxStamina && r() < C.starterToRelief.chance) move(s, 'RP', '긴 이닝을 버티지 못해 불펜으로 옮겼다.');
+      else if (s.role === 'C' && s.publicTools.defense < C.catcherToInfield.maxDefense && r() < C.catcherToInfield.chance) move(s, 'IF', '포수 수비 부담을 덜고 타격을 살리려 내야로 옮겼다.');
+    }
+    return events;
+  }
+
   const OUT_OF_BASEBALL = {
     released: ['방출 · 무소속', '무소속이라 이 해의 기록이 없습니다.'],
     retired: ['은퇴', '은퇴해 기록이 없습니다.'],
@@ -442,22 +595,26 @@
    * Plays season `yearIndex` for every signed player: service changes, national team, each player's
    * season, standings and awards, then the offseason. `orders` are the user's service choices.
    */
-  function advance(career, picks, byId, seed, orders = {}) {
+  function advance(career, picks, byId, seed, orders = {}, plans = {}, userTeamId = null) {
     const yearIndex = career.years.length;
     if (yearIndex >= SEASONS) throw Error(SEASONS + '시즌이 모두 끝났습니다.');
     const year = D.bio.ENTRY_YEAR + yearIndex,
-      plans = S.plans(seed, TEAMS),
+      clubPlans = S.plans(seed, TEAMS),
       rankings = {};
+    let preseason = [];
     if (yearIndex) {
-      const moves = serviceStep(career, byId, seed, yearIndex, orders);
+      const moves = [...serviceStep(career, byId, seed, yearIndex, orders), ...planStep(career, byId, seed, yearIndex, plans, userTeamId)];
       career.years[yearIndex - 1].events.push(...moves);
       career.events.push(...moves);
+    } else {
+      preseason = planStep(career, byId, seed, 0, plans, userTeamId);
+      career.events.push(...preseason);
     }
     const international = internationalStep(career, byId, seed, yearIndex);
     for (const t of TEAMS)
       for (const role of Object.keys(D.ROLES)) {
         rankings[t.id + '-' + role] = Object.values(career.players)
-          .filter((s) => canPlay(s) && s.currentTeamId === t.id && byId[s.playerId].role === role)
+          .filter((s) => canPlay(s) && s.currentTeamId === t.id && s.role === role)
           .sort(
             (a, b) =>
               b.ability + (b.route === 'regular' ? 5 : 0) - (a.ability + (a.route === 'regular' ? 5 : 0)) ||
@@ -478,8 +635,9 @@
           age: ageIn(p, yearIndex),
           route: state.status,
           routeLabel,
-          stats: M.emptyStats(p),
-          futures: M.emptyStats(p),
+          role: state.role,
+          stats: M.emptyStats(viewOf(p, state)),
+          futures: M.emptyStats(viewOf(p, state)),
           growth: 0,
           growthLabel: '프로 기록 없음',
           developmentNote: '이전 기록만 남아 있습니다.',
@@ -493,21 +651,47 @@
           scoutFV: state.scoutFV,
         };
       }
-      const t = { ...byTeam[state.currentTeamId], ...plans[state.currentTeamId] };
+      const t = { ...byTeam[state.currentTeamId], ...clubPlans[state.currentTeamId] },
+        view = viewOf(p, state);
       let rec;
-      if (state.service) rec = M.serviceSeason(p, sel, { seed }, t, state, yearIndex, state.service.type);
+      if (state.service) rec = M.serviceSeason(view, sel, { seed }, t, state, yearIndex, state.service.type, state.focus);
       else {
-        const rank = rankings[t.id + '-' + p.role].indexOf(p.id),
-          capacity = T.roles.cohortCapacity[p.role];
-        rec = M.simulatePlayer(p, sel, { seed }, t, fit(p, t), yearIndex ? state : null, yearIndex, {
-          // Development-contract players cannot be regulars in their first season.
-          blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
-          closer: p.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
+        const rank = rankings[t.id + '-' + state.role].indexOf(p.id),
+          capacity = T.roles.cohortCapacity[state.role],
+          twoWay = state.twoWay,
+          scale = (twoWay ? T.twoWay.growthScale : 1) * (state.adapting ? T.positions.adaptGrowth : 1);
+        const common = {
           absentDays: state.absentDays || 0,
           growthBoost: state.currentTeamId === sel.teamId && yearIndex < T.contracts.growthBoost.seasons ? career.boosts?.[sel.teamId] || 0 : 0,
+          focus: state.focus,
+          growthScale: scale,
+          impactShift: state.adapting ? T.positions.adaptImpact : 0,
+        };
+        rec = M.simulatePlayer(view, sel, { seed }, t, fit(view, t), state, yearIndex, {
+          ...common,
+          // Development-contract players cannot be regulars in their first season.
+          blockedRegular: rank >= capacity || (sel.dev && yearIndex === 0),
+          closer: state.role === 'RP' && rank === 0 && state.ability >= T.roles.closer.minAbility && yearIndex >= T.roles.closer.fromYear,
         });
+        if (twoWay) {
+          // The second side: part-time first-team work, same injury, its own growth and scouting.
+          const o = state.other,
+            view2 = { ...p, ...sideBase(p, o.side), role: o.role, potentialTools: o.potential, upside: G.overall(o.potential, o.role) };
+          const rec2 = M.simulatePlayer(view2, sel, { seed: seed + '-second' }, t, fit(view2, t), o, yearIndex, {
+            ...common,
+            focus: 'balanced',
+            health: { limited: rec.limited, daysLost: rec.daysLost },
+            blockedRegular: true,
+            gamesScale: T.twoWay.secondaryGames,
+          });
+          for (const k of SIDE_KEYS) if (k in rec2.endState) o[k] = rec2.endState[k];
+          rec.second = { role: o.role, routeLabel: rec2.routeLabel, stats: rec2.stats, futures: rec2.futures, war: rec2.war, scoutReady: rec2.scoutReady, scoutFV: rec2.scoutFV, velocity: rec2.velocity };
+          rec.war = round(rec.war + rec2.war, 1);
+          rec.contribution = round(rec.contribution + rec2.contribution);
+        }
       }
       Object.assign(state, rec.endState);
+      state.adapting = false;
       if (rec.route !== 'service') {
         state.debuted = state.debuted || rec.stats.games > 0;
         state.noGameStreak = rec.stats.games > 0 ? 0 : (state.noGameStreak || 0) + 1;
@@ -522,7 +706,7 @@
       for (const id of e.playerIds)
         honors.push({ id: `${year}-national-${id}`, title: `${e.name} ${e.result ?? '국가대표'}`, scope: 'national', year, playerId: id, teamId: career.players[id].currentTeamId });
     const events = offseason(seed, yearIndex, career, records, byId);
-    const row = { year, records, league, awards: honors, events, international };
+    const row = { year, records, league, awards: honors, events, international, preseason };
     career.years.push(row);
     career.events.push(...events);
     return row;
@@ -581,6 +765,6 @@
       };
     }).sort((a, b) => b.score - a.score || b.total - a.total || a.teamId.localeCompare(b.teamId));
   }
-  root.DraftCareer = { SEASONS, SERVICE_LABELS: M.SERVICE_LABELS, create, advance, history, totalStats, review, standings, serviceOptions, sangmuChance };
+  root.DraftCareer = { SEASONS, SERVICE_LABELS: M.SERVICE_LABELS, FOCUS_KEYS, kindOf, planOptions, viewOf, create, advance, history, totalStats, review, standings, serviceOptions, sangmuChance };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.DraftCareer;
 })(typeof window !== 'undefined' ? window : globalThis);

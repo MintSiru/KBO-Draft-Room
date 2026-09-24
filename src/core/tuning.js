@@ -23,6 +23,37 @@
     // Development ("육성") contracts after the draft. They cannot hold a regular role in their first season.
     devContracts: { max: 5, cpuMin: 3, cpuMax: 5 },
 
+    // The other side of every player (a pitcher's bat, a hitter's arm), generated on its own stream.
+    // Mostly weak; a few prospects per pool are genuine two-way talents.
+    altTalent: {
+      base: [22, 18], // [min, span] of the other side's potential centre
+      athleticism: 0.4, // share of (main potential − 45) that carries over
+      gap: { young: [8, 6], older: [5, 4] }, // how far current is below potential, [base, span]
+      twoWay: { chances: [0.35, 0.1], maxRank: 40, below: [0, 4] }, // per pool: first and second two-way prospect; side sits `below` the main one
+      publicMinFV: 45, // scouts mention the other side from this future value
+    },
+
+    // Position changes, two-way players and development focus (user plans and CPU habits).
+    positions: {
+      // Defence change when a hitter moves: from → to → grade points (current and potential).
+      defenseShift: { C: { IF: -3, OF: 2 }, IF: { OF: 3 }, OF: { IF: -5 } },
+      toReliever: { stuff: 2 }, // short outings add a little velocity
+      toStarter: { stuff: -1 },
+      sideSwitchMaxAge: 26, // pitcher ↔ hitter only until this age (end of the coming season)
+      adaptImpact: 2, // role-decision penalty in the first season at a new position
+      adaptGrowth: 0.8, // growth rate in that season
+      // CPU clubs: yearly chance to move a player when the rule applies (from the second season).
+      cpu: { starterToRelief: { maxStamina: 40, chance: 0.25 }, catcherToInfield: { maxDefense: 38, chance: 0.2 }, switchSide: { margin: 5, maxAge: 24, chance: 0.5 } },
+    },
+    twoWay: {
+      growthScale: 0.75, // each side grows more slowly while he does both
+      secondaryGames: 0.55, // first-team games on the second side, relative to a normal role
+      dropGap: 10, // CPU clubs end two-way play when one side trails the other by this much (public grades)...
+      dropFromYear: 2, // ...from this season on
+    },
+    // Development focus: the chosen tool closes its gap faster, the others a little slower.
+    focus: { chosen: 1.6, others: 0.85 },
+
     // Signing bonuses and club budgets. Amounts are in 백만 원 (100 = 1억).
     contracts: {
       budget: { base: 1350, spread: 300, local: 300 }, // base + (roll - 0.5) × spread, + local when the regional round is on

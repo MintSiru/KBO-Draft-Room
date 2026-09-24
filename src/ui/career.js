@@ -9,23 +9,47 @@
   function rows(g, year = 'all', teamId = 'ALL', scope = 'origin', sort = 'rank', level = 'stats') {
     const years = g.career?.years || [],
       chosen = year === 'all' ? null : years.find((y) => String(y.year) === String(year)) || years.at(-1);
+    const sum = (list) => Math.round(list.reduce((n, v) => n + (v || 0), 0) * 10) / 10;
     const out = C.signed(g)
-      .map((s) => {
+      .flatMap((s) => {
         const p = player(g, s.playerId),
           state = g.career?.players[p.id],
           hist = g.career ? C.Career.history(g.career, p.id) : [];
         const rec = chosen ? chosen.records.find((r) => r.playerId === p.id) : null;
-        return {
-          p, s, state, rec,
-          stats: chosen ? rec?.stats : C.Career.totalStats(hist),
-          futures: chosen ? rec?.futures : C.Career.totalStats(hist, 'futures'),
+        // Position that season, or now for career totals; stats are totals for that kind of play.
+        const role = (chosen ? rec?.role : state?.role) ?? p.role,
+          kind = UI.kindOf(role);
+        const secondWar = (r) => r.second?.war || 0;
+        const base = {
+          p, s, state, rec, role, kind,
+          stats: chosen ? rec?.stats : C.Career.totalStats(hist, 'stats', kind),
+          futures: chosen ? rec?.futures : C.Career.totalStats(hist, 'futures', kind),
           teamId: scope === 'origin' ? s.teamId : state ? state.currentTeamId : s.teamId,
           contribution: chosen ? rec?.contribution || 0 : hist.reduce((n, r) => n + r.contribution, 0),
-          war: chosen ? rec?.war ?? 0 : Math.round(hist.reduce((n, r) => n + (r.war || 0), 0) * 10) / 10,
+          war: chosen ? Math.round(((rec?.war ?? 0) - (rec ? secondWar(rec) : 0)) * 10) / 10 : sum(hist.map((r) => (r.war || 0) - secondWar(r))),
           // Top velocity that season; for career totals, the latest one.
-          velocity: chosen ? rec?.velocity ?? null : hist.findLast((r) => r.velocity)?.velocity ?? p.velocity ?? null,
+          velocity: chosen ? (UI.kindOf(role) === 'pitcher' ? rec?.velocity ?? null : null) : hist.findLast((r) => r.velocity && r.role === role)?.velocity ?? (role === p.role ? p.velocity : null) ?? null,
           honors: years.flatMap((y) => y.awards).filter((a) => a.playerId === p.id && (!chosen || a.year === chosen.year)).length,
         };
+        // A two-way player also appears under his second side.
+        const seconds = hist.filter((r) => r.second && (!chosen || r === rec));
+        if (!seconds.length) return [base];
+        const r2 = seconds.at(-1).second,
+          kind2 = UI.kindOf(r2.role),
+          wrap = (key) => seconds.map((r) => ({ [key]: r.second[key] }));
+        return [
+          base,
+          {
+            ...base,
+            second: true,
+            role: r2.role,
+            kind: kind2,
+            stats: C.Career.totalStats(wrap('stats'), 'stats', kind2),
+            futures: C.Career.totalStats(wrap('futures'), 'futures', kind2),
+            war: sum(seconds.map(secondWar)),
+            velocity: kind2 === 'pitcher' ? seconds.findLast((r) => r.second.velocity)?.second.velocity ?? null : null,
+          },
+        ];
       })
       .filter((x) => teamId === 'ALL' || x.teamId === teamId);
     const value = (x) => {
@@ -58,7 +82,7 @@
     const mixed = list.some((x) => x.s.teamId !== g.teamId);
     return ['hitter', 'pitcher']
       .map((kind) => {
-        const group = list.filter((x) => x.p.record.kind === kind);
+        const group = list.filter((x) => x.kind === kind);
         if (!group.length) return '';
         const labels = kind === 'hitter' ? ['G', 'PA', 'AVG', 'OBP', 'SLG', 'OPS', 'HR', 'RBI', 'SB'] : ['G', 'GS', 'IP', 'ERA', 'W', 'HLD', 'SV', 'K', 'BB', 'QS', '구속'];
         const body = group
@@ -70,8 +94,9 @@
                 ? [s.games, s.pa, rate(s.avg), rate(UI.obp(s)), rate(UI.slg(s)), rate(s.ops), s.hr, s.rbi, s.sb]
                 : [s.games, s.gs, C.innings(s.outs), num(s.era, 2), s.wins, s.holds, s.saves, s.k, s.bb, s.qs, x.velocity ?? '—'];
             const moved = UI.statusLabel(x.state, x.s.teamId);
-            return `<tr class="${mixed && x.s.teamId === g.teamId ? 'mine' : ''}">
-              <td>${playerLink(x.p.id, x.p.name)}<small>${teamName(x.s.teamId)} ${esc(x.s.label)} · ${C.ROLES[x.p.role]}</small></td>
+            const cls = [mixed && x.s.teamId === g.teamId ? 'mine' : '', x.second ? 'second' : ''].filter(Boolean).join(' ');
+            return `<tr class="${cls}">
+              <td>${playerLink(x.p.id, x.p.name)}${x.second ? ` ${tag('이도류')}` : ''}<small>${teamName(x.s.teamId)} ${esc(x.s.label)} · ${C.ROLES[x.role]}${x.role !== x.p.role && !x.second ? ` (지명 당시 ${C.ROLES[x.p.role]})` : ''}</small></td>
               <td>${moved ? `<span class="warn">${moved}</span>` : ''}</td>
               ${values.map((v) => `<td class="n">${esc(v)}</td>`).join('')}
               <td class="n">${level === 'stats' ? num(x.war, 1) : '—'}</td></tr>`;
@@ -97,7 +122,8 @@
           <p class="move">${from} → ${r.scoutReady} <small>현재 기량 · FV ${p.scoutCeiling}${r.scoutFV !== p.scoutCeiling ? ` → ${r.scoutFV}` : ''}</small></p>
           ${r.velocity ? `<p class="note">최고 구속 ${r.velocity}km/h (${UI.velocityChange(g, r)})</p>` : ''}
           <p>${esc(r.note)}</p>
-          <p class="note">${esc(r.growthLabel)}${r.planScore != null ? ` · 계획 이행 ${r.planScore}점` : ''}${r.teamId !== g.teamId ? ` · 현재 ${teamName(r.teamId)}` : ''}</p>
+          ${r.second ? `<p class="note">${tag('이도류')} ${C.ROLES[r.second.role]} · ${esc(r.second.routeLabel)} · ${UI.statLine(r.second.stats)}</p>` : ''}
+          <p class="note">${r.role && r.role !== p.role ? `${C.ROLES[r.role]} · ` : ''}${esc(r.growthLabel)}${r.planScore != null ? ` · 계획 이행 ${r.planScore}점` : ''}${r.teamId !== g.teamId ? ` · 현재 ${teamName(r.teamId)}` : ''}</p>
         </article>`;
       })
       .join('');
@@ -115,13 +141,14 @@
         claim: `입단 · ${teamName(ev.fromTeamId)} → ${teamName(ev.toTeamId)}`,
         retire: '은퇴',
         enlist: `입대 · ${teamName(ev.fromTeamId)}`,
+        position: `포지션 · ${teamName(ev.fromTeamId)}${ev.from !== ev.to ? ` · ${C.ROLES[ev.from]} → ${C.ROLES[ev.to]}` : ''}`,
         note: `병역 · ${teamName(ev.fromTeamId)}`,
       })[ev.type];
     return `<ul class="event-list">${items
       .map(
         (ev) => `<li><b>${head(ev)}</b>
           ${ev.playerIds.map((id) => playerLink(id, player(g, id).name)).join(' ↔ ')}
-          <small>${esc(ev.reason)} (${ev.year}시즌 종료 후)</small></li>`,
+          <small>${esc(ev.reason)} (${ev.preseason ? '첫 시즌 전' : `${ev.year}시즌 종료 후`})</small></li>`,
       )
       .join('')}</ul>`;
   }
@@ -176,7 +203,7 @@
       <div class="table-scroll"><table class="t"><thead><tr><th>선수</th><th class="n">나이</th><th>상태</th><th>결정</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
-  function season(g, index, orders = {}) {
+  function season(g, index, orders = {}, plans = {}) {
     const years = g.career.years,
       total = C.Career.SEASONS,
       y = years[Math.min(index, years.length - 1)] || years.at(-1),
@@ -207,6 +234,7 @@
     <p class="note">원지명 기준입니다. 다른 팀으로 옮기거나 은퇴한 선수도 계속 보여 줍니다. 이름을 누르면 경력 전체를 볼 수 있습니다.</p>
     ${recordTable(g, mine)}
     ${joined.length ? `<h2 class="rule">다른 팀에서 온 동기 <small>${y.year} 시즌 우리 팀 소속</small></h2>${recordTable(g, joined)}` : ''}
+    ${y.preseason?.length ? `<h2 class="rule">첫 시즌 전 결정</h2>${events(g, y.preseason)}` : ''}
     ${development(g, y)}
     ${international(g, y)}
     <div class="cols even" style="margin-top:8px">
@@ -227,6 +255,7 @@
           .join('')}</details>
       </section>
     </div>
+    ${last && years.length < total ? UI.planPanel(g, plans, `${years.at(-1).year + 1} 시즌 육성 계획`) : ''}
     ${last ? servicePanel(g, orders) : ''}
     <div class="actions">
       ${years.length < total ? `<button class="btn primary" data-action="next-season">${years.at(-1).year + 1} 시즌 진행</button>` : `<button class="btn primary" data-action="owner">${total}년 최종 평가 보기</button>`}
@@ -269,7 +298,9 @@
     return `<div class="career-profile">
       <span class="kicker">${teamName(sel.teamId)} ${esc(sel.label)} ${sel.dev ? '계약' : '지명'}${status ? ` · ${esc(status)}` : ''}</span>
       <h2>${esc(p.name)}</h2>
-      <p>${C.ROLES[p.role]} · ${esc(p.pathway)}${p.quotaEligible ? ' (대졸 의무 대상)' : ''} · ${UI.hand(p)} · ${p.height}cm ${p.weight}kg</p>
+      <p>${C.ROLES[state?.role ?? p.role]}${state && state.role !== p.role ? ` (지명 당시 ${C.ROLES[p.role]})` : ''}${state?.twoWay ? ` · ${tag('이도류')} ${C.ROLES[state.other.role]} 겸업` : ''} · ${esc(p.pathway)}${p.quotaEligible ? ' (대졸 의무 대상)' : ''} · ${UI.hand(p)} · ${p.height}cm ${p.weight}kg</p>
+      ${state?.roleHistory.length ? `<p class="note">포지션 변경: ${state.roleHistory.map((h) => `${h.year} ${C.ROLES[h.from]} → ${C.ROLES[h.to]}`).join(' · ')}</p>` : ''}
+      ${state && state.focus !== 'balanced' ? `<p class="note">육성 방향: ${esc(UI.focusLabel(state.focus))} 집중</p>` : ''}
       <p class="muted">${esc(p.pathText)} · ${p.birthday} 출생 · 지명 당시 만 ${p.age}세${hist.length ? `, ${hist.at(-1).year}년 말 만 ${hist.at(-1).age}세` : ''}</p>
       <p>강점: ${esc(p.strength)} 과제: ${esc(p.weakness)}</p>
       ${state ? `<p>병역: ${esc(UI.serviceStatus(state))} · 현재 FV ${state.scoutFV}${state.scoutFV !== p.scoutCeiling ? ` (지명 당시 ${p.scoutCeiling})` : ''}</p>` : ''}
@@ -283,22 +314,40 @@
         ? hist
             .map(
               (y) => `<article class="year-report">
-                <header><b>${y.year} · ${teamName(y.teamId)}</b>${tag(y.routeLabel, y.route === 'regular' ? 'good' : '')}</header>
+                <header><b>${y.year} · ${teamName(y.teamId)}${y.role ? ` · ${C.ROLES[y.role]}` : ''}</b>${tag(y.routeLabel, y.route === 'regular' ? 'good' : '')}</header>
                 ${y.route === 'service' ? '' : `<p>1군: ${UI.statLine(y.stats)}${y.stats.games ? ` · WAR ${num(y.war, 1)}` : ''}</p>`}
                 <p class="muted">${y.route === 'service' && y.serviceType === 'sangmu' ? '상무(퓨처스)' : '퓨처스'}: ${UI.statLine(y.futures)}</p>
+                ${y.second ? `<p>${tag('이도류')} ${C.ROLES[y.second.role]} · ${esc(y.second.routeLabel)} — 1군: ${UI.statLine(y.second.stats)}${y.second.stats.games ? ` · WAR ${num(y.second.war, 1)}` : ''}</p>` : ''}
                 <p>${esc(y.note)}</p>
                 ${y.teamId ? `<p class="note">${esc(y.growthLabel)} · 현재 기량 ${y.startGrade ?? y.scoutReady} → ${y.scoutReady} · FV ${y.scoutFV}${y.planScore != null ? ` · 계획 이행 ${y.planScore}` : ''}${y.velocity ? ` · 최고 구속 ${y.velocity}km/h (${UI.velocityChange(g, y)})` : ''}</p>` : ''}
                 ${y.publicTools ? UI.toolSnapshot(p, y.publicTools, '시즌 종료 세부 기량') : ''}
               </article>`,
             )
             .join('') +
-          `<p><b>1군 통산</b> ${UI.statLine(C.Career.totalStats(hist))} · WAR ${num(Math.round(hist.reduce((n, y) => n + (y.war || 0), 0) * 10) / 10, 1)}</p><p class="muted"><b>퓨처스 통산</b> ${UI.statLine(C.Career.totalStats(hist, 'futures'))}</p>`
+          careerTotals(hist)
         : '<p class="note">아직 프로 시즌을 치르지 않았습니다.</p>'}
       <h3>수상</h3>
       ${honors.length ? honors.map((a) => `<p>${a.year} · ${esc(a.title)} (${teamName(a.teamId)})</p>`).join('') : '<p class="note">없음</p>'}
       <h3>이적·방출·병역</h3>
       ${events(g, evs)}
     </div>`;
+  }
+
+  /** Career totals per kind of play (a converted or two-way player has both). */
+  function careerTotals(hist) {
+    const kinds = [...new Set(hist.flatMap((y) => [y.stats?.kind, y.second?.stats.kind]).filter(Boolean))];
+    const war = Math.round(hist.reduce((n, y) => n + (y.war || 0), 0) * 10) / 10;
+    return (
+      kinds
+        .map((kind) => {
+          const main = hist.filter((y) => y.stats?.kind === kind),
+            second = hist.filter((y) => y.second?.stats.kind === kind).map((y) => ({ stats: y.second.stats, futures: y.second.futures }));
+          const all = [...main, ...second],
+            label = kinds.length > 1 ? (kind === 'pitcher' ? ' (투수)' : ' (타자)') : '';
+          return `<p><b>1군 통산${label}</b> ${UI.statLine(C.Career.totalStats(all, 'stats', kind))}</p><p class="muted"><b>퓨처스 통산${label}</b> ${UI.statLine(C.Career.totalStats(all, 'futures', kind))}</p>`;
+        })
+        .join('') + `<p><b>통산 WAR</b> ${num(war, 1)}</p>`
+    );
   }
 
   function pledge(g) {

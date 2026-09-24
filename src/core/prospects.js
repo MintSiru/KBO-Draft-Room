@@ -325,6 +325,14 @@
     for (const p of players) Object.assign(p, W.scoutNotes(p, rng(seed + '-notes-' + p.id)));
     players.sort((a, b) => b.publicScore - a.publicScore || a.id.localeCompare(b.id));
     players.forEach((p, i) => (p.rank = i + 1));
+    // The other side of each player, then two-way prospects. Own streams: talent above is unaffected.
+    const A = TUNING.altTalent,
+      ar = rng(seed + '-alt-talent'),
+      tw = rng(seed + '-two-way');
+    const twoWayIds = new Set();
+    const eligible = players.filter((p) => p.rank <= A.twoWay.maxRank && !p.proExperience);
+    for (const chance of A.twoWay.chances) if (tw() < chance && eligible.length) twoWayIds.add(eligible.splice(Math.floor(tw() * eligible.length), 1)[0].id);
+    for (const p of players) Object.assign(p, altSide(p, twoWayIds.has(p.id), ar));
     // Announced intentions (public): a few high-school players would rather go to college, and a rare
     // top prospect has interest from abroad. Own stream, so talent and ranks are unaffected.
     const I = TUNING.contracts.intent,
@@ -339,6 +347,33 @@
       } else if (p.scoutCeiling >= I.collegeMinFV && ir() < I.collegeShare) p.intent = 'college';
     }
     return { players, byId: Object.fromEntries(players.map((p) => [p.id, p])), seed: String(seed) };
+  }
+  /**
+   * The other side of a player: hidden tools (`trueTools`, `potentialTools`) and a public estimate.
+   * Pitchers' other side is a hitter (outfield or infield); hitters' is a pitcher (mostly relief).
+   */
+  function altSide(p, twoWay, r) {
+    const A = TUNING.altTalent,
+      V = TUNING.generation.velocity,
+      pitcher = pitcherRole(p.role);
+    const role = pitcher ? (r() < 0.6 ? 'OF' : 'IF') : twoWay && r() < 0.5 ? 'SP' : 'RP';
+    const centre = twoWay ? p.upside - (A.twoWay.below[0] + r() * A.twoWay.below[1]) : A.base[0] + r() * A.base[1] + Math.max(0, p.upside - 45) * A.athleticism;
+    const young = p.pathway === '고졸' || p.pathway === '야구 유학',
+      [g0, gs] = young ? A.gap.young : A.gap.older,
+      gap = g0 + r() * gs;
+    const keys = G.keys(role).concat(pitcherRole(role) ? [] : ['eye']);
+    const potentialTools = {},
+      trueTools = {},
+      tools = {};
+    for (const k of keys) {
+      potentialTools[k] = clamp(centre + normal(r) * 4, 20, 80);
+      trueTools[k] = Math.min(potentialTools[k], clamp(potentialTools[k] - gap * (k === 'speed' ? 0.4 : 1), 20, 80));
+      tools[k] = G.grade(trueTools[k] + normal(r) * 5);
+    }
+    const ready = G.grade(G.overall(tools, role)),
+      scoutCeiling = Math.max(ready, G.grade(G.overall(potentialTools, role) * 0.8 + G.overall(trueTools, role) * 0.2 + normal(r) * 3));
+    const velocity = pitcherRole(role) ? Math.round(clamp(V.base + (trueTools.stuff - V.pivot) * V.perStuff + normal(r) * V.noise * 2, V.min, V.max)) : null;
+    return { twoWay, alt: { role, trueTools, potentialTools, tools, ready, scoutCeiling, ceilingGrade: scoutCeiling, velocity, upside: G.overall(potentialTools, role) } };
   }
   /** Replaces the amateur line with a last overseas season (or a short MLB sample). */
   function applyOverseasRecord(record, level, pitcher, talent, r) {

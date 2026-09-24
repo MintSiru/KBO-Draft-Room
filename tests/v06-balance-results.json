@@ -1,6 +1,6 @@
 {
   "notice": "Fictional all-AI balance audit over the full career. Thresholds are game-design targets, not official KBO statistics.",
-  "sim": "0.9",
+  "sim": "1.0",
   "drafts": 600,
   "results": [
     {
@@ -12,8 +12,8 @@
           "round": 0,
           "sample": 929,
           "rookieDebutPct": 42.73,
-          "careerDebutPct": 93.11,
-          "everRegularPct": 75.24,
+          "careerDebutPct": 93.33,
+          "everRegularPct": 74.92,
           "meanFV": 54.31,
           "fv60plusPct": 27.77
         },
@@ -31,7 +31,7 @@
           "sample": 1968,
           "rookieDebutPct": 38.06,
           "careerDebutPct": 96.54,
-          "everRegularPct": 74.29,
+          "everRegularPct": 74.44,
           "meanFV": 53.27,
           "fv60plusPct": 3.61
         },
@@ -39,8 +39,8 @@
           "round": 3,
           "sample": 1968,
           "rookieDebutPct": 18.65,
-          "careerDebutPct": 89.08,
-          "everRegularPct": 52.44,
+          "careerDebutPct": 89.13,
+          "everRegularPct": 52.9,
           "meanFV": 50.73,
           "fv60plusPct": 0.1
         },
@@ -48,8 +48,8 @@
           "round": 4,
           "sample": 1973,
           "rookieDebutPct": 7.7,
-          "careerDebutPct": 79.02,
-          "everRegularPct": 37.81,
+          "careerDebutPct": 79.27,
+          "everRegularPct": 38.17,
           "meanFV": 49.07,
           "fv60plusPct": 0
         },
@@ -57,8 +57,8 @@
           "round": 5,
           "sample": 1981,
           "rookieDebutPct": 5.81,
-          "careerDebutPct": 66.08,
-          "everRegularPct": 26.35,
+          "careerDebutPct": 66.03,
+          "everRegularPct": 26.65,
           "meanFV": 47.67,
           "fv60plusPct": 0
         },
@@ -66,8 +66,8 @@
           "round": 6,
           "sample": 1983,
           "rookieDebutPct": 4.69,
-          "careerDebutPct": 55.62,
-          "everRegularPct": 15.83,
+          "careerDebutPct": 56.03,
+          "everRegularPct": 16.54,
           "meanFV": 46.46,
           "fv60plusPct": 0
         },
@@ -75,8 +75,8 @@
           "round": 7,
           "sample": 1978,
           "rookieDebutPct": 3.84,
-          "careerDebutPct": 47.88,
-          "everRegularPct": 10.77,
+          "careerDebutPct": 47.93,
+          "everRegularPct": 10.72,
           "meanFV": 45.67,
           "fv60plusPct": 0
         },
@@ -84,8 +84,8 @@
           "round": 8,
           "sample": 1975,
           "rookieDebutPct": 3.19,
-          "careerDebutPct": 42.58,
-          "everRegularPct": 8,
+          "careerDebutPct": 43.7,
+          "everRegularPct": 8.3,
           "meanFV": 45.07,
           "fv60plusPct": 0
         },
@@ -93,8 +93,8 @@
           "round": 9,
           "sample": 1981,
           "rookieDebutPct": 3.13,
-          "careerDebutPct": 37.41,
-          "everRegularPct": 6.36,
+          "careerDebutPct": 37.86,
+          "everRegularPct": 6.87,
           "meanFV": 44.65,
           "fv60plusPct": 0
         },
@@ -102,8 +102,8 @@
           "round": 10,
           "sample": 1983,
           "rookieDebutPct": 2.47,
-          "careerDebutPct": 35.65,
-          "everRegularPct": 5.6,
+          "careerDebutPct": 36.26,
+          "everRegularPct": 6,
           "meanFV": 44.18,
           "fv60plusPct": 0
         },
@@ -111,8 +111,8 @@
           "round": 11,
           "sample": 1982,
           "rookieDebutPct": 2.37,
-          "careerDebutPct": 29.87,
-          "everRegularPct": 3.78,
+          "careerDebutPct": 30.12,
+          "everRegularPct": 4.74,
           "meanFV": 43.46,
           "fv60plusPct": 0
         },
@@ -120,8 +120,8 @@
           "round": "dev",
           "sample": 7412,
           "rookieDebutPct": 2.35,
-          "careerDebutPct": 22.67,
-          "everRegularPct": 2.51,
+          "careerDebutPct": 23.22,
+          "everRegularPct": 2.81,
           "meanFV": 42.02,
           "fv60plusPct": 0
         }
@@ -137,7 +137,7 @@
         },
         {
           "year": 2028,
-          "debutPct": 14.27,
+          "debutPct": 14.26,
           "regularPct": 4.62,
           "playingPct": 100,
           "servicePct": 25.44,
@@ -145,79 +145,79 @@
         },
         {
           "year": 2029,
-          "debutPct": 18.68,
-          "regularPct": 7.76,
+          "debutPct": 18.72,
+          "regularPct": 7.74,
           "playingPct": 95.8,
-          "servicePct": 22.03,
+          "servicePct": 21.96,
           "regularsPerClub": 1.16
         },
         {
           "year": 2030,
-          "debutPct": 22.89,
+          "debutPct": 22.91,
           "regularPct": 10.78,
-          "playingPct": 89.76,
+          "playingPct": 89.83,
           "servicePct": 13.15,
           "regularsPerClub": 1.62
         },
         {
           "year": 2031,
-          "debutPct": 25.78,
-          "regularPct": 13.42,
-          "playingPct": 79.4,
-          "servicePct": 8.05,
-          "regularsPerClub": 2.01
+          "debutPct": 25.93,
+          "regularPct": 13.45,
+          "playingPct": 79.54,
+          "servicePct": 8.07,
+          "regularsPerClub": 2.02
         },
         {
           "year": 2032,
-          "debutPct": 27.06,
-          "regularPct": 14.38,
-          "playingPct": 71.08,
-          "servicePct": 7.18,
-          "regularsPerClub": 2.16
+          "debutPct": 27.2,
+          "regularPct": 14.49,
+          "playingPct": 71.31,
+          "servicePct": 7.23,
+          "regularsPerClub": 2.18
         },
         {
           "year": 2033,
-          "debutPct": 30.49,
-          "regularPct": 16.85,
-          "playingPct": 63.18,
-          "servicePct": 3.72,
-          "regularsPerClub": 2.53
+          "debutPct": 30.67,
+          "regularPct": 17.07,
+          "playingPct": 63.57,
+          "servicePct": 3.77,
+          "regularsPerClub": 2.56
         },
         {
           "year": 2034,
-          "debutPct": 28.91,
-          "regularPct": 16.95,
-          "playingPct": 58.58,
-          "servicePct": 7.84,
-          "regularsPerClub": 2.54
+          "debutPct": 29.22,
+          "regularPct": 17.18,
+          "playingPct": 58.98,
+          "servicePct": 7.77,
+          "regularsPerClub": 2.58
         },
         {
           "year": 2035,
-          "debutPct": 30.81,
-          "regularPct": 18.11,
-          "playingPct": 55.7,
-          "servicePct": 3.5,
-          "regularsPerClub": 2.72
+          "debutPct": 30.99,
+          "regularPct": 18.39,
+          "playingPct": 56.14,
+          "servicePct": 3.52,
+          "regularsPerClub": 2.76
         },
         {
           "year": 2036,
-          "debutPct": 26.88,
-          "regularPct": 14.78,
-          "playingPct": 53.46,
-          "servicePct": 6.32,
-          "regularsPerClub": 2.22
+          "debutPct": 27.03,
+          "regularPct": 14.97,
+          "playingPct": 53.89,
+          "servicePct": 6.41,
+          "regularsPerClub": 2.25
         }
       ],
       "transitions": {
-        "healthySameTeamSample": 25397,
-        "healthyRetentionPct": 90.97,
+        "healthySameTeamSample": 25591,
+        "healthyRetentionPct": 91.04,
         "healthyToFuturesPct": 0
       },
       "growth": {
-        "within5InternalCeilingPct": 62.93
+        "within5InternalCeilingPct": 63.22
       },
       "stats": {
-        "qualifiedHitters": 17095,
+        "qualifiedHitters": 17103,
         "hitterMedian": {
           "avg": 0.272,
           "obp": 0.339,
@@ -225,17 +225,17 @@
           "ops": 0.767
         },
         "hitterMeanHR": 16.38,
-        "qualifiedStarters": 10350,
+        "qualifiedStarters": 10238,
         "starterMedianERA": 3.93,
-        "starterMeanIP": 161.07,
-        "starterMeanWins": 11.37,
-        "starterMedianK9": 7.29,
-        "starterMedianBB9": 3.359,
-        "relieverMedianERA": 3.99,
+        "starterMeanIP": 161.11,
+        "starterMeanWins": 11.36,
+        "starterMedianK9": 7.273,
+        "starterMedianBB9": 3.353,
+        "relieverMedianERA": 4,
         "maxSPWins": 22,
         "maxHitterHR": 51,
-        "tenWinSeasons": 7694,
-        "twentyHRSeasons": 5022
+        "tenWinSeasons": 7611,
+        "twentyHRSeasons": 5029
       },
       "war": {
         "qualifiedSeasonMedian": 2.7,
@@ -243,9 +243,9 @@
         "classTotalMedian": 43.8
       },
       "service": {
-        "enlistedPerDraft": 131.72,
-        "sangmuPct": 17.86,
-        "armyPct": 70.72,
+        "enlistedPerDraft": 131.84,
+        "sangmuPct": 17.91,
+        "armyPct": 70.67,
         "socialPct": 11.42,
         "exemptPerDraft": 5.38,
         "medianEnlistAge": 24,
@@ -262,12 +262,25 @@
         "medianGrowthBoost": 0.064,
         "overBudget": 0
       },
+      "positions": {
+        "changesPerDraft": {
+          "starterToRelief": 6.64,
+          "catcherMove": 2.36,
+          "sideSwitch": 0.05,
+          "twoWayEnded": 0.02,
+          "other": 0
+        },
+        "twoWaySignedPerDraft": 0.39,
+        "twoWaySeasonsPerDraft": 3.13,
+        "secondSideFirstTeamGamesPerSeason": 10.3
+      },
       "movesPerDraft": {
         "trade": 5.52,
-        "release": 33.76,
-        "claim": 4.58,
-        "retire": 68.43,
-        "enlist": 131.72
+        "release": 33.48,
+        "claim": 4.6,
+        "retire": 67.75,
+        "enlist": 131.84,
+        "position": 9.07
       },
       "meanFinalScore": 65.59,
       "mlbPools": 21,
@@ -282,8 +295,8 @@
           "round": 0,
           "sample": 954,
           "rookieDebutPct": 44.34,
-          "careerDebutPct": 95.07,
-          "everRegularPct": 79.77,
+          "careerDebutPct": 94.86,
+          "everRegularPct": 79.98,
           "meanFV": 54.85,
           "fv60plusPct": 28.62
         },
@@ -292,7 +305,7 @@
           "sample": 1941,
           "rookieDebutPct": 78.98,
           "careerDebutPct": 99.64,
-          "everRegularPct": 93.66,
+          "everRegularPct": 93.82,
           "meanFV": 58.07,
           "fv60plusPct": 49.1
         },
@@ -300,7 +313,7 @@
           "round": 2,
           "sample": 1938,
           "rookieDebutPct": 38.39,
-          "careerDebutPct": 95.77,
+          "careerDebutPct": 95.82,
           "everRegularPct": 72.45,
           "meanFV": 53,
           "fv60plusPct": 2.94
@@ -309,8 +322,8 @@
           "round": 3,
           "sample": 1951,
           "rookieDebutPct": 18.09,
-          "careerDebutPct": 86.88,
-          "everRegularPct": 51.72,
+          "careerDebutPct": 87.34,
+          "everRegularPct": 51.97,
           "meanFV": 50.52,
           "fv60plusPct": 0.21
         },
@@ -318,8 +331,8 @@
           "round": 4,
           "sample": 1970,
           "rookieDebutPct": 7.82,
-          "careerDebutPct": 77.46,
-          "everRegularPct": 36.35,
+          "careerDebutPct": 77.77,
+          "everRegularPct": 36.6,
           "meanFV": 48.92,
           "fv60plusPct": 0
         },
@@ -327,8 +340,8 @@
           "round": 5,
           "sample": 1975,
           "rookieDebutPct": 5.37,
-          "careerDebutPct": 64.61,
-          "everRegularPct": 25.77,
+          "careerDebutPct": 64.56,
+          "everRegularPct": 25.82,
           "meanFV": 47.66,
           "fv60plusPct": 0
         },
@@ -336,8 +349,8 @@
           "round": 6,
           "sample": 1980,
           "rookieDebutPct": 4.24,
-          "careerDebutPct": 55.61,
-          "everRegularPct": 17.07,
+          "careerDebutPct": 56.16,
+          "everRegularPct": 16.92,
           "meanFV": 46.53,
           "fv60plusPct": 0
         },
@@ -345,8 +358,8 @@
           "round": 7,
           "sample": 1975,
           "rookieDebutPct": 3.54,
-          "careerDebutPct": 47.04,
-          "everRegularPct": 11.24,
+          "careerDebutPct": 47.49,
+          "everRegularPct": 11.59,
           "meanFV": 45.56,
           "fv60plusPct": 0
         },
@@ -354,8 +367,8 @@
           "round": 8,
           "sample": 1970,
           "rookieDebutPct": 3.15,
-          "careerDebutPct": 42.69,
-          "everRegularPct": 7.82,
+          "careerDebutPct": 43.81,
+          "everRegularPct": 8.22,
           "meanFV": 44.87,
           "fv60plusPct": 0
         },
@@ -363,7 +376,7 @@
           "round": 9,
           "sample": 1980,
           "rookieDebutPct": 2.53,
-          "careerDebutPct": 37.73,
+          "careerDebutPct": 36.97,
           "everRegularPct": 6.77,
           "meanFV": 44.29,
           "fv60plusPct": 0
@@ -373,7 +386,7 @@
           "sample": 1977,
           "rookieDebutPct": 3.19,
           "careerDebutPct": 35.15,
-          "everRegularPct": 4.35,
+          "everRegularPct": 4.6,
           "meanFV": 43.84,
           "fv60plusPct": 0
         },
@@ -381,8 +394,8 @@
           "round": 11,
           "sample": 1976,
           "rookieDebutPct": 2.48,
-          "careerDebutPct": 29.1,
-          "everRegularPct": 2.78,
+          "careerDebutPct": 29.66,
+          "everRegularPct": 3.29,
           "meanFV": 43.2,
           "fv60plusPct": 0
         },
@@ -390,8 +403,8 @@
           "round": "dev",
           "sample": 7366,
           "rookieDebutPct": 2.35,
-          "careerDebutPct": 23.99,
-          "everRegularPct": 2.34,
+          "careerDebutPct": 24.64,
+          "everRegularPct": 2.74,
           "meanFV": 42.19,
           "fv60plusPct": 0
         }
@@ -407,105 +420,105 @@
         },
         {
           "year": 2028,
-          "debutPct": 14.16,
-          "regularPct": 4.66,
+          "debutPct": 14.14,
+          "regularPct": 4.65,
           "playingPct": 100,
           "servicePct": 25.71,
           "regularsPerClub": 0.7
         },
         {
           "year": 2029,
-          "debutPct": 18.58,
-          "regularPct": 7.71,
+          "debutPct": 18.61,
+          "regularPct": 7.72,
           "playingPct": 95.64,
-          "servicePct": 22.1,
+          "servicePct": 22.04,
           "regularsPerClub": 1.16
         },
         {
           "year": 2030,
-          "debutPct": 22.61,
+          "debutPct": 22.75,
           "regularPct": 10.85,
-          "playingPct": 89.54,
-          "servicePct": 13.17,
+          "playingPct": 89.61,
+          "servicePct": 13.18,
           "regularsPerClub": 1.63
         },
         {
           "year": 2031,
-          "debutPct": 25.59,
-          "regularPct": 13.35,
-          "playingPct": 79.07,
-          "servicePct": 7.92,
+          "debutPct": 25.77,
+          "regularPct": 13.36,
+          "playingPct": 79.2,
+          "servicePct": 7.93,
           "regularsPerClub": 2
         },
         {
           "year": 2032,
-          "debutPct": 26.93,
-          "regularPct": 14.21,
-          "playingPct": 70.54,
-          "servicePct": 7.05,
-          "regularsPerClub": 2.13
+          "debutPct": 27.06,
+          "regularPct": 14.31,
+          "playingPct": 70.81,
+          "servicePct": 7.09,
+          "regularsPerClub": 2.14
         },
         {
           "year": 2033,
-          "debutPct": 30.39,
-          "regularPct": 16.88,
-          "playingPct": 62.66,
-          "servicePct": 3.63,
-          "regularsPerClub": 2.53
+          "debutPct": 30.65,
+          "regularPct": 17.03,
+          "playingPct": 62.99,
+          "servicePct": 3.66,
+          "regularsPerClub": 2.55
         },
         {
           "year": 2034,
-          "debutPct": 28.98,
-          "regularPct": 16.9,
-          "playingPct": 58.22,
-          "servicePct": 7.77,
-          "regularsPerClub": 2.53
+          "debutPct": 29.23,
+          "regularPct": 17.03,
+          "playingPct": 58.6,
+          "servicePct": 7.73,
+          "regularsPerClub": 2.55
         },
         {
           "year": 2035,
-          "debutPct": 30.67,
-          "regularPct": 18.21,
-          "playingPct": 55.48,
-          "servicePct": 3.5,
-          "regularsPerClub": 2.73
+          "debutPct": 30.89,
+          "regularPct": 18.36,
+          "playingPct": 55.9,
+          "servicePct": 3.55,
+          "regularsPerClub": 2.75
         },
         {
           "year": 2036,
-          "debutPct": 26.92,
-          "regularPct": 14.7,
-          "playingPct": 53.3,
-          "servicePct": 6.27,
-          "regularsPerClub": 2.2
+          "debutPct": 27.22,
+          "regularPct": 14.88,
+          "playingPct": 53.74,
+          "servicePct": 6.3,
+          "regularsPerClub": 2.23
         }
       ],
       "transitions": {
-        "healthySameTeamSample": 25348,
-        "healthyRetentionPct": 91.37,
+        "healthySameTeamSample": 25465,
+        "healthyRetentionPct": 91.32,
         "healthyToFuturesPct": 0
       },
       "growth": {
-        "within5InternalCeilingPct": 62.08
+        "within5InternalCeilingPct": 62.28
       },
       "stats": {
-        "qualifiedHitters": 17031,
+        "qualifiedHitters": 17018,
         "hitterMedian": {
           "avg": 0.272,
           "obp": 0.339,
           "slg": 0.426,
           "ops": 0.767
         },
-        "hitterMeanHR": 16.29,
-        "qualifiedStarters": 10191,
-        "starterMedianERA": 3.94,
-        "starterMeanIP": 161.34,
+        "hitterMeanHR": 16.31,
+        "qualifiedStarters": 10051,
+        "starterMedianERA": 3.93,
+        "starterMeanIP": 161.44,
         "starterMeanWins": 11.31,
-        "starterMedianK9": 7.306,
-        "starterMedianBB9": 3.346,
-        "relieverMedianERA": 3.98,
+        "starterMedianK9": 7.291,
+        "starterMedianBB9": 3.339,
+        "relieverMedianERA": 4,
         "maxSPWins": 22,
         "maxHitterHR": 62,
-        "tenWinSeasons": 7501,
-        "twentyHRSeasons": 4927
+        "tenWinSeasons": 7400,
+        "twentyHRSeasons": 4938
       },
       "war": {
         "qualifiedSeasonMedian": 2.7,
@@ -513,9 +526,9 @@
         "classTotalMedian": 43.4
       },
       "service": {
-        "enlistedPerDraft": 131.37,
-        "sangmuPct": 17.85,
-        "armyPct": 70.78,
+        "enlistedPerDraft": 131.43,
+        "sangmuPct": 17.96,
+        "armyPct": 70.67,
         "socialPct": 11.37,
         "exemptPerDraft": 5.4,
         "medianEnlistAge": 24,
@@ -532,14 +545,27 @@
         "medianGrowthBoost": 0.061,
         "overBudget": 0
       },
+      "positions": {
+        "changesPerDraft": {
+          "starterToRelief": 5.93,
+          "catcherMove": 3,
+          "sideSwitch": 0.05,
+          "twoWayEnded": 0.02,
+          "other": 0
+        },
+        "twoWaySignedPerDraft": 0.39,
+        "twoWaySeasonsPerDraft": 3.13,
+        "secondSideFirstTeamGamesPerSeason": 10.6
+      },
       "movesPerDraft": {
         "trade": 5.52,
-        "release": 33.54,
+        "release": 33.2,
         "claim": 4.26,
-        "retire": 68.58,
-        "enlist": 131.37
+        "retire": 67.91,
+        "enlist": 131.43,
+        "position": 8.99
       },
-      "meanFinalScore": 65.36,
+      "meanFinalScore": 65.33,
       "mlbPools": 21,
       "meanFV60plusPerPool": 7.32
     },
@@ -552,8 +578,8 @@
           "round": 0,
           "sample": 966,
           "rookieDebutPct": 41.93,
-          "careerDebutPct": 95.13,
-          "everRegularPct": 79.3,
+          "careerDebutPct": 94.93,
+          "everRegularPct": 79.19,
           "meanFV": 54.72,
           "fv60plusPct": 27.54
         },
@@ -562,7 +588,7 @@
           "sample": 1965,
           "rookieDebutPct": 78.83,
           "careerDebutPct": 99.49,
-          "everRegularPct": 93.64,
+          "everRegularPct": 93.54,
           "meanFV": 57.88,
           "fv60plusPct": 48.3
         },
@@ -570,8 +596,8 @@
           "round": 2,
           "sample": 1946,
           "rookieDebutPct": 37.77,
-          "careerDebutPct": 93.78,
-          "everRegularPct": 69.73,
+          "careerDebutPct": 93.88,
+          "everRegularPct": 69.68,
           "meanFV": 52.68,
           "fv60plusPct": 2.83
         },
@@ -579,8 +605,8 @@
           "round": 3,
           "sample": 1952,
           "rookieDebutPct": 17.57,
-          "careerDebutPct": 84.84,
-          "everRegularPct": 51.23,
+          "careerDebutPct": 84.89,
+          "everRegularPct": 51.33,
           "meanFV": 50.38,
           "fv60plusPct": 0.1
         },
@@ -588,8 +614,8 @@
           "round": 4,
           "sample": 1944,
           "rookieDebutPct": 8.95,
-          "careerDebutPct": 77.11,
-          "everRegularPct": 38.53,
+          "careerDebutPct": 76.9,
+          "everRegularPct": 38.68,
           "meanFV": 49.15,
           "fv60plusPct": 0.26
         },
@@ -597,8 +623,8 @@
           "round": 5,
           "sample": 1966,
           "rookieDebutPct": 4.63,
-          "careerDebutPct": 65.41,
-          "everRegularPct": 27.52,
+          "careerDebutPct": 65.36,
+          "everRegularPct": 27.82,
           "meanFV": 47.76,
           "fv60plusPct": 0.2
         },
@@ -606,8 +632,8 @@
           "round": 6,
           "sample": 1969,
           "rookieDebutPct": 3.56,
-          "careerDebutPct": 54.29,
-          "everRegularPct": 17.83,
+          "careerDebutPct": 54.6,
+          "everRegularPct": 18.18,
           "meanFV": 46.39,
           "fv60plusPct": 0
         },
@@ -615,7 +641,7 @@
           "round": 7,
           "sample": 1979,
           "rookieDebutPct": 2.93,
-          "careerDebutPct": 45.78,
+          "careerDebutPct": 45.73,
           "everRegularPct": 10.36,
           "meanFV": 45.42,
           "fv60plusPct": 0
@@ -624,8 +650,8 @@
           "round": 8,
           "sample": 1968,
           "rookieDebutPct": 2.79,
-          "careerDebutPct": 41.16,
-          "everRegularPct": 8.18,
+          "careerDebutPct": 40.85,
+          "everRegularPct": 8.69,
           "meanFV": 44.72,
           "fv60plusPct": 0
         },
@@ -633,8 +659,8 @@
           "round": 9,
           "sample": 1969,
           "rookieDebutPct": 2.39,
-          "careerDebutPct": 35.3,
-          "everRegularPct": 6.3,
+          "careerDebutPct": 36.16,
+          "everRegularPct": 6.65,
           "meanFV": 44.15,
           "fv60plusPct": 0
         },
@@ -642,8 +668,8 @@
           "round": 10,
           "sample": 1970,
           "rookieDebutPct": 2.34,
-          "careerDebutPct": 31.68,
-          "everRegularPct": 5.74,
+          "careerDebutPct": 32.28,
+          "everRegularPct": 6.24,
           "meanFV": 43.73,
           "fv60plusPct": 0
         },
@@ -651,8 +677,8 @@
           "round": 11,
           "sample": 1975,
           "rookieDebutPct": 2.94,
-          "careerDebutPct": 27.8,
-          "everRegularPct": 3.29,
+          "careerDebutPct": 27.44,
+          "everRegularPct": 3.44,
           "meanFV": 42.99,
           "fv60plusPct": 0
         },
@@ -660,8 +686,8 @@
           "round": "dev",
           "sample": 7389,
           "rookieDebutPct": 2.35,
-          "careerDebutPct": 24.54,
-          "everRegularPct": 2.8,
+          "careerDebutPct": 25.35,
+          "everRegularPct": 3.38,
           "meanFV": 42.11,
           "fv60plusPct": 0
         }
@@ -677,105 +703,105 @@
         },
         {
           "year": 2028,
-          "debutPct": 13.95,
-          "regularPct": 4.68,
+          "debutPct": 13.93,
+          "regularPct": 4.67,
           "playingPct": 100,
           "servicePct": 25.68,
           "regularsPerClub": 0.7
         },
         {
           "year": 2029,
-          "debutPct": 18.15,
+          "debutPct": 18.18,
           "regularPct": 7.73,
           "playingPct": 95.64,
-          "servicePct": 22.19,
+          "servicePct": 22.14,
           "regularsPerClub": 1.16
         },
         {
           "year": 2030,
-          "debutPct": 22.4,
-          "regularPct": 10.69,
-          "playingPct": 89.42,
-          "servicePct": 13.35,
-          "regularsPerClub": 1.6
+          "debutPct": 22.5,
+          "regularPct": 10.74,
+          "playingPct": 89.48,
+          "servicePct": 13.33,
+          "regularsPerClub": 1.61
         },
         {
           "year": 2031,
-          "debutPct": 25.41,
-          "regularPct": 13.42,
-          "playingPct": 78.75,
-          "servicePct": 7.91,
-          "regularsPerClub": 2.01
+          "debutPct": 25.51,
+          "regularPct": 13.49,
+          "playingPct": 78.83,
+          "servicePct": 7.94,
+          "regularsPerClub": 2.02
         },
         {
           "year": 2032,
-          "debutPct": 26.94,
-          "regularPct": 14.4,
-          "playingPct": 70.18,
-          "servicePct": 6.99,
-          "regularsPerClub": 2.16
+          "debutPct": 27.13,
+          "regularPct": 14.54,
+          "playingPct": 70.33,
+          "servicePct": 7.02,
+          "regularsPerClub": 2.18
         },
         {
           "year": 2033,
-          "debutPct": 30.16,
-          "regularPct": 17.01,
-          "playingPct": 62.3,
-          "servicePct": 3.59,
-          "regularsPerClub": 2.55
+          "debutPct": 30.35,
+          "regularPct": 17.23,
+          "playingPct": 62.54,
+          "servicePct": 3.62,
+          "regularsPerClub": 2.58
         },
         {
           "year": 2034,
-          "debutPct": 28.68,
-          "regularPct": 17.1,
-          "playingPct": 57.75,
-          "servicePct": 7.62,
-          "regularsPerClub": 2.56
+          "debutPct": 28.84,
+          "regularPct": 17.32,
+          "playingPct": 58.04,
+          "servicePct": 7.58,
+          "regularsPerClub": 2.59
         },
         {
           "year": 2035,
-          "debutPct": 30.68,
-          "regularPct": 18.41,
-          "playingPct": 55.01,
-          "servicePct": 3.31,
-          "regularsPerClub": 2.76
+          "debutPct": 31,
+          "regularPct": 18.58,
+          "playingPct": 55.3,
+          "servicePct": 3.32,
+          "regularsPerClub": 2.78
         },
         {
           "year": 2036,
-          "debutPct": 26.86,
-          "regularPct": 15,
-          "playingPct": 52.79,
-          "servicePct": 6.32,
-          "regularsPerClub": 2.25
+          "debutPct": 27.04,
+          "regularPct": 15.12,
+          "playingPct": 53.14,
+          "servicePct": 6.39,
+          "regularsPerClub": 2.27
         }
       ],
       "transitions": {
-        "healthySameTeamSample": 25587,
-        "healthyRetentionPct": 91.28,
+        "healthySameTeamSample": 25747,
+        "healthyRetentionPct": 91.21,
         "healthyToFuturesPct": 0
       },
       "growth": {
-        "within5InternalCeilingPct": 61.86
+        "within5InternalCeilingPct": 61.99
       },
       "stats": {
-        "qualifiedHitters": 17026,
+        "qualifiedHitters": 17042,
         "hitterMedian": {
           "avg": 0.272,
           "obp": 0.339,
           "slg": 0.426,
           "ops": 0.768
         },
-        "hitterMeanHR": 16.4,
-        "qualifiedStarters": 10479,
+        "hitterMeanHR": 16.36,
+        "qualifiedStarters": 10339,
         "starterMedianERA": 3.95,
-        "starterMeanIP": 161.06,
-        "starterMeanWins": 11.31,
-        "starterMedianK9": 7.277,
-        "starterMedianBB9": 3.356,
-        "relieverMedianERA": 3.98,
+        "starterMeanIP": 161.21,
+        "starterMeanWins": 11.32,
+        "starterMedianK9": 7.262,
+        "starterMedianBB9": 3.345,
+        "relieverMedianERA": 4,
         "maxSPWins": 23,
         "maxHitterHR": 62,
-        "tenWinSeasons": 7679,
-        "twentyHRSeasons": 4971
+        "tenWinSeasons": 7582,
+        "twentyHRSeasons": 4946
       },
       "war": {
         "qualifiedSeasonMedian": 2.7,
@@ -783,10 +809,10 @@
         "classTotalMedian": 43.8
       },
       "service": {
-        "enlistedPerDraft": 131.22,
-        "sangmuPct": 17.92,
-        "armyPct": 70.74,
-        "socialPct": 11.34,
+        "enlistedPerDraft": 131.26,
+        "sangmuPct": 17.94,
+        "armyPct": 70.7,
+        "socialPct": 11.36,
         "exemptPerDraft": 5.42,
         "medianEnlistAge": 24,
         "overdue": 0
@@ -802,14 +828,27 @@
         "medianGrowthBoost": 0.057,
         "overBudget": 0
       },
+      "positions": {
+        "changesPerDraft": {
+          "starterToRelief": 5.12,
+          "catcherMove": 3.77,
+          "sideSwitch": 0.05,
+          "twoWayEnded": 0.03,
+          "other": 0
+        },
+        "twoWaySignedPerDraft": 0.39,
+        "twoWaySeasonsPerDraft": 3.11,
+        "secondSideFirstTeamGamesPerSeason": 10.1
+      },
       "movesPerDraft": {
         "trade": 5.52,
-        "release": 33.89,
-        "claim": 4.14,
-        "retire": 69.25,
-        "enlist": 131.22
+        "release": 33.71,
+        "claim": 4.19,
+        "retire": 68.77,
+        "enlist": 131.26,
+        "position": 8.96
       },
-      "meanFinalScore": 65.51,
+      "meanFinalScore": 65.46,
       "mlbPools": 21,
       "meanFV60plusPerPool": 7.32
     }
